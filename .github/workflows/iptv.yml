@@ -185,8 +185,8 @@ jobs:
         echo "📝 README.md 文档已更新"
         
     - name: Check for changes
-      id: check_changes
-      run: |
+      id:  check_changes
+         run |
         echo "检查文件变更..."
         git add -A
                 pip install requests pandas
