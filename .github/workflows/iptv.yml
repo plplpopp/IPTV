@@ -2,21 +2,22 @@ name: Update IPTV
 
 on:
   schedule:
-    - cron: '05,12,17 * * * *'  # 更清晰的cron表达式
-  workflow_dispatch:
-  push:  # 添加push触发，便于测试
-    paths:
-      - 'iptv.py'
-      - 'requirements.txt'
-
-permissions:
-  contents: write
+    # 每天5点、12点、17点（UTC时间）运行，对应北京时间13点、20点、次日1点
+    - cron: '0 5,12,17 * * *'
+  workflow_dispatch:  # 允许手动触发
+    inputs:
+      skip_test:
+        description: '跳过测速步骤（仅更新源）'
+        required: false
+        default: 'false'
+        type: boolean
 
 env:
-  TZ: Asia/Shanghai
+  PYTHON_VERSION: '3.9'
 
 jobs:
-  update:
+  update-iptv:
+    name: Update IPTV Sources
     runs-on: ubuntu-latest
     
     steps:
@@ -24,69 +25,172 @@ jobs:
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Setup environment
-      run: echo "DATE=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
-
+        
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
-        cache: 'pip'  # 添加pip缓存
-
+        python-version: ${{ env.PYTHON_VERSION }}
+        
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        sudo apt-get update && sudo apt-get install -y ffmpeg
-
-    - name: Generate IPTV sources
-      run: python iptv.py
-
+        pip install requests pandas
+        
+    - name: Create template file if not exists
+      run: |
+        if [ ! -f "demo.txt" ]; then
+          echo "Creating default demo.txt template..."
+          cat > demo.txt << EOF
+        CCTV1
+        CCTV2
+        CCTV5
+        CCTV5+
+        CCTV6
+        CCTV8
+        湖南卫视
+        浙江卫视
+        江苏卫视
+        东方卫视
+        北京卫视
+        安徽卫视
+        EOF
+        fi
+        
+    - name: Run IPTV update script
+      env:
+        SKIP_TEST: ${{ inputs.skip_test }}
+      run: |
+        echo "Starting IPTV update process..."
+        echo "Current time: $(date)"
+        python iptv.py
+        
     - name: Update documentation
       run: |
+        DATE=$(date '+%Y-%m-%d %H:%M:%S')
+        REPO_OWNER="${{ github.repository_owner }}"
+        REPO_NAME="${{ github.event.repository.name }}"
+        
         cat << EOF > README.md
-        # 📺 IPTV源更新
-
+        # 📺 IPTV直播源自动更新仓库
+        
         ## 📢 免责声明
-
         1. 本仓库仅供学习使用，请尊重版权，请勿利用此仓库从事商业行为及非法用途!
-
         2. 使用本仓库的过程中可能会产生版权数据。对于这些版权数据，本仓库不拥有它们的所有权。为了避免侵权，使用者务必在 24 小时内清除使用本仓库的过程中所产生的版权数据。
-      
         3. 由于使用本仓库产生的包括由于本协议或由于使用或无法使用本仓库而引起的任何性质的任何直接、间接、特殊、偶然或结果性损害由使用者负责。
-
         4. 禁止在违反当地法律法规的情况下使用本仓库。对于使用者在明知或不知当地法律法规不允许的情况下使用本仓库所造成的任何违法违规行为由使用者承担。
-
         5. 如果官方平台觉得本仓库不妥，可联系本仓库更改或移除。
         
-        ## 最近更新
-        **更新时间**: $DATE
+        ## 📊 最近更新
+        **最后更新时间**: $DATE
         
-        ## 下载链接
-        - [IPTV文本格式](https://ghfast.top/raw.githubusercontent.com/plplpopp/IPTV/refs/heads/main/iptv.txt)
-        - [IPTV M3U格式](https://ghfast.top/raw.githubusercontent.com/plplpopp/IPTV/refs/heads/main/iptv.m3u)
+        ## 📥 下载链接
+        - [IPTV文本格式 (TXT)](https://ghfast.top/https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/main/iptv.txt)
+        - [IPTV M3U播放列表](https://ghfast.top/https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/main/iptv.m3u)
+        - [IPTV JSON数据](https://ghfast.top/https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/main/iptv_data.json)
+        - [测速报告](https://ghfast.top/https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/main/speed_report.txt)
         
-        ## 使用说明
-        将上述链接添加到您的IPTV播放器中使用。
+        ## 🛠️ 使用说明
+        将上述链接添加到您的IPTV播放器中使用：
         
-        ## 自动更新
-        此仓库每天自动更新多次，确保源的可用性。
+        ### 文本格式 (TXT)
+        - 适用于支持文本格式的播放器
+        - 格式：频道名称,URL
         
-        ⭐ 如果对您有帮助，请给个Star！
+        ### M3U格式
+        - 适用于大多数IPTV播放器
+        - 包含频道分组和速度信息
+        
+        ### 直接播放链接
+        您也可以直接使用以下格式的链接：
+        \`\`\`
+        https://ghfast.top/https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/main/iptv.m3u
+        \`\`\`
+        
+        ## ⚡ 自动更新
+        此仓库通过GitHub Actions自动更新：
+        - **更新时间**: 每天UTC时间 5:00, 12:00, 17:00 (北京时间 13:00, 20:00, 次日1:00)
+        - **更新内容**: 自动抓取、测速、筛选最优直播源
+        - **质量保证**: 只保留速度 > 500KB/s 的优质源
+        
+        ## 📁 文件说明
+        - \`iptv.txt\` - 文本格式直播源，按频道分类
+        - \`iptv.m3u\` - M3U播放列表格式
+        - \`iptv_data.json\` - 完整的频道数据（JSON格式）
+        - \`speed_report.txt\` - 详细的测速报告和统计信息
+        - \`process.log\` - 处理日志
+        - \`demo.txt\` - 频道模板文件
+        
+        ## 🔧 本地运行
+        如需本地运行更新脚本：
+        \`\`\`bash
+        git clone https://github.com/$REPO_OWNER/$REPO_NAME.git
+        cd $REPO_NAME
+        pip install requests pandas
+        python iptv.py
+        \`\`\`
+        
+        ## ⭐ 支持
+        如果这个项目对您有帮助，请给个Star！这是对我们最大的鼓励！
+        
+        ---
+        *自动更新于: $DATE*
         EOF
-
-    - name: Configure Git
+        
+        echo "📝 README.md 文档已更新"
+        
+    - name: Check for changes
+      id: check_changes
       run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
+        echo "Checking for file changes..."
+        git add -A
+        if git diff --staged --quiet; then
+          echo "changes=false" >> $GITHUB_OUTPUT
+          echo "No changes detected"
+        else
+          echo "changes=true" >> $GITHUB_OUTPUT
+          echo "Changes detected in the following files:"
+          git diff --staged --name-only
+        fi
+        
     - name: Commit and push changes
+      if: steps.check_changes.outputs.changes == 'true'
       run: |
-        git add iptv.txt iptv.m3u README.md
-        git diff --staged --quiet || git commit -m "🔄 自动更新于 $DATE"
-        git push origin main
-
+        echo "Committing and pushing changes..."
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git commit -m "🔄 Auto-update IPTV sources and documentation - $(date +'%Y-%m-%d %H:%M:%S')"
+        git push
+        
+    - name: Upload generated files as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: iptv-sources
+        path: |
+          iptv.txt
+          iptv.m3u
+          iptv_data.json
+          speed_report.txt
+          process.log
+          README.md
+        retention-days: 7
+        
+    - name: Notify success
+      if: success()
+      run: |
+        echo "🎉 IPTV update completed successfully!"
+        echo "📊 Generated files:"
+        echo "  - iptv.txt"
+        echo "  - iptv.m3u" 
+        echo "  - iptv_data.json"
+        echo "  - speed_report.txt"
+        echo "  - process.log"
+        echo "  - README.md"
+        
+    - name: Notify failure
+      if: failure()
+      run: |
+        echo "❌ IPTV update failed!"
+        echo "Please check the workflow logs for details."
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
