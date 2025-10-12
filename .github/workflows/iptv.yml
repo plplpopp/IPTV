@@ -19,12 +19,14 @@ jobs:
   update-iptv:
     name: Update IPTV Sources
     runs-on: ubuntu-latest
+    timeout-minutes: 30  # 设置超时时间
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0  # 获取完整历史记录
         
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -35,6 +37,159 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install requests pandas
+        echo "依赖安装完成"
+        
+    - name: Create template file if not exists
+      run: |
+        if [ ! -f "demo.txt" ]; then
+          echo "创建默认 demo.txt 模板..."
+          cat > demo.txt << EOF
+        CCTV1
+        CCTV2
+        CCTV5
+        CCTV5+
+        CCTV6
+        CCTV8
+        湖南卫视
+        浙江卫视
+        江苏卫视
+        东方卫视
+        北京卫视
+        安徽卫视
+        EOF
+          echo "模板文件创建完成"
+        else
+          echo "demo.txt 已存在，跳过创建"
+        fi
+        
+    - name: Run IPTV update script
+      env:
+        SKIP_TEST: ${{ inputs.skip_test }}
+      run: |
+        echo "开始 IPTV 更新流程..."
+        echo "当前时间: $(date)"
+        echo "跳过测速: $SKIP_TEST"
+        
+        # 检查脚本是否存在
+        if [ ! -f "iptv.py" ]; then
+          echo "❌ 错误: iptv.py 脚本不存在"
+          exit 1
+        fi
+        
+        # 执行更新脚本
+        python iptv.py
+        
+        # 检查脚本执行结果
+        if [ $? -eq 0 ]; then
+          echo "✅ IPTV 更新脚本执行成功"
+        else
+          echo "❌ IPTV 更新脚本执行失败"
+          exit 1
+        fi
+        
+    - name: Verify generated files
+      run: |
+        echo "检查生成的文件..."
+        files=("iptv.txt" "iptv.m3u" "iptv_data.json" "speed_report.txt" "process.log")
+        
+        for file in "${files[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✅ $file 存在"
+            # 检查文件是否为空
+            if [ -s "$file" ]; then
+              echo "  文件大小: $(wc -l < "$file") 行"
+            else
+              echo "  ⚠️  文件为空"
+            fi
+          else
+            echo "❌ $file 不存在"
+            exit 1
+          fi
+        done
+        
+    - name: Update documentation
+      run: |
+        echo "更新文档..."
+        DATE=$(date '+%Y-%m-%d %H:%M:%S')
+        REPO_OWNER="${{ github.repository_owner }}"
+        REPO_NAME="${{ github.event.repository.name }}"
+        
+        # 获取文件统计信息
+        TXT_LINES=$(wc -l < iptv.txt 2>/dev/null || echo "未知")
+        M3U_LINES=$(wc -l < iptv.m3u 2>/dev/null || echo "未知")
+        JSON_SIZE=$(wc -c < iptv_data.json 2>/dev/null || echo "未知")
+        
+        cat << EOF > README.md
+        # 📺 IPTV直播源自动更新仓库
+        
+        ## 📢 免责声明
+        1. 本仓库仅供学习使用，请尊重版权，请勿利用此仓库从事商业行为及非法用途!
+        2. 使用本仓库的过程中可能会产生版权数据。对于这些版权数据，本仓库不拥有它们的所有权。为了避免侵权，使用者务必在 24 小时内清除使用本仓库的过程中所产生的版权数据。
+        3. 由于使用本仓库产生的包括由于本协议或由于使用或无法使用本仓库而引起的任何性质的任何直接、间接、特殊、偶然或结果性损害由使用者负责。
+        4. 禁止在违反当地法律法规的情况下使用本仓库。对于使用者在明知或不知当地法律法规不允许的情况下使用本仓库所造成的任何违法违规行为由使用者承担。
+        5. 如果官方平台觉得本仓库不妥，可联系本仓库更改或移除。
+        
+        ## 📊 最近更新
+        **最后更新时间**: $DATE
+        **频道数量**: $TXT_LINES 个频道
+        **播放列表大小**: $M3U_LINES 行
+        **数据文件**: ${JSON_SIZE} 字节
+        
+        ## 📥 下载链接
+        - [IPTV文本格式 (TXT)]($REPO_NAME/raw/main/iptv.txt) - $TXT_LINES 个频道
+        - [IPTV M3U播放列表]($REPO_NAME/raw/main/iptv.m3u) - $M3U_LINES 行
+        - [IPTV JSON数据]($REPO_NAME/raw/main/iptv_data.json) - ${JSON_SIZE} 字节
+        - [测速报告]($REPO_NAME/raw/main/speed_report.txt)
+        
+        ## 🛠️ 使用说明
+        将上述链接添加到您的IPTV播放器中使用：
+        
+        ### 文本格式 (TXT)
+        - 适用于支持文本格式的播放器
+        - 格式：频道名称,URL
+        
+        ### M3U格式
+        - 适用于大多数IPTV播放器
+        - 包含频道分组和速度信息
+        
+        ## ⚡ 自动更新
+        此仓库通过GitHub Actions自动更新：
+        - **更新时间**: 每天UTC时间 5:00, 12:00, 17:00 (北京时间 13:00, 20:00, 次日1:00)
+        - **更新内容**: 自动抓取、测速、筛选最优直播源
+        - **质量保证**: 只保留速度 > 500KB/s 的优质源
+        
+        ## 📁 文件说明
+        - \`iptv.txt\` - 文本格式直播源，按频道分类 ($TXT_LINES 个频道)
+        - \`iptv.m3u\` - M3U播放列表格式 ($M3U_LINES 行)
+        - \`iptv_data.json\` - 完整的频道数据（JSON格式, ${JSON_SIZE} 字节）
+        - \`speed_report.txt\` - 详细的测速报告和统计信息
+        - \`process.log\` - 处理日志
+        - \`demo.txt\` - 频道模板文件
+        
+        ## 🔧 本地运行
+        如需本地运行更新脚本：
+        \`\`\`bash
+        git clone https://github.com/$REPO_OWNER/$REPO_NAME.git
+        cd $REPO_NAME
+        pip install requests pandas
+        python iptv.py
+        \`\`\`
+        
+        ## ⭐ 支持
+        如果这个项目对您有帮助，请给个Star！这是对我们最大的鼓励！
+        
+        ---
+        *自动更新于: $DATE*
+        EOF
+        
+        echo "📝 README.md 文档已更新"
+        
+    - name: Check for changes
+      id: check_changes
+      run: |
+        echo "检查文件变更..."
+        git add -A
+                pip install requests pandas
         
     - name: Create template file if not exists
       run: |
