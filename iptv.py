@@ -54,8 +54,8 @@ CONFIG = {
     
     # 订阅源配置 (用于提取RTP路径)
     'search_dict': {
-        "上海": "https://raw.githubusercontent.com/xisohi/IPTV-Multicast-source/main/shanghai/telecom.txt",
-        "北京": "https://raw.githubusercontent.com/xisohi/IPTV-Multicast-source/main/beijing/unicom.txt",
+        "安徽": "https://raw.githubusercontent.com/plplpopp/IPTV-Multicast-source/refs/heads/main/anhui/telecom.txt",
+        "北京": "https://raw.githubusercontent.com/plplpopp/IPTV-Multicast-source/refs/heads/main/beijing/telecom.txt",
         "广东": "https://raw.githubusercontent.com/xisohi/IPTV-Multicast-source/main/guangdong/telecom.txt"
     },
     
