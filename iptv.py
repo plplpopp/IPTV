@@ -54,16 +54,16 @@ CONFIG = {
     
     # 订阅源配置 (用于提取RTP路径)
     'search_dict': {
-        "上海": "https://mirror.ghproxy.com/https://raw.githubusercontent.com/xisohi/IPTV-Multicast-source/main/shanghai/telecom.txt",
-        "北京": "https://mirror.ghproxy.com/https://raw.githubusercontent.com/xisohi/IPTV-Multicast-source/main/beijing/unicom.txt",
-        "广东": "https://mirror.ghproxy.com/https://raw.githubusercontent.com/xisohi/IPTV-Multicast-source/main/guangdong/telecom.txt"
+        "上海": "https://raw.githubusercontent.com/xisohi/IPTV-Multicast-source/main/shanghai/telecom.txt",
+        "北京": "https://raw.githubusercontent.com/xisohi/IPTV-Multicast-source/main/beijing/unicom.txt",
+        "广东": "https://raw.githubusercontent.com/xisohi/IPTV-Multicast-source/main/guangdong/telecom.txt"
     },
     
     # 其他直播源URL
     'crawl_urls': [
-        "https://github.moeyy.xyz/https://raw.githubusercontent.com/PizazzGY/TVBox/main/live.txt",
-        "https://mirror.ghproxy.com/https://raw.githubusercontent.com/YanG-1989/m3u/main/Gather.m3u",
-        "https://mirror.ghproxy.com/https://raw.githubusercontent.com/ssili126/tv/main/itvlist.txt"
+        "https://raw.githubusercontent.com/PizazzGY/TVBox/main/live.txt",
+        "https://raw.githubusercontent.com/YanG-1989/m3u/main/Gather.m3u",
+        "https://raw.githubusercontent.com/ssili126/tv/main/itvlist.txt"
     ],
     
     # 模板频道列表配置
