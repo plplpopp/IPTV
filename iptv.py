@@ -1,816 +1,1006 @@
-import requests
-import pandas as pd
-import re
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import os
-import time
-import concurrent.futures
+import re
 import json
-import hashlib
-import pickle
-import logging
-import argparse
-from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Tuple, Set
-from urllib.parse import urlparse
-from tenacity import retry, stop_after_attempt, wait_exponential
+import time
+import socket
+import asyncio
+import ipaddress
+import subprocess
+import urllib.parse
+import random
+import traceback
+from collections.abc import Iterable
+from urllib.parse import urlparse, quote
 
+import requests
+from bs4 import BeautifulSoup
 
-class Config:
-    """配置管理类"""
-    DEFAULT_CONFIG = {
-        'timeout': 10,
-        'max_workers': 15,
-        'test_size_kb': 512,  # 增大测试数据量以获得更准确的速度
-        'cache_ttl_hours': 2,
-        'max_sources_per_channel': 25,
-        'keep_best_sources': 5,
-        'min_speed_mbps': 0.3,  # 最低速度要求 0.3 MB/s
-        'sources': [
-            "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
-            "https://raw.githubusercontent.com/wwb521/live/main/tv.m3u",
-            "https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/ipv4/result.m3u",  
-            "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/cn.m3u",
-            "https://raw.githubusercontent.com/suxuang/myIPTV/main/ipv4.m3u",
-            "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt",
-            "https://raw.githubusercontent.com/develop202/migu_video/refs/heads/main/interface.txt",
-            "http://47.120.41.246:8899/zb.txt",
+# ==================== 全局配置 ====================
+CONFIG = {
+    # 文件配置
+    'final_file': 'result.txt',
+    
+    # 测速权重配置
+    'response_time_weight': 0.6,
+    'resolution_weight': 0.4,
+    
+    # 频道配置
+    'max_urls_per_channel': 8,
+    
+    # 性能配置
+    'max_concurrent_tasks': 10,
+    
+    # 测速配置
+    'open_sort': True,
+    'ffmpeg_time': 10,
+    
+    # 网络配置
+    'ipv_type': "ipv4",
+    
+    # 过滤配置
+    'domain_blacklist': [],
+    'url_keywords_blacklist': [],
+    'search_ignore_key': ["高清", "4K", "HD", "HDR", "杜比", "Dolby"],
+    
+    # 搜索配置
+    'search_regions': ["全国"],
+    'search_page_num': 8,
+    
+    # 爬取模式配置 (1-tonkiang组播源, 2-crawl_urls, 3-全部)
+    'crawl_type': "3",
+    
+    # 订阅源配置 (用于提取RTP路径)
+    'search_dict': {
+        "上海": "https://mirror.ghproxy.com/https://raw.githubusercontent.com/xisohi/IPTV-Multicast-source/main/shanghai/telecom.txt",
+        "北京": "https://mirror.ghproxy.com/https://raw.githubusercontent.com/xisohi/IPTV-Multicast-source/main/beijing/unicom.txt",
+        "广东": "https://mirror.ghproxy.com/https://raw.githubusercontent.com/xisohi/IPTV-Multicast-source/main/guangdong/telecom.txt"
+    },
+    
+    # 其他直播源URL
+    'crawl_urls': [
+        "https://github.moeyy.xyz/https://raw.githubusercontent.com/PizazzGY/TVBox/main/live.txt",
+        "https://mirror.ghproxy.com/https://raw.githubusercontent.com/YanG-1989/m3u/main/Gather.m3u",
+        "https://mirror.ghproxy.com/https://raw.githubusercontent.com/ssili126/tv/main/itvlist.txt"
+    ],
+    
+    # 模板频道列表配置
+    'channel_list': {
+        "央视频道": [
+            "CCTV-1", "CCTV-2", "CCTV-3", "CCTV-4", "CCTV-5", "CCTV-5+", "CCTV-6", "CCTV-7", 
+            "CCTV-8", "CCTV-9", "CCTV-10", "CCTV-11", "CCTV-12", "CCTV-13", "CCTV-14", "CCTV-15",
+            "CCTV-16", "CCTV-17", "CCTV-新闻", "CCTV-少儿", "CCTV-音乐", "CCTV-戏曲", "CCTV-社会与法"
         ],
-        'output_formats': ['txt', 'm3u'],
-        'template_file': 'demo.txt',
-        'output_files': {
-            'txt': 'iptv.txt',
-            'm3u': 'iptv.m3u'
-        }
+        "卫视频道": [
+            "北京卫视", "天津卫视", "河北卫视", "山西卫视", "内蒙古卫视", "辽宁卫视", "吉林卫视", 
+            "黑龙江卫视", "东方卫视", "江苏卫视", "浙江卫视", "安徽卫视", "福建卫视", "江西卫视", 
+            "山东卫视", "河南卫视", "湖北卫视", "湖南卫视", "广东卫视", "广西卫视", "海南卫视", 
+            "重庆卫视", "四川卫视", "贵州卫视", "云南卫视", "陕西卫视", "甘肃卫视", "宁夏卫视"
+        ],
+        "高清频道": [
+            "CCTV-1高清", "CCTV-2高清", "CCTV-3高清", "CCTV-4高清", "CCTV-5高清", "CCTV-6高清",
+            "CCTV-7高清", "CCTV-8高清", "CCTV-9高清", "CCTV-10高清", "CCTV-11高清", "CCTV-12高清",
+            "CCTV-13高清", "CCTV-14高清", "CCTV-15高清", "北京卫视高清", "湖南卫视高清", 
+            "浙江卫视高清", "江苏卫视高清", "东方卫视高清", "广东卫视高清", "深圳卫视高清"
+        ],
+        "4K频道": [
+            "CCTV-4K", "北京卫视4K", "上海纪实4K", "湖南卫视4K", "浙江卫视4K", "江苏卫视4K",
+            "东方卫视4K", "广东卫视4K", "深圳卫视4K", "CCTV-16-4K"
+        ],
+        "地方频道": [
+            "北京文艺", "北京科教", "北京影视", "北京财经", "北京生活", "北京青年", "北京新闻",
+            "上海新闻综合", "上海东方影视", "上海娱乐", "上海体育", "上海纪实", "上海第一财经",
+            "广东珠江", "广东体育", "广东公共", "广东新闻", "深圳都市", "深圳公共", "深圳电视剧",
+            "重庆新闻", "重庆影视", "重庆文艺", "重庆社会与法", "浙江钱江", "浙江教育科技",
+            "江苏城市", "江苏影视", "江苏公共新闻", "湖南经视", "湖南都市", "湖南娱乐"
+        ],
+        "体育频道": [
+            "CCTV-5", "CCTV-5+", "广东体育", "北京体育", "上海体育", "江苏体育", "浙江体育",
+            "山东体育", "辽宁体育", "湖北体育", "湖南体育", "四川体育", "天津体育", "重庆体育",
+            "劲爆体育", "足球频道", "高尔夫网球"
+        ],
+        "影视娱乐": [
+            "CCTV-6", "CCTV-8", "东方影视", "湖南电影", "广东电影", "江苏影视", "浙江影视",
+            "山东影视", "四川影视", "重庆影视", "湖北影视", "天津影视", "北京影视", "上海影视"
+        ],
+        "少儿卡通": [
+            "CCTV-14", "卡酷少儿", "炫动卡通", "金鹰卡通", "优漫卡通", "嘉佳卡通", "北京少儿",
+            "上海哈哈炫动", "广东少儿", "江苏优漫", "浙江少儿", "山东少儿", "湖南金鹰"
+        ],
+        "新闻财经": [
+            "CCTV-13", "CCTV-2", "凤凰资讯", "深圳财经", "第一财经", "广东新闻", "北京新闻",
+            "上海新闻", "江苏新闻", "浙江新闻", "山东新闻", "四川新闻", "湖北综合", "湖南经视"
+        ]
     }
-    
-    def __init__(self, config_file='config.json'):
-        self.config = self.DEFAULT_CONFIG.copy()
-        self.config_file = config_file
-        self.load_from_file()
-    
-    def load_from_file(self):
-        """从文件加载配置"""
-        try:
-            if os.path.exists(self.config_file):
-                with open(self.config_file, 'r', encoding='utf-8') as f:
-                    user_config = json.load(f)
-                    self.config.update(user_config)
-                print(f"✅ 已加载配置文件: {self.config_file}")
-            else:
-                self.create_default_config()
-        except Exception as e:
-            print(f"❌ 加载配置文件失败: {str(e)}，使用默认配置")
-    
-    def create_default_config(self):
-        """创建默认配置文件"""
-        try:
-            with open(self.config_file, 'w', encoding='utf-8') as f:
-                json.dump(self.DEFAULT_CONFIG, f, indent=4, ensure_ascii=False)
-            print(f"✅ 已创建默认配置文件: {self.config_file}")
-        except Exception as e:
-            print(f"❌ 创建配置文件失败: {str(e)}")
-    
-    def get(self, key, default=None):
-        """获取配置值"""
-        return self.config.get(key, default)
+}
 
-
-class CacheManager:
-    """缓存管理"""
-    def __init__(self, cache_dir='cache', ttl_hours=2):
-        self.cache_dir = cache_dir
-        self.ttl = timedelta(hours=ttl_hours)
-        os.makedirs(cache_dir, exist_ok=True)
+# ==================== 配置类 ====================
+class DynamicConfig:
+    """动态配置类"""
+    def __init__(self):
+        # 直接从全局配置加载
+        for key, value in CONFIG.items():
+            setattr(self, key, value)
+        
+        # 验证配置有效性
+        self._validate_config()
     
-    def get_cache_key(self, url):
-        """生成缓存键"""
-        return hashlib.md5(url.encode()).hexdigest()[:16]
-    
-    def is_valid(self, cache_file):
-        """检查缓存是否有效"""
-        if not os.path.exists(cache_file):
-            return False
-        mod_time = datetime.fromtimestamp(os.path.getmtime(cache_file))
-        return datetime.now() - mod_time < self.ttl
-    
-    def save(self, key, data):
-        """保存缓存"""
-        try:
-            cache_file = os.path.join(self.cache_dir, f"{key}.pkl")
-            with open(cache_file, 'wb') as f:
-                pickle.dump({'data': data, 'timestamp': datetime.now()}, f)
-        except Exception as e:
-            print(f"缓存保存失败: {str(e)}")
-    
-    def load(self, key):
-        """加载缓存"""
-        try:
-            cache_file = os.path.join(self.cache_dir, f"{key}.pkl")
-            if self.is_valid(cache_file):
-                with open(cache_file, 'rb') as f:
-                    return pickle.load(f)['data']
-        except Exception as e:
-            print(f"缓存加载失败: {str(e)}")
-        return None
+    def _validate_config(self):
+        """验证配置有效性"""
+        # 验证权重配置
+        if not (0 <= self.response_time_weight <= 1 and 0 <= self.resolution_weight <= 1):
+            print("⚠ 权重配置无效，使用默认值")
+            self.response_time_weight = 0.5
+            self.resolution_weight = 0.5
+        
+        # 验证并发数
+        if self.max_concurrent_tasks <= 0:
+            print("⚠ 并发任务数无效，使用默认值")
+            self.max_concurrent_tasks = 10
+        
+        # 验证URL数量限制
+        if self.max_urls_per_channel <= 0:
+            print("⚠ URL数量限制无效，使用默认值")
+            self.max_urls_per_channel = 8
+        
+        # 验证频道列表
+        if not self.channel_list:
+            print("⚠ 频道列表为空，使用默认频道")
+            self.channel_list = {
+                "默认频道": ["CCTV-1", "CCTV-2", "湖南卫视", "浙江卫视"]
+            }
 
-
-class IPTV:
-    """IPTV直播源抓取与测速工具"""
+# ==================== 核心功能类 ====================
+class IPTVProcessor:
+    """IPTV直播源处理器"""
     
-    def __init__(self, config_file='config.json'):
-        """
-        初始化工具
+    def __init__(self, config):
+        self.config = config
+        self.previous_result_dict = {}
+    
+    def getChannelItems(self):
+        """从配置获取频道项 - 严格按照模板"""
+        channels = {}
         
-        Args:
-            config_file: 配置文件路径
-        """
-        # 初始化配置
-        self.config = Config(config_file)
-        
-        # 配置参数
-        self.timeout = self.config.get('timeout', 10)
-        self.max_workers = self.config.get('max_workers', 15)
-        self.test_size = self.config.get('test_size_kb', 512) * 1024  # 转换为字节
-        self.min_speed_mbps = self.config.get('min_speed_mbps', 0.3)
-        
-        # 初始化组件
-        self.logger = self.setup_logging()
-        self.cache_manager = CacheManager(ttl_hours=self.config.get('cache_ttl_hours', 2))
-        
-        # 请求会话配置
-        self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept-Encoding': 'gzip, deflate',
-            'Accept': '*/*',
-            'Connection': 'keep-alive'
-        })
-        
-        # 数据源配置
-        self.source_urls = self.config.get('sources', [])
-        
-        # 正则表达式预编译
-        self.ipv4_pattern = re.compile(r'^http://(\d{1,3}\.){3}\d{1,3}')
-        self.ipv6_pattern = re.compile(r'^http://\[([a-fA-F0-9:]+)\]')
-        self.channel_pattern = re.compile(r'^([^,#]+)')
-        self.extinf_pattern = re.compile(r'#EXTINF:.*?,(.+)')
-        
-        # 文件路径配置
-        self.template_file = self.config.get('template_file', 'demo.txt')
-        output_files = self.config.get('output_files', {
-            'txt': 'iptv.txt',
-            'm3u': 'iptv.m3u'
-        })
-        self.output_files = {
-            'txt': output_files['txt'],
-            'm3u': output_files['m3u']
-        }
-        
-        # 初始化状态
-        self.template_channels = self.load_template_channels()
-        self.all_streams = []
-
-    def setup_logging(self, level=logging.INFO):
-        """设置日志系统"""
-        logging.basicConfig(
-            level=level,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler('iptv.log', encoding='utf-8'),
-                logging.StreamHandler()
-            ]
-        )
-        return logging.getLogger(__name__)
-
-    def load_template_channels(self) -> Set[str]:
-        """加载模板文件中的频道列表"""
-        channels = set()
-        template_file = self.config.get('template_file', 'demo.txt')
-        
-        if not os.path.exists(template_file):
-            self.logger.warning(f"模板文件 {template_file} 不存在，将处理所有频道")
-            return channels
-        
-        try:
-            with open(template_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#'):
-                        if match := self.channel_pattern.match(line):
-                            channel_name = self.normalize_channel_name(match.group(1).strip())
-                            channels.add(channel_name)
-            self.logger.info(f"加载模板频道 {len(channels)} 个")
-        except Exception as e:
-            self.logger.error(f"加载模板文件错误: {str(e)}")
+        # 严格按照配置的channel_list获取频道
+        if hasattr(self.config, 'channel_list') and self.config.channel_list:
+            for category, channel_names in self.config.channel_list.items():
+                channels[category] = {}
+                for channel_name in channel_names:
+                    channels[category][channel_name] = []  # 空的URL列表
         
         return channels
-
-    def normalize_channel_name(self, name: str) -> str:
-        """标准化频道名称"""
-        # 去除多余空格和特殊字符
-        name = re.sub(r'\s+', ' ', name.strip())
-        
-        # 统一央视命名
-        cctv_patterns = [
-            (r'CCTV-?(\d+)', r'CCTV\1'),
-            (r'央视(\d+)', r'CCTV\1'),
-            (r'中央(\d+)', r'CCTV\1')
-        ]
-        
-        for pattern, replacement in cctv_patterns:
-            name = re.sub(pattern, replacement, name)
-        
-        # 统一卫视频道命名
-        ws_patterns = [
-            (r'湖南卫视', '湖南卫视'),
-            (r'江苏卫视', '江苏卫视'),
-            (r'浙江卫视', '浙江卫视'),
-            (r'东方卫视', '东方卫视'),
-            (r'北京卫视', '北京卫视'),
-        ]
-        
-        for pattern, replacement in ws_patterns:
-            if pattern in name:
-                name = replacement
-                break
-        
-        return name
-
-    # ==================== 数据获取与处理 ====================
     
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-    def fetch_with_retry(self, url):
-        """带重试的抓取"""
+    def updateChannelUrlsTxt(self, cate, channelUrls):
+        """更新分类和频道URL到最终文件 - 严格按照模板顺序"""
         try:
-            response = self.session.get(url, timeout=self.timeout)
-            response.raise_for_status()
-            return response.text
+            with open("result_new.txt", "a", encoding="utf-8") as f:
+                f.write(f"{cate},#genre#\n")
+                for name, urls in channelUrls.items():
+                    for url in urls:
+                        if url and url.strip():
+                            f.write(f"{name},{url}\n")
+                f.write("\n")
         except Exception as e:
-            self.logger.warning(f"抓取失败: {url}, 错误: {e}")
-            raise
-
-    def fetch_streams(self) -> Optional[str]:
-        """从所有源URL抓取直播源"""
-        contents = []
-        successful_sources = 0
-        
-        for url in self.source_urls:
-            domain = self._extract_domain(url)
-            self.logger.info(f"抓取源: {domain}")
+            print(f"❌ 更新频道URL文件错误: {e}")
+    
+    def updateFile(self, final_file, old_file):
+        """更新文件"""
+        try:
+            if os.path.exists(old_file):
+                if os.path.exists(final_file):
+                    os.remove(final_file)
+                    time.sleep(1)
+                os.replace(old_file, final_file)
+                print(f"✓ 文件更新完成: {final_file}")
+            else:
+                print(f"⚠ 临时文件不存在: {old_file}")
+        except Exception as e:
+            print(f"❌ 文件更新错误: {e}")
+    
+    async def check_stream_speed(self, url_info):
+        """检查流媒体速度"""
+        try:
+            url = url_info[0]
+            if not url or not url.strip():
+                return float("-inf")
             
-            # 检查缓存
-            cache_key = self.cache_manager.get_cache_key(url)
-            cached_content = self.cache_manager.load(cache_key)
+            video_info = await self.ffmpeg_url(url, self.config.ffmpeg_time)
+            if video_info is None:
+                return float("-inf")
             
-            if cached_content:
-                self.logger.info(f"  ✓ 使用缓存")
-                contents.append(cached_content)
-                successful_sources += 1
-                continue
+            frame, _ = self.analyse_video_info(video_info)
+            if frame is None:
+                return float("-inf")
             
-            try:
-                content = self.fetch_with_retry(url)
+            return frame
+        except Exception as e:
+            print(f"❌ 流媒体速度检查错误 {url_info[0]}: {e}")
+            return float("-inf")
+    
+    async def getSpeed(self, url_info):
+        """获取速度"""
+        try:
+            url, _, _ = url_info
+            if not url or not url.strip():
+                return float("-inf")
                 
-                # 验证内容有效性
-                if self.validate_content(content):
-                    contents.append(content)
-                    successful_sources += 1
-                    self.cache_manager.save(cache_key, content)
-                    self.logger.info(f"  ✓ 成功")
+            if "$" in url:
+                url = url.split('$')[0]
+            url = quote(url, safe=':/?&=$[]')
+            url_info[0] = url
+            
+            speed = await self.check_stream_speed(url_info)
+            return speed
+        except Exception as e:
+            print(f"❌ 获取速度错误 {url_info[0] if url_info else 'Unknown'}: {e}")
+            return float("-inf")
+    
+    async def limited_getSpeed(self, url_info, semaphore):
+        """限速获取速度"""
+        async with semaphore:
+            return await self.getSpeed(url_info)
+    
+    async def compareSpeedAndResolution(self, infoList):
+        """比较速度和分辨率"""
+        if not infoList:
+            return None
+        
+        semaphore = asyncio.Semaphore(self.config.max_concurrent_tasks)
+        
+        try:
+            response_times = await asyncio.gather(
+                *[self.limited_getSpeed(url_info, semaphore) for url_info in infoList],
+                return_exceptions=True
+            )
+        except Exception as e:
+            print(f"❌ 测速任务执行错误: {e}")
+            return None
+        
+        # 处理异常情况
+        valid_responses = []
+        for info, rt in zip(infoList, response_times):
+            if isinstance(rt, Exception):
+                print(f"⚠ 测速异常: {rt}")
+                continue
+            if rt != float("-inf"):
+                valid_responses.append((info, rt))
+
+        def extract_resolution(resolution_str):
+            """提取分辨率数值"""
+            if not resolution_str:
+                return 0
+            try:
+                numbers = re.findall(r"\d+x\d+", resolution_str)
+                if numbers:
+                    width, height = map(int, numbers[0].split("x"))
+                    return width * height
+            except (ValueError, IndexError):
+                pass
+            return 0
+
+        # 验证权重配置
+        response_time_weight = max(0, min(1, getattr(self.config, "response_time_weight", 0.5)))
+        resolution_weight = max(0, min(1, getattr(self.config, "resolution_weight", 0.5)))
+        
+        # 归一化权重
+        total_weight = response_time_weight + resolution_weight
+        if total_weight == 0:
+            response_time_weight = 0.5
+            resolution_weight = 0.5
+        else:
+            response_time_weight /= total_weight
+            resolution_weight /= total_weight
+
+        def combined_key(item):
+            """组合排序键"""
+            try:
+                (_, _, resolution), response_time = item
+                resolution_value = extract_resolution(resolution) if resolution else 0
+                return (
+                    response_time_weight * response_time +
+                    resolution_weight * resolution_value
+                )
+            except Exception:
+                return float("-inf")
+
+        try:
+            sorted_res = sorted(valid_responses, key=combined_key, reverse=True)
+            return sorted_res
+        except Exception as e:
+            print(f"❌ 排序错误: {e}")
+            return valid_responses
+    
+    def getTotalUrls(self, data):
+        """获取总URL - 限制为8个"""
+        if not data:
+            return []
+        try:
+            max_urls = min(self.config.max_urls_per_channel, 8)  # 确保最多8个
+            if len(data) > max_urls:
+                total_urls = [url for (url, _, _), _ in data[:max_urls]]
+            else:
+                total_urls = [url for (url, _, _), _ in data]
+            return list(dict.fromkeys(total_urls))
+        except Exception as e:
+            print(f"❌ 获取URL列表错误: {e}")
+            return []
+    
+    def getTotalUrlsFromInfoList(self, infoList):
+        """从信息列表获取总URL - 限制为8个"""
+        if not infoList:
+            return []
+        try:
+            max_urls = min(self.config.max_urls_per_channel, 8)  # 确保最多8个
+            total_urls = [
+                url for url, _, _ in infoList[:max_urls]
+            ]
+            return list(dict.fromkeys(total_urls))
+        except Exception as e:
+            print(f"❌ 从信息列表获取URL错误: {e}")
+            return []
+    
+    def is_ipv6(self, url):
+        """检查是否为IPv6"""
+        try:
+            host = urllib.parse.urlparse(url).hostname
+            if host:
+                ipaddress.IPv6Address(host)
+                return True
+            return False
+        except (ValueError, ipaddress.AddressValueError):
+            return False
+    
+    def checkUrlIPVType(self, url):
+        """检查URL IP类型"""
+        ipv_type = getattr(self.config, "ipv_type", "ipv4")
+        if ipv_type == "ipv4":
+            return not self.is_ipv6(url)
+        elif ipv_type == "ipv6":
+            return self.is_ipv6(url)
+        else:
+            return True
+    
+    def checkByDomainBlacklist(self, url):
+        """检查域名黑名单"""
+        try:
+            domain_blacklist = [
+                urlparse(domain).netloc if urlparse(domain).scheme else domain
+                for domain in getattr(self.config, "domain_blacklist", [])
+            ]
+            return urlparse(url).netloc not in domain_blacklist
+        except Exception:
+            return True
+    
+    def checkByURLKeywordsBlacklist(self, url):
+        """检查URL关键词黑名单"""
+        try:
+            url_keywords_blacklist = getattr(self.config, "url_keywords_blacklist", [])
+            return not any(keyword in url for keyword in url_keywords_blacklist)
+        except Exception:
+            return True
+    
+    def filterUrlsByPatterns(self, urls):
+        """根据模式过滤URL"""
+        if not urls:
+            return []
+        filtered_urls = []
+        for url in urls:
+            if not url or not url.strip():
+                continue
+            if not self.checkUrlIPVType(url):
+                continue
+            if not self.checkByDomainBlacklist(url):
+                continue
+            if not self.checkByURLKeywordsBlacklist(url):
+                continue
+            filtered_urls.append(url)
+        return filtered_urls
+    
+    def filter_CCTV_key(self, key: str):
+        """过滤CCTV关键词"""
+        if not key:
+            return key
+        try:
+            key = re.sub(r'\[.*?\]', '', key)
+            if "cctv" not in key.lower():
+                return key.strip()
+            chinese_pattern = re.compile("[\u4e00-\u9fa5]+")
+            filtered_text = chinese_pattern.sub('', key)
+            result = re.sub(r'\[\d+\*\d+\]', '', filtered_text)
+            if "-" not in result:
+                result = result.replace("CCTV", "CCTV-")
+            if result.upper().endswith("HD"):
+                result = result[:-2]
+            return result.strip()
+        except Exception:
+            return key
+    
+    async def ffmpeg_url(self, url, timeout, cmd='ffmpeg'):
+        """FFmpeg URL测试"""
+        if not url or not url.strip():
+            return None
+            
+        args = [cmd, '-t', str(timeout), '-stats', '-i', url, '-f', 'null', '-']
+        proc = None
+        res = None
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            out, err = await asyncio.wait_for(proc.communicate(), timeout=timeout + 5)
+            if out:
+                res = out.decode('utf-8', errors='ignore')
+            if err:
+                res = err.decode('utf-8', errors='ignore')
+            return res
+        except asyncio.TimeoutError:
+            if proc:
+                try:
+                    proc.kill()
+                except:
+                    pass
+            return None
+        except Exception:
+            if proc:
+                try:
+                    proc.kill()
+                except:
+                    pass
+            return None
+        finally:
+            if proc:
+                try:
+                    await proc.wait()
+                except:
+                    pass
+    
+    def analyse_video_info(self, video_info):
+        """分析视频信息"""
+        frame_size = float("-inf")
+        if video_info is not None:
+            try:
+                info_data = video_info.replace(" ", "")
+                matches = re.findall(r"frame=(\d+).*?fps=([\d\.]+).*?speed=([\d\.]+)x", info_data)
+                if matches:
+                    total_frame = 0
+                    total_fps = 0.0
+                    total_speed = 0.0
+                    count = 0
+                    for m in matches:
+                        try:
+                            frame = int(m[0])
+                            fps = float(m[1])
+                            speed = float(m[2])
+                            total_frame += frame
+                            total_fps += fps
+                            total_speed += speed
+                            count += 1
+                        except (ValueError, IndexError):
+                            continue
+                    if count > 0:
+                        avg_frame = total_frame / count
+                        avg_fps = total_fps / count
+                        avg_speed = total_speed / count
+                        frame_size = avg_frame + avg_fps + avg_speed
+            except Exception:
+                pass
+        return frame_size, None
+    
+    def find_matching_values(self, dictionary, partial_key):
+        """查找匹配值"""
+        if not dictionary or not partial_key:
+            return None
+        result = []
+        matching_keys = []
+        try:
+            for key in dictionary:
+                if partial_key not in key:
+                    continue
+                if not key.replace(partial_key, ""):
+                    matching_keys.append(key)
+                elif key.replace(partial_key, "") in self.config.search_ignore_key:
+                    matching_keys.append(key)
+            if not matching_keys:
+                return None
+            for m_key in matching_keys:
+                if m_key in dictionary:
+                    result.extend(dictionary[m_key])
+        except Exception as e:
+            print(f"❌ 查找匹配值错误: {e}")
+        return result if result else None
+    
+    def get_previous_results(self, file_path):
+        """获取先前结果"""
+        channel_dict = {}
+        if not os.path.exists(file_path):
+            return channel_dict
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                lines = file.readlines()
+                for line in lines:
+                    if "#genre#" in line:
+                        continue
+                    parts = line.strip().split(',')
+                    if len(parts) == 2:
+                        channel_name, url = parts
+                        if channel_name and url:
+                            if channel_name in channel_dict:
+                                channel_dict[channel_name].append(url)
+                            else:
+                                channel_dict[channel_name] = [url]
+        except Exception as e:
+            print(f"❌ 读取先前结果错误: {e}")
+        return channel_dict
+
+# ==================== 增强的爬取和搜索功能 ====================
+class IPTVCrawler:
+    """IPTV爬取器 - 增强版"""
+    
+    def __init__(self, config, processor):
+        self.config = config
+        self.processor = processor
+        self.rtp_paths = []
+    
+    def extract_rtp_paths(self):
+        """从search_dict中提取RTP路径"""
+        rtp_paths = []
+        for region, url in self.config.search_dict.items():
+            try:
+                print(f"📡 提取RTP路径从: {region}")
+                response = requests.get(url, timeout=15)
+                if response.status_code == 200:
+                    content = response.text
+                    lines = content.split('\n')
+                    for line in lines:
+                        line = line.strip()
+                        if line.startswith('rtp://') or 'rtp://' in line:
+                            rtp_match = re.search(r'rtp://[^/]+(/.*)', line)
+                            if rtp_match:
+                                path = rtp_match.group(1)
+                                if path not in rtp_paths:
+                                    rtp_paths.append(path)
+                                    print(f"  ✅ 找到RTP路径: {path}")
                 else:
-                    self.logger.warning(f"  ⚠️ 内容无效")
+                    print(f"  ❌ HTTP错误: {response.status_code}")
+            except Exception as e:
+                print(f"❌ 提取RTP路径失败 {region}: {e}")
+        
+        print(f"📊 总共提取到 {len(rtp_paths)} 个RTP路径")
+        return rtp_paths
+    
+    def crawl_tonkiang_all_multicast(self, page_num=5):
+        """从tonkiang.us爬取所有组播源（不指定关键词）"""
+        print("🌐 爬取tonkiang.us所有组播源...")
+        ip_headers = []
+        
+        for page in range(1, page_num + 1):
+            try:
+                # 访问组播页面
+                url = f"http://tonkiang.us/hotellist.html?page={page}"
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+                response = requests.get(url, headers=headers, timeout=15)
+                if response.status_code != 200:
+                    print(f"  ❌ 第{page}页HTTP错误: {response.status_code}")
+                    continue
+                
+                soup = BeautifulSoup(response.text, 'html.parser')
+                channel_divs = soup.find_all('div', class_='channel')
+                
+                for div in channel_divs:
+                    try:
+                        result_div = div.find('div', class_='result')
+                        if not result_div:
+                            continue
+                        
+                        # 查找IP头信息
+                        ip_pattern = r'\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)\b'
+                        matches = re.findall(ip_pattern, result_div.get_text())
+                        
+                        for match in matches:
+                            if match not in ip_headers:
+                                ip_headers.append(match)
+                    
+                    except Exception as e:
+                        continue
+                
+                print(f"  📄 第{page}页找到 {len(channel_divs)} 个频道，IP头总数: {len(ip_headers)}")
+                
+                # 检查是否有下一页
+                if not channel_divs:
+                    break
                     
             except Exception as e:
-                self.logger.error(f"  ✗ 失败: {str(e)}")
-        
-        self.logger.info(f"成功抓取 {successful_sources}/{len(self.source_urls)} 个源")
-        return "\n".join(contents) if contents else None
-
-    def validate_content(self, content: str) -> bool:
-        """验证内容是否为有效的直播源格式"""
-        lines = content.splitlines()
-        valid_lines = 0
-        
-        for line in lines:
-            line = line.strip()
-            if not line or line.startswith('#'):
+                print(f"❌ 爬取tonkiang.us第{page}页错误: {e}")
                 continue
-            if line.startswith('http') or (',' in line and 'http' in line):
-                valid_lines += 1
         
-        return valid_lines >= 5
-
-    def parse_content(self, content: str) -> pd.DataFrame:
-        """解析直播源内容"""
-        streams = []
-        
-        # 自动检测格式并解析
-        if content.startswith("#EXTM3U"):
-            streams.extend(self.parse_m3u_content(content))
-        else:
-            streams.extend(self.parse_txt_content(content))
-        
-        if not streams:
-            self.logger.warning("未解析到有效直播源")
-            return pd.DataFrame(columns=['program_name', 'stream_url'])
-        
-        df = pd.DataFrame(streams)
-        
-        # 数据清洗和标准化
-        df = self.clean_stream_data(df)
-        
-        self.logger.info(f"解析到 {len(df)} 个直播源，{len(df['program_name'].unique())} 个频道")
-        return df
-
-    def parse_m3u_content(self, content: str) -> List[Dict]:
-        """解析M3U格式内容"""
-        streams = []
-        current_program = None
-        
-        for line in content.splitlines():
-            line = line.strip()
-            if line.startswith("#EXTINF"):
-                # 尝试多种格式提取节目名
-                if match := re.search(r'tvg-name="([^"]+)"', line):
-                    current_program = self.normalize_channel_name(match.group(1).strip())
-                elif match := self.extinf_pattern.search(line):
-                    current_program = self.normalize_channel_name(match.group(1).strip())
-            elif line.startswith("http"):
-                if current_program:
-                    streams.append({
-                        "program_name": current_program,
-                        "stream_url": line
-                    })
-                current_program = None
-        
-        return streams
-
-    def parse_txt_content(self, content: str) -> List[Dict]:
-        """解析TXT格式内容"""
-        streams = []
-        
-        for line in content.splitlines():
-            line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-                
-            # 支持多种分隔符
-            if ',' in line:
-                parts = line.split(',', 1)
-            elif ' ' in line and 'http' in line:
-                parts = line.split(' ', 1)
-            else:
-                continue
-                
-            if len(parts) == 2:
-                program_name = self.normalize_channel_name(parts[0].strip())
-                stream_url = parts[1].strip()
-                
-                if program_name and stream_url.startswith('http'):
-                    streams.append({
-                        "program_name": program_name,
-                        "stream_url": stream_url
-                    })
-        
-        return streams
-
-    def clean_stream_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """数据清洗"""
-        if df.empty:
-            return df
-        
-        # 去除节目名中的多余空格
-        df['program_name'] = df['program_name'].str.strip()
-        
-        # 过滤无效URL
-        initial_count = len(df)
-        df = df[df['stream_url'].str.startswith('http')]
-        
-        # 去除明显无效的节目名
-        invalid_names = ['', 'None', 'null', 'undefined']
-        df = df[~df['program_name'].isin(invalid_names)]
-        
-        # 去除重复的节目名和URL组合
-        df = df.drop_duplicates(subset=['program_name', 'stream_url'])
-        
-        self.logger.info(f"数据清洗: {initial_count} -> {len(df)} 个源")
-        return df
-
-    def organize_streams(self, df: pd.DataFrame) -> pd.DataFrame:
-        """整理直播源数据，每个频道最多保留指定数量的源用于测速"""
-        max_sources = self.config.get('max_sources_per_channel', 25)
-        grouped = df.groupby('program_name')['stream_url'].apply(list).reset_index()
-        
-        # 限制每个频道的源数量
-        grouped['stream_url'] = grouped['stream_url'].apply(lambda x: x[:max_sources])
-        
-        self.logger.info(f"整理后: {len(grouped)} 个频道，每个频道最多{max_sources}个源")
-        return grouped
-
-    # ==================== 增强测速功能 ====================
+        print(f"📊 总共找到 {len(ip_headers)} 个IP头")
+        return ip_headers
     
-    def test_single_url(self, url: str) -> Tuple[Optional[float], Optional[str], float]:
-        """
-        测试单个URL的速度，返回速度(MB/s)、错误信息和响应时间
+    def crawl_tonkiang_by_region(self, region, page_num=5):
+        """从tonkiang.us按地区爬取组播源"""
+        print(f"🌐 爬取tonkiang.us地区组播源: {region}")
+        ip_headers = []
         
-        Args:
-            url: 要测试的URL
-            
-        Returns:
-            Tuple[速度(MB/s), 错误信息, 响应时间]
-        """
-        start_time = time.time()
-        
-        try:
-            response = self.session.get(
-                url, 
-                timeout=self.timeout, 
-                stream=True,
-                headers={'Range': f'bytes=0-{self.test_size-1}'}
-            )
-            response_time = time.time() - start_time
-            
-            if response.status_code not in [200, 206]:
-                return None, f"HTTP {response.status_code}", response_time
-            
-            content_length = 0
-            chunk_start_time = time.time()
-            
-            for chunk in response.iter_content(chunk_size=64*1024):  # 64KB chunks
-                if not chunk:
+        for page in range(1, page_num + 1):
+            try:
+                # 使用地区作为搜索关键词
+                url = f"http://tonkiang.us/hotellist.html?s={quote(region)}&page={page}"
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+                response = requests.get(url, headers=headers, timeout=15)
+                if response.status_code != 200:
+                    print(f"  ❌ 地区{region}第{page}页HTTP错误: {response.status_code}")
+                    continue
+                
+                soup = BeautifulSoup(response.text, 'html.parser')
+                channel_divs = soup.find_all('div', class_='channel')
+                
+                for div in channel_divs:
+                    try:
+                        result_div = div.find('div', class_='result')
+                        if not result_div:
+                            continue
+                        
+                        # 查找IP头信息
+                        ip_pattern = r'\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)\b'
+                        matches = re.findall(ip_pattern, result_div.get_text())
+                        
+                        for match in matches:
+                            if match not in ip_headers:
+                                ip_headers.append(match)
+                    
+                    except Exception as e:
+                        continue
+                
+                print(f"  📄 地区{region}第{page}页找到 {len(channel_divs)} 个频道，IP头总数: {len(ip_headers)}")
+                
+                if not channel_divs:
                     break
                     
-                content_length += len(chunk)
-                if content_length >= self.test_size:
-                    break
-                    
-                # 检查下载是否超时
-                if time.time() - chunk_start_time > self.timeout:
-                    return None, "下载超时", response_time
-            
-            if content_length == 0:
-                return 0.0, "无数据", response_time
-            
-            total_time = time.time() - start_time
-            speed_mbps = (content_length / total_time) / (1024 * 1024)  # MB/s
-            
-            return speed_mbps, None, response_time
-            
-        except requests.exceptions.Timeout:
-            return None, "请求超时", time.time() - start_time
-        except requests.exceptions.SSLError:
-            return None, "SSL错误", time.time() - start_time
-        except requests.exceptions.ConnectionError:
-            return None, "连接失败", time.time() - start_time
-        except requests.exceptions.HTTPError as e:
-            return None, f"HTTP错误 {e.response.status_code}", time.time() - start_time
-        except Exception as e:
-            return None, f"错误: {str(e)}", time.time() - start_time
-
-    def test_urls_concurrently(self, urls: List[str]) -> List[Tuple[str, Optional[float], Optional[str], float]]:
-        """并发测试URL列表"""
-        results = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            future_to_url = {executor.submit(self.test_single_url, url): url for url in urls}
-            for future in concurrent.futures.as_completed(future_to_url):
-                url = future_to_url[future]
-                speed, error, response_time = future.result()
-                results.append((url, speed, error, response_time))
-        return results
-
-    def test_all_channels(self, grouped_streams: pd.DataFrame) -> Dict[str, List[Tuple[str, float]]]:
-        """测试所有频道并保留最佳源"""
-        keep_best = self.config.get('keep_best_sources', 5)
-        min_speed = self.config.get('min_speed_mbps', 0.3)
-        results = {}
-        total_channels = len(grouped_streams)
-        tested_channels = 0
-        successful_channels = 0
+            except Exception as e:
+                print(f"❌ 爬取地区{region}第{page}页错误: {e}")
+                continue
         
-        self.logger.info(f"开始测速 {total_channels} 个频道")
-        self.logger.info(f"每个频道测试最多{self.config.get('max_sources_per_channel', 25)}个源，保留最优{keep_best}个")
-        self.logger.info(f"最低速度要求: {min_speed} MB/s")
+        print(f"📊 地区{region}总共找到 {len(ip_headers)} 个IP头")
+        return ip_headers
+    
+    def combine_rtp_urls(self, ip_headers, rtp_paths):
+        """组合RTP URL：将IP头与RTP路径拼接成完整URL"""
+        combined_urls = []
         
-        for idx, (_, row) in enumerate(grouped_streams.iterrows(), 1):
-            channel = row['program_name']
-            urls = row['stream_url']
+        for ip_header in ip_headers:
+            for path in rtp_paths:
+                full_url = f"http://{ip_header}/rtp{path}"
+                combined_urls.append(full_url)
+        
+        return combined_urls
+    
+    def get_crawl_result(self):
+        """获取爬取结果 - 增强版"""
+        print("🚀 开始爬取直播源...")
+        crawl_result_dict = {}
+        
+        # 提取RTP路径
+        rtp_paths = self.extract_rtp_paths()
+        self.rtp_paths = rtp_paths
+        
+        if self.config.crawl_type in ["1", "3"] and rtp_paths:
+            print("🔍 增强tonkiang.us组播源爬取...")
             
-            self.logger.info(f"[{idx}/{total_channels}] 测试频道: {channel} ({len(urls)}个源)")
+            # 获取搜索地区配置
+            search_regions = getattr(self.config, 'search_regions', ["全国"])
+            all_ip_headers = []
             
-            test_results = self.test_urls_concurrently(urls)
-            valid_streams = []
-            
-            excellent_count = 0
-            good_count = 0
-            slow_count = 0
-            failed_count = 0
-            
-            for url, speed, error, response_time in test_results:
-                if speed is not None:
-                    if speed >= min_speed:  # 过滤低速源
-                        valid_streams.append((url, speed))
-                        if speed > 2.0:
-                            excellent_count += 1
-                        elif speed > 1.0:
-                            good_count += 1
-                        else:
-                            slow_count += 1
-                    else:
-                        slow_count += 1
+            # 按配置的地区进行搜索
+            for region in search_regions:
+                if region == "全国":
+                    # 搜索所有组播源
+                    region_ips = self.crawl_tonkiang_all_multicast(self.config.search_page_num)
                 else:
-                    failed_count += 1
-            
-            # 按速度排序并保留最佳源
-            valid_streams.sort(key=lambda x: x[1], reverse=True)
-            best_streams = valid_streams[:keep_best]
-            results[channel] = best_streams
-            
-            tested_channels += 1
-            if best_streams:
-                successful_channels += 1
-                best_speed = best_streams[0][1]
-                self.logger.info(f"  ✅ 成功: 最佳速度 {best_speed:.2f} MB/s")
-                self.logger.info(f"     详情: 极速{excellent_count} 快速{good_count} 慢速{slow_count} 失败{failed_count}")
-                self.logger.info(f"     保留: {len(best_streams)}个最优源")
-            else:
-                self.logger.warning(f"  ❌ 失败: 无有效源 (最低要求: {min_speed} MB/s)")
-        
-        self.logger.info(f"测速完成: {successful_channels}/{tested_channels} 个频道有有效源")
-        return results
-
-    # ==================== 模板匹配和结果生成 ====================
-    
-    def filter_by_template(self, speed_results: Dict[str, List[Tuple[str, float]]]) -> Dict[str, List[Tuple[str, float]]]:
-        """根据模板频道过滤结果"""
-        if not self.template_channels:
-            self.logger.info("未使用模板过滤，保留所有频道")
-            return speed_results
-        
-        filtered_results = {}
-        matched_count = 0
-        
-        for channel in self.template_channels:
-            if channel in speed_results and speed_results[channel]:
-                filtered_results[channel] = speed_results[channel]
-                matched_count += 1
-        
-        self.logger.info(f"模板匹配: {matched_count}/{len(self.template_channels)} 个频道")
-        
-        # 显示未匹配的模板频道
-        unmatched = self.template_channels - set(speed_results.keys())
-        if unmatched:
-            self.logger.warning(f"未找到源的模板频道: {len(unmatched)}个")
-            for channel in list(unmatched)[:10]:  # 只显示前10个
-                self.logger.warning(f"  - {channel}")
-            if len(unmatched) > 10:
-                self.logger.warning(f"  ... 还有 {len(unmatched) - 10} 个")
-        
-        return filtered_results
-
-    def generate_output_files(self, speed_results: Dict[str, List[Tuple[str, float]]]):
-        """生成所有输出文件"""
-        self.generate_txt_file(speed_results)
-        self.generate_m3u_file(speed_results)
-        self.generate_report(speed_results)
-
-    def generate_txt_file(self, results: Dict[str, List[Tuple[str, float]]]):
-        """生成TXT格式文件"""
-        categories = {
-            "央视频道,#genre#": ["CCTV", "央视"],
-            "卫视频道,#genre#": ["卫视", "湖南", "浙江", "江苏", "东方", "北京"],
-            "地方频道,#genre#": ["重庆", "广东", "深圳", "南方", "天津", "河北"],
-            "港澳频道,#genre#": ["凤凰", "翡翠", "明珠", "澳亚"],
-            "其他频道,#genre#": []
-        }
-        
-        categorized = {cat: [] for cat in categories}
-        
-        for channel in self.get_ordered_channels(results.keys()):
-            streams = results.get(channel, [])
-            if not streams:
-                continue
+                    # 搜索指定地区
+                    region_ips = self.crawl_tonkiang_by_region(region, self.config.search_page_num)
                 
-            matched = False
-            for cat, keywords in categories.items():
-                if any(keyword in channel for keyword in keywords):
-                    categorized[cat].extend(
-                        f"{channel},{url} # 速度: {speed:.2f}MB/s" 
-                        for url, speed in streams
-                    )
-                    matched = True
-                    break
+                all_ip_headers.extend(region_ips)
+                print(f"📍 地区 {region} 找到 {len(region_ips)} 个IP头")
             
-            if not matched:
-                categorized["其他频道,#genre#"].extend(
-                    f"{channel},{url} # 速度: {speed:.2f}MB/s" 
-                    for url, speed in streams
-                )
-        
-        with open(self.output_files['txt'], 'w', encoding='utf-8') as f:
-            for cat, items in categorized.items():
-                if items:
-                    f.write(f"\n{cat}\n")
-                    f.write("\n".join(items) + "\n")
-        
-        self.logger.info(f"生成TXT文件: {self.output_files['txt']}")
-
-    def generate_m3u_file(self, results: Dict[str, List[Tuple[str, float]]]):
-        """生成M3U格式文件"""
-        with open(self.output_files['m3u'], 'w', encoding='utf-8') as f:
-            f.write("#EXTM3U\n")
+            # 去重
+            all_ip_headers = list(set(all_ip_headers))
+            print(f"📊 所有地区总共找到 {len(all_ip_headers)} 个唯一IP头")
             
-            for channel in self.get_ordered_channels(results.keys()):
-                streams = results.get(channel, [])
-                for url, speed in streams:
-                    quality = self.get_speed_quality(speed)
-                    f.write(f'#EXTINF:-1 tvg-name="{channel}",{channel} [速度: {speed:.2f}MB/s {quality}]\n{url}\n')
-        
-        self.logger.info(f"生成M3U文件: {self.output_files['m3u']}")
-
-    def generate_report(self, results: Dict[str, List[Tuple[str, float]]]):
-        """生成测速报告"""
-        speed_stats = []
-        valid_channels = []
-        total_sources = 0
-        
-        for channel, streams in results.items():
-            if streams:
-                best_speed = streams[0][1]
-                speed_stats.append(best_speed)
-                valid_channels.append((channel, best_speed, len(streams)))
-                total_sources += len(streams)
-        
-        if not speed_stats:
-            self.logger.warning("⚠️ 无有效测速结果")
-            return
-        
-        # 按速度排序频道
-        valid_channels.sort(key=lambda x: x[1], reverse=True)
-        
-        print("\n" + "="*60)
-        print("IPTV直播源测速报告")
-        print("="*60)
-        print(f"有效频道数: {len(valid_channels)}")
-        print(f"总源数量: {total_sources}")
-        print(f"平均速度: {sum(speed_stats)/len(speed_stats):.2f} MB/s")
-        print(f"最快速度: {max(speed_stats):.2f} MB/s")
-        print(f"最慢速度: {min(speed_stats):.2f} MB/s")
-        print(f"速度要求: ≥{self.min_speed_mbps} MB/s")
-        
-        # 速度分布统计
-        excellent = len([s for s in speed_stats if s > 2.0])
-        good = len([s for s in speed_stats if 1.0 < s <= 2.0])
-        normal = len([s for s in speed_stats if 0.5 < s <= 1.0])
-        slow = len([s for s in speed_stats if s <= 0.5])
-        
-        print(f"\n速度分布:")
-        print(f"  极速(>2.0MB/s): {excellent}个频道")
-        print(f"  快速(1.0-2.0MB/s): {good}个频道")
-        print(f"  中速(0.5-1.0MB/s): {normal}个频道")
-        print(f"  慢速(≤0.5MB/s): {slow}个频道")
-        
-        print("\n频道速度排名 TOP 20:")
-        for i, (channel, speed, count) in enumerate(valid_channels[:20], 1):
-            quality = self.get_speed_quality(speed)
-            print(f"{i:2d}. {channel:<15} {speed:>5.2f} MB/s ({quality}) [{count}个源]")
-
-    # ==================== 辅助方法 ====================
-    
-    def get_ordered_channels(self, channels: List[str]) -> List[str]:
-        """按照模板顺序排序频道列表"""
-        if not self.template_channels:
-            return sorted(channels)
-        
-        ordered = []
-        # 首先按模板顺序
-        with open(self.template_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    if match := self.channel_pattern.match(line):
-                        channel = self.normalize_channel_name(match.group(1).strip())
-                        if channel in channels and channel not in ordered:
-                            ordered.append(channel)
-        
-        # 添加未在模板中的频道（理论上不应该有，因为已经过滤了）
-        for channel in channels:
-            if channel not in ordered:
-                ordered.append(channel)
+            if all_ip_headers:
+                # 组合RTP URL
+                combined_rtp_urls = self.combine_rtp_urls(all_ip_headers, rtp_paths)
+                print(f"🔗 生成 {len(combined_rtp_urls)} 个组合RTP URL")
                 
-        return ordered
-
-    def _extract_domain(self, url: str) -> str:
-        """从URL提取域名"""
-        try:
-            netloc = urlparse(url).netloc
-            return netloc.split(':')[0]
-        except:
-            return url[:30] + "..." if len(url) > 30 else url
-
-    def get_speed_quality(self, speed: float) -> str:
-        """获取速度质量评级"""
-        if speed > 2.0: return "极佳"
-        if speed > 1.0: return "优秀" 
-        if speed > 0.5: return "良好"
-        if speed > 0.3: return "一般"
-        return "较差"
-
-    # ==================== 主流程 ====================
-    
-    def run(self):
-        """运行主流程"""
-        print("="*60)
-        print("IPTV直播源处理工具")
-        print("="*60)
-        print(f"配置: 超时{self.timeout}s 线程{self.max_workers} 测速{self.test_size//1024}KB")
-        print(f"要求: 最低速度{self.min_speed_mbps}MB/s")
+                # 将组合的URL分配到对应频道
+                channels = self.processor.getChannelItems()
+                for category, channel_dict in channels.items():
+                    for channel_name in channel_dict.keys():
+                        filtered_name = self.processor.filter_CCTV_key(channel_name)
+                        if filtered_name:
+                            # 为每个频道分配一部分组合URL
+                            if channel_name not in crawl_result_dict:
+                                crawl_result_dict[channel_name] = []
+                            
+                            # 随机选择一部分URL分配给该频道（避免每个频道都有全部URL）
+                            sample_size = min(8, len(combined_rtp_urls))  # 每个频道最多8个URL
+                            if sample_size > 0 and combined_rtp_urls:
+                                sampled_urls = random.sample(combined_rtp_urls, sample_size)
+                                crawl_result_dict[channel_name].extend(sampled_urls)
+                
+                print(f"📺 为 {len(crawl_result_dict)} 个频道分配了组合RTP URL")
         
+        if self.config.crawl_type in ["2", "3"]:
+            print("🌐 爬取配置的URL源...")
+            for url in self.config.crawl_urls:
+                try:
+                    print(f"  📡 爬取: {url}")
+                    response = requests.get(url, timeout=15)
+                    if response.status_code == 200:
+                        content = response.text
+                        lines = content.split('\n')
+                        url_count = 0
+                        for line in lines:
+                            line = line.strip()
+                            if ',' in line and '#genre#' not in line:
+                                parts = line.split(',', 1)
+                                if len(parts) == 2:
+                                    channel, url_val = parts[0].strip(), parts[1].strip()
+                                    if channel and url_val:
+                                        if channel not in crawl_result_dict:
+                                            crawl_result_dict[channel] = []
+                                        if url_val not in crawl_result_dict[channel]:
+                                            crawl_result_dict[channel].append(url_val)
+                                            url_count += 1
+                        print(f"  ✅ 成功爬取 {url_count} 个URL")
+                    else:
+                        print(f"  ❌ HTTP错误: {response.status_code}")
+                except Exception as e:
+                    print(f"❌ 爬取失败 {url}: {e}")
+        
+        print(f"🎉 爬取完成，共获取 {len(crawl_result_dict)} 个频道")
+        return crawl_result_dict
+    
+    def search_hotel_ip(self):
+        """搜索酒店IP"""
+        print("🏨 搜索酒店IP...")
+        subscribe_dict = {}
+        
+        # 从订阅源获取直播源
+        for region, url in self.config.search_dict.items():
+            try:
+                print(f"  📡 加载订阅源: {region}")
+                response = requests.get(url, timeout=15)
+                if response.status_code == 200:
+                    content = response.text
+                    lines = content.split('\n')
+                    url_count = 0
+                    for line in lines:
+                        line = line.strip()
+                        if ',' in line and '#genre#' not in line:
+                            parts = line.split(',', 1)
+                            if len(parts) == 2:
+                                channel, url_val = parts[0].strip(), parts[1].strip()
+                                if channel and url_val:
+                                    if channel not in subscribe_dict:
+                                        subscribe_dict[channel] = []
+                                    if url_val not in subscribe_dict[channel]:
+                                        subscribe_dict[channel].append(url_val)
+                                        url_count += 1
+                    print(f"  ✅ 成功加载 {region} 订阅源，{url_count} 个URL")
+                else:
+                    print(f"  ❌ HTTP错误: {response.status_code}")
+            except Exception as e:
+                print(f"❌ 加载订阅源失败 {region}: {e}")
+        
+        # 生成搜索关键词 - 严格按照模板频道列表
+        search_keyword_list = []
+        channels = self.processor.getChannelItems()
+        for category, channel_dict in channels.items():
+            for channel_name in channel_dict.keys():
+                filtered_name = self.processor.filter_CCTV_key(channel_name)
+                if filtered_name:
+                    search_keyword_list.append(filtered_name)
+        
+        print(f"🔍 搜索完成，共 {len(search_keyword_list)} 个搜索关键词")
+        return subscribe_dict, {}, search_keyword_list
+
+# ==================== 主更新类 ====================
+class UpdateSource:
+    """更新源主类"""
+    
+    def __init__(self, crawl_result_dict, subscribe_dict, kw_zbip_dict, search_keyword_list):
+        self.config = DynamicConfig()
+        self.processor = IPTVProcessor(self.config)
+        self.crawl_result_dict = crawl_result_dict
+        self.subscribe_dict = subscribe_dict
+        self.kw_zbip_dict = kw_zbip_dict
+        self.search_keyword_list = search_keyword_list
+    
+    async def process_channel_urls(self, channel_name, filtered_name):
+        """处理单个频道的URL - 所有找到的URL都进行测速"""
+        # 收集所有可能的URL源
+        all_urls = []
+        
+        # 1. 从爬取结果获取URL（组合的RTP URL）
+        if filtered_name and filtered_name in self.crawl_result_dict:
+            all_urls.extend(self.crawl_result_dict[filtered_name])
+        
+        # 2. 从订阅源获取URL
+        if filtered_name:
+            matching_urls = self.processor.find_matching_values(self.subscribe_dict, filtered_name)
+            if matching_urls:
+                all_urls.extend(matching_urls)
+        
+        # 过滤URL
+        filtered_urls = self.processor.filterUrlsByPatterns(all_urls)
+        
+        best_urls = []
+        if filtered_urls:
+            # 准备测速 - 所有URL都进行测速
+            info_list = [[url, None, None] for url in filtered_urls]
+            
+            print(f"  ⚡ 对 {len(info_list)} 个URL进行测速排序...")
+            try:
+                # 异步测速排序
+                sorted_data = await self.processor.compareSpeedAndResolution(info_list)
+                if sorted_data:
+                    best_urls = self.processor.getTotalUrls(sorted_data)
+                else:
+                    best_urls = self.processor.getTotalUrlsFromInfoList(info_list)
+            except Exception as e:
+                print(f"❌ 测速排序错误: {e}")
+                best_urls = self.processor.getTotalUrlsFromInfoList(info_list)
+            
+            # 确保最多8个URL
+            best_urls = best_urls[:8]
+            print(f"  ✅ 测速完成，选择 {len(best_urls)} 个最佳源")
+        
+        return best_urls
+    
+    async def main(self):
+        """主执行函数 - 严格按照模板频道列表"""
+        print("🚀 开始更新直播源...")
         start_time = time.time()
         
         try:
-            # 第一步：抓取所有直播源
-            self.logger.info("第一步：抓取直播源...")
-            content = self.fetch_streams()
-            if not content:
-                self.logger.error("❌ 未能获取有效数据")
+            # 清理旧文件
+            if os.path.exists("result_new.txt"):
+                os.remove("result_new.txt")
+            
+            # 获取频道数据 - 严格按照模板
+            channels = self.processor.getChannelItems()
+            if not channels:
+                print("❌ 错误: 无法读取频道数据")
                 return
             
-            # 第二步：解析和整理数据
-            self.logger.info("第二步：解析直播源数据...")
-            df = self.parse_content(content)
-            if df.empty:
-                self.logger.error("❌ 未解析到有效直播源")
-                return
+            total_channels = sum(len(channel_dict) for channel_dict in channels.values())
+            processed_channels = 0
             
-            # 第三步：整理数据，每个频道最多指定数量的源
-            grouped = self.organize_streams(df)
+            print(f"📺 开始处理 {total_channels} 个频道...")
+            print("📋 严格按照模板频道列表进行搜索和测速...")
             
-            # 第四步：对所有频道进行测速
-            self.logger.info("第三步：测速优化...")
-            speed_results = self.test_all_channels(grouped)
+            # 按照模板分类顺序处理
+            for category, channel_dict in channels.items():
+                print(f"\n🏷️ 处理分类: {category}")
+                category_channels = {}
+                
+                # 按照模板频道顺序处理
+                for channel_name in channel_dict.keys():
+                    processed_channels += 1
+                    print(f"  📻 处理频道 [{processed_channels}/{total_channels}]: {channel_name}")
+                    
+                    filtered_name = self.processor.filter_CCTV_key(channel_name)
+                    best_urls = await self.process_channel_urls(channel_name, filtered_name)
+                    
+                    if best_urls:
+                        category_channels[channel_name] = best_urls
+                        print(f"    ✅ 找到 {len(best_urls)} 个可用源")
+                    else:
+                        print(f"    ⚠ 未找到可用源")
+                        category_channels[channel_name] = []  # 即使没有源也保留频道
+                
+                # 更新分类结果 - 严格按照模板顺序
+                if category_channels:
+                    self.processor.updateChannelUrlsTxt(category, category_channels)
+                    print(f"✅ 分类 {category} 处理完成，共 {len(category_channels)} 个频道")
             
-            # 第五步：根据模板频道过滤结果
-            self.logger.info("第四步：模板匹配...")
-            filtered_results = self.filter_by_template(speed_results)
+            # 完成文件更新
+            self.processor.updateFile(self.config.final_file, "result_new.txt")
             
-            if not filtered_results:
-                self.logger.error("❌ 无匹配的频道结果")
-                return
+            end_time = time.time()
+            processing_time = end_time - start_time
+            print(f"\n🎉 更新完成！耗时: {processing_time:.2f} 秒")
+            print(f"💾 结果文件: {self.config.final_file}")
             
-            # 第六步：生成输出文件
-            self.logger.info("第五步：生成输出文件...")
-            self.generate_output_files(filtered_results)
+            # 显示统计信息
+            self.show_statistics()
             
-            # 完成统计
-            total_time = time.time() - start_time
-            self.logger.info(f"🎉 处理完成! 总耗时: {total_time:.1f}秒")
-            
-        except KeyboardInterrupt:
-            self.logger.info("用户中断程序")
         except Exception as e:
-            self.logger.error(f"❌ 处理过程中发生错误: {str(e)}")
-            import traceback
+            print(f"❌ 更新过程中出现错误: {e}")
             traceback.print_exc()
+    
+    def show_statistics(self):
+        """显示统计信息"""
+        if os.path.exists(self.config.final_file):
+            try:
+                with open(self.config.final_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                lines = content.split('\n')
+                channel_count = 0
+                url_count = 0
+                categories = []
+                
+                for line in lines:
+                    if line.strip() and '#genre#' in line:
+                        categories.append(line.replace(',#genre#', ''))
+                    elif line.strip() and '#genre#' not in line and ',' in line:
+                        channel_count += 1
+                        url_count += 1
+                
+                print(f"\n📊 最终结果统计:")
+                print(f"  📁 分类数量: {len(categories)}")
+                print(f"  📺 频道数量: {channel_count}")
+                print(f"  🔗 URL数量: {url_count}")
+                print(f"  🏷️ 分类列表: {', '.join(categories)}")
+            except Exception as e:
+                print(f"❌ 统计信息显示错误: {e}")
+        else:
+            print("⚠ 结果文件不存在")
 
-
-def main():
-    """主程序入口"""
-    parser = argparse.ArgumentParser(description='IPTV直播源处理工具')
-    parser.add_argument('--config', '-c', default='config.json', help='配置文件路径')
-    parser.add_argument('--timeout', '-t', type=int, help='超时时间(秒)')
-    parser.add_argument('--workers', '-w', type=int, help='并发线程数')
-    parser.add_argument('--test-size', '-s', type=int, help='测速数据大小(KB)')
-    parser.add_argument('--min-speed', type=float, help='最低速度要求(MB/s)')
-    parser.add_argument('--verbose', '-v', action='store_true', help='详细日志输出')
+# ==================== 主函数 ====================
+async def main():
+    """主函数"""
+    print("=" * 70)
+    print("🎬 IPTV直播源管理工具 - 增强RTP组合版")
+    print("✨ 特点:")
+    print("  • 📋 严格按照模板频道列表搜索")
+    print("  • ⚡ 所有找到的URL都进行测速") 
+    print("  • 📊 按照模板顺序生成结果文件")
+    print("  • 🎯 每个频道最多8个优质源")
+    print("  • 🔧 集成配置，无需外部文件")
+    print("=" * 70)
     
-    args = parser.parse_args()
-    
-    # 设置日志级别
-    log_level = logging.DEBUG if args.verbose else logging.INFO
-    
+    # 检查ffmpeg是否可用
     try:
-        # 创建IPTV实例
-        tool = IPTV(args.config)
+        result = subprocess.run(['ffmpeg', '-version'], capture_output=True, timeout=5, text=True)
+        if result.returncode == 0:
+            print("✅ FFmpeg可用")
+        else:
+            print("⚠ FFmpeg可能不可用，将影响流媒体测速")
+    except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+        print("⚠ 警告: FFmpeg不可用，将影响流媒体测速")
+    
+    # 执行更新
+    try:
+        config = DynamicConfig()
+        processor = IPTVProcessor(config)
+        crawler = IPTVCrawler(config, processor)
         
-        # 覆盖命令行参数
-        if args.timeout:
-            tool.timeout = args.timeout
-        if args.workers:
-            tool.max_workers = args.workers
-        if args.test_size:
-            tool.test_size = args.test_size * 1024
-        if args.min_speed:
-            tool.min_speed_mbps = args.min_speed
+        processor.previous_result_dict = processor.get_previous_results(config.final_file)
+        crawl_result_dict = crawler.get_crawl_result()
+        subscribe_dict, kw_zbip_dict, search_keyword_list = crawler.search_hotel_ip()
         
-        # 运行主流程
-        tool.run()
-        
-    except KeyboardInterrupt:
-        print("\n用户中断程序")
+        update_source = UpdateSource(crawl_result_dict, subscribe_dict, kw_zbip_dict, search_keyword_list)
+        await update_source.main()
     except Exception as e:
-        print(f"程序执行错误: {e}")
-        logging.exception("程序异常")
+        print(f"❌ 程序执行错误: {e}")
+        traceback.print_exc()
 
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n⏹️ 用户中断程序执行")
+    except Exception as e:
+        print(f"❌ 程序运行错误: {e}")
+        traceback.print_exc()
