@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-🎬 IPTV智能管理工具 - GitHub Actions 优化版 v6.1
-流程：智能抓取 → 精准测速 → 模板匹配 → 生成文件
-特点：优化抓取策略 + 精准测速算法 + 智能过滤机制 + 全面质量控制
+🎬 IPTV智能管理工具 - 测速优化版 v6.2
+流程：URL抓取 → 精准测速 → 模板匹配 → 生成文件
+特点：专注测速优化 + 简化抓取流程 + 集中配置管理
 """
 
 import requests
@@ -84,89 +84,79 @@ class ProcessingStats:
     speed_filtered: int = 0
 
 
-# ==================== 配置管理系统 ====================
+# ==================== 集中配置管理系统 ====================
 
-class GitHubConfigManager:
-    """GitHub Actions 专用配置管理器"""
+class ConfigManager:
+    """集中配置管理器 - 所有功能配置都在这里"""
     
     def __init__(self):
-        # 文件配置
-        self.template_file: str = "demo.txt"
-        self.output_txt: str = "iptv.txt"
-        self.output_m3u: str = "iptv.m3u"
-        self.temp_dir: str = "temp"
-        self.cache_dir: str = "cache"
-        self.backup_dir: str = "backup"
+        # ==================== 文件配置 ====================
+        self.template_file: str = "demo.txt"          # 模板文件名
+        self.output_txt: str = "iptv.txt"             # 输出TXT文件名
+        self.output_m3u: str = "iptv.m3u"             # 输出M3U文件名
+        self.temp_dir: str = "temp"                   # 临时目录
+        self.cache_dir: str = "cache"                 # 缓存目录
+        self.backup_dir: str = "backup"               # 备份目录
         
-        # GitHub环境优化配置
-        self.request_timeout: int = 12
-        self.request_retries: int = 2
-        self.max_workers: int = 8  # GitHub Actions限制
-        self.connection_pool_size: int = 10
+        # ==================== 网络请求配置 ====================
+        self.request_timeout: int = 15                # 请求超时时间(秒)
+        self.request_retries: int = 2                 # 请求重试次数
+        self.max_workers: int = 8                     # 最大工作线程数
+        self.connection_pool_size: int = 20           # 连接池大小
         
-        # 智能抓取配置
-        self.enable_smart_crawling: bool = True
-        self.crawling_batch_size: int = 5
-        self.source_priority: Dict[str, int] = {
-            "github.com": 10,
-            "raw.githubusercontent.com": 9,
-            "gitee.com": 8,
-            "mirror.ghproxy.com": 7
-        }
+        # ==================== 测速功能配置 ====================
+        self.open_speed_test: bool = True             # 是否开启测速
+        self.speed_test_limit: int = 10               # 测速并发数
+        self.speed_test_timeout: int = 10             # 测速超时时间(秒)
+        self.enable_smart_speed_test: bool = True     # 是否启用智能测速
+        self.speed_test_strategy: str = "balanced"    # 测速策略: conservative/balanced/aggressive
         
-        # 测速配置 - GitHub环境优化
-        self.open_speed_test: bool = True
-        self.speed_test_limit: int = 6  # 减少并发避免限制
-        self.speed_test_timeout: int = 8
-        self.enable_smart_speed_test: bool = True
-        self.speed_test_strategy: str = "conservative"  # GitHub环境使用保守策略
+        # ==================== 过滤功能配置 ====================
+        self.open_filter_speed: bool = True           # 是否开启速度过滤
+        self.min_speed: float = 0.5                   # 最小速度限制(秒)
+        self.max_speed: float = 15.0                  # 最大速度限制(秒)
+        self.enable_quality_filter: bool = True       # 是否开启质量过滤
+        self.min_content_length: int = 1024           # 最小内容长度(字节)
+        self.max_content_length: int = 10485760       # 最大内容长度(字节) 10MB
         
-        # 过滤配置
-        self.open_filter_speed: bool = True
-        self.min_speed: float = 0.5
-        self.max_speed: float = 12.0
-        self.enable_quality_filter: bool = True
-        self.min_content_length: int = 1024
-        self.max_content_length: int = 5242880  # 5MB
-        
-        # 内容类型过滤
-        self.allowed_content_types: List[str] = [
+        # ==================== 内容类型过滤配置 ====================
+        self.allowed_content_types: List[str] = [     # 允许的内容类型
             "video/", "audio/", "application/", "text/",
-            "octet-stream", "x-mpegurl", "mpegurl"
+            "octet-stream", "x-mpegurl", "mpegurl", "vnd.apple.mpegurl"
         ]
-        self.blocked_content_types: List[str] = [
-            "text/html", "application/json", "text/plain"
+        self.blocked_content_types: List[str] = [     # 阻止的内容类型
+            "text/html", "application/json", "text/plain", "application/xml"
         ]
         
-        # 域名过滤
-        self.blocked_domains: List[str] = [
+        # ==================== 域名过滤配置 ====================
+        self.blocked_domains: List[str] = [           # 阻止的域名
             "example.com", "localhost", "127.0.0.1",
-            "test.com", "dummy.com"
+            "test.com", "dummy.com", "invalid.com"
         ]
         
-        # 匹配配置
-        self.similarity_threshold: int = 50
-        self.max_sources_per_channel: int = 5  # 减少源数量
-        self.enable_fuzzy_matching: bool = True
-        self.matching_confidence: float = 0.7
+        # ==================== 匹配功能配置 ====================
+        self.similarity_threshold: int = 50           # 相似度阈值(0-100)
+        self.max_sources_per_channel: int = 5         # 每个频道最大源数量
+        self.enable_fuzzy_matching: bool = True       # 是否启用模糊匹配
+        self.matching_confidence: float = 0.7         # 匹配置信度
         
-        # 质量控制
-        self.enable_quality_control: bool = True
-        self.min_stream_size: int = 512
-        self.max_url_length: int = 350
+        # ==================== 质量控制配置 ====================
+        self.enable_quality_control: bool = True      # 是否启用质量控制
+        self.min_stream_size: int = 512               # 最小流大小(字节)
+        self.max_url_length: int = 500                # 最大URL长度
         
-        # 性能优化
-        self.enable_caching: bool = True
-        self.cache_ttl: int = 1800  # 30分钟缓存
-        self.enable_compression: bool = True
+        # ==================== 性能优化配置 ====================
+        self.enable_caching: bool = True              # 是否启用缓存
+        self.cache_ttl: int = 3600                    # 缓存存活时间(秒) 1小时
+        self.enable_compression: bool = True          # 是否启用压缩
         
-        # 显示配置 - GitHub环境减少输出
-        self.progress_bar_width: int = 30
-        self.show_detailed_stats: bool = True
-        self.enable_real_time_stats: bool = False  # GitHub Actions中关闭实时统计
+        # ==================== 显示配置 ====================
+        self.progress_bar_width: int = 40             # 进度条宽度
+        self.show_detailed_stats: bool = True         # 是否显示详细统计
+        self.enable_real_time_stats: bool = True      # 是否启用实时统计
         
-        # 优化的源URL列表 - 选择稳定性高的源
-        self.source_urls: List[str] = [
+        # ==================== 源URL列表配置 ====================
+        self.source_urls: List[str] = [               # IPTV源URL列表
             "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
             "https://raw.githubusercontent.com/wwb521/live/main/tv.m3u",
             "https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/ipv4/result.m3u",  
@@ -177,23 +167,25 @@ class GitHubConfigManager:
             "http://47.120.41.246:8899/zb.txt",
         ]
         
-        # HTTP请求头配置
+        # ==================== HTTP请求头配置 ====================
         self.headers: Dict[str, str] = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 GitHub-Actions-IPTV',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': '*/*',
             'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
             'Accept-Encoding': 'gzip, deflate, br',
             'Connection': 'keep-alive',
-            'Cache-Control': 'no-cache'
+            'Cache-Control': 'no-cache',
+            'Referer': 'https://github.com/'
         }
 
 
 # ==================== 进度显示管理器 ====================
 
 class ProgressDisplay:
-    """进度显示管理器 - GitHub Actions优化版本"""
+    """进度显示管理器"""
     
-    def __init__(self):
+    def __init__(self, config: ConfigManager):
+        self.config = config
         self.start_time: Optional[float] = None
         self.current_step: int = 0
         self.total_steps: int = 0
@@ -228,8 +220,8 @@ class ProgressDisplay:
     def _print_header(self) -> None:
         """打印进度头"""
         print("\n" + "="*60)
-        print("🎬 IPTV智能管理工具 - GitHub Actions优化版 v6.1")
-        print("🔧 流程: 智能抓取 → 精准测速 → 模板匹配 → 生成文件")
+        print("🎬 IPTV智能管理工具 - 测速优化版 v6.2")
+        print("🔧 流程: URL抓取 → 精准测速 → 模板匹配 → 生成文件")
         print("="*60)
     
     def _print_step(self, step_name: str, message: str) -> None:
@@ -241,14 +233,14 @@ class ProgressDisplay:
         print(f"   ⏰ 总用时: {elapsed:.1f}秒")
 
 
-# ==================== 智能测速引擎 ====================
+# ==================== 增强测速引擎 ====================
 
-class SmartSpeedTestEngine:
-    """智能测速引擎核心类 - GitHub Actions优化版"""
+class EnhancedSpeedTestEngine:
+    """增强测速引擎 - 专注测速功能优化"""
     
-    def __init__(self, config: GitHubConfigManager):
+    def __init__(self, config: ConfigManager):
         self.config = config
-        self.session = self._create_session()
+        self.session = self._create_enhanced_session()
         self._stop_event = threading.Event()
         self._patterns = self._compile_patterns()
         self._cache: Dict[str, SpeedTestResult] = {}
@@ -256,20 +248,22 @@ class SmartSpeedTestEngine:
             'total_tests': 0,
             'successful_tests': 0,
             'failed_tests': 0,
-            'average_speed': 0.0
+            'average_speed': 0.0,
+            'timeout_count': 0,
+            'connection_error_count': 0
         }
     
-    def _create_session(self) -> requests.Session:
-        """创建优化的HTTP会话"""
+    def _create_enhanced_session(self) -> requests.Session:
+        """创建增强的HTTP会话"""
         session = requests.Session()
         session.headers.update(self.config.headers)
         
-        # 优化连接适配器
+        # 优化连接适配器配置
         adapter = requests.adapters.HTTPAdapter(
             pool_connections=self.config.connection_pool_size,
             pool_maxsize=self.config.connection_pool_size,
-            max_retries=2,
-            pool_block=False
+            max_retries=3,
+            pool_block=True
         )
         session.mount('http://', adapter)
         session.mount('https://', adapter)
@@ -280,23 +274,25 @@ class SmartSpeedTestEngine:
         """编译正则表达式模式"""
         return {
             'stream_protocol': re.compile(r'^(https?|rtmp|rtsp)://', re.IGNORECASE),
-            'domain_extract': re.compile(r'://([^/]+)')
+            'domain_extract': re.compile(r'://([^/]+)'),
+            'content_range': re.compile(r'bytes (\d+)-(\d+)/(\d+|\*)')
         }
     
     def stop(self) -> None:
-        """停止测速"""
+        """停止测速引擎"""
         self._stop_event.set()
         self.session.close()
     
-    def _detect_stream_type(self, url: str) -> StreamType:
+    def _detect_stream_type(self, url: str, content_type: str = "") -> StreamType:
         """智能检测流媒体类型"""
         if not url:
             return StreamType.UNKNOWN
         
         url_lower = url.lower()
+        content_type_lower = content_type.lower() if content_type else ""
         
-        # 精确匹配流媒体类型
-        if '.m3u8' in url_lower or 'm3u8' in url_lower:
+        # 基于URL扩展名检测
+        if '.m3u8' in url_lower or 'm3u8' in url_lower or 'mpegurl' in content_type_lower:
             return StreamType.M3U8
         elif '.ts' in url_lower or 'ts' in url_lower:
             return StreamType.TS
@@ -310,6 +306,10 @@ class SmartSpeedTestEngine:
             return StreamType.RTSP
         else:
             # 基于内容类型推断
+            if 'video' in content_type_lower:
+                return StreamType.MP4
+            elif 'audio' in content_type_lower:
+                return StreamType.MP4
             return StreamType.UNKNOWN
     
     def _is_blocked_domain(self, url: str) -> bool:
@@ -342,62 +342,122 @@ class SmartSpeedTestEngine:
             if allowed_type in content_type_lower:
                 return True
         
-        return False
+        # 如果没有匹配到允许的类型，但也不是阻止的类型，则允许
+        return not any(blocked in content_type_lower for blocked in self.config.blocked_content_types)
     
-    def _adaptive_speed_test(self, url: str) -> Tuple[bool, float, str, int]:
-        """自适应测速策略"""
+    def _advanced_speed_test(self, url: str) -> Tuple[bool, float, str, int, int]:
+        """高级测速策略 - 支持多种测速方法"""
         try:
             start_time = time.time()
             
-            # 根据URL类型选择测速策略
-            if any(proto in url.lower() for proto in ['.m3u8', '.ts', '.flv']):
-                # 流媒体使用HEAD请求快速检测
+            # 根据测速策略选择不同的方法
+            if self.config.speed_test_strategy == "conservative":
+                # 保守策略：只使用HEAD请求
                 response = self.session.head(
                     url, 
                     timeout=self.config.speed_test_timeout,
                     allow_redirects=True
                 )
-            else:
-                # 其他类型使用GET请求部分内容
+                response_time = time.time() - start_time
+                
+                if response.status_code == 200:
+                    content_type = response.headers.get('Content-Type', '')
+                    content_length = int(response.headers.get('Content-Length', 0))
+                    return True, response_time, content_type, content_length, response.status_code
+                else:
+                    return False, float('inf'), '', 0, response.status_code
+                    
+            elif self.config.speed_test_strategy == "balanced":
+                # 平衡策略：HEAD + 部分内容获取
+                # 先尝试HEAD
+                head_response = self.session.head(
+                    url,
+                    timeout=self.config.speed_test_timeout // 2,
+                    allow_redirects=True
+                )
+                
+                if head_response.status_code != 200:
+                    head_response.close()
+                    return False, float('inf'), '', 0, head_response.status_code
+                
+                # 获取部分内容验证可访问性
+                headers = {'Range': 'bytes=0-8192'}  # 获取前8KB
+                get_response = self.session.get(
+                    url,
+                    headers=headers,
+                    timeout=self.config.speed_test_timeout,
+                    allow_redirects=True,
+                    stream=True
+                )
+                
+                response_time = time.time() - start_time
+                
+                if get_response.status_code in [200, 206]:
+                    content_type = get_response.headers.get('Content-Type', '')
+                    content_length = int(get_response.headers.get('Content-Length', 0))
+                    
+                    # 读取少量数据验证连接
+                    try:
+                        next(get_response.iter_content(chunk_size=1024))
+                    except StopIteration:
+                        pass
+                    
+                    get_response.close()
+                    return True, response_time, content_type, content_length, get_response.status_code
+                else:
+                    get_response.close()
+                    return False, float('inf'), '', 0, get_response.status_code
+                    
+            else:  # aggressive
+                # 激进策略：完整内容测速
                 response = self.session.get(
                     url,
                     timeout=self.config.speed_test_timeout,
                     allow_redirects=True,
                     stream=True
                 )
-            
-            end_time = time.time()
-            response_time = end_time - start_time
-            
-            # 检查响应状态
-            if response.status_code in [200, 206, 302, 301, 307]:
-                content_type = response.headers.get('Content-Type', '')
-                content_length = int(response.headers.get('Content-Length', 0))
                 
-                # 验证内容类型
-                if not self._is_allowed_content_type(content_type):
+                response_time = time.time() - start_time
+                
+                if response.status_code == 200:
+                    content_type = response.headers.get('Content-Type', '')
+                    content_length = int(response.headers.get('Content-Length', 0))
+                    
+                    # 读取前16KB数据计算实际速度
+                    total_read = 0
+                    start_read_time = time.time()
+                    for chunk in response.iter_content(chunk_size=8192):
+                        total_read += len(chunk)
+                        if total_read >= 16384:  # 读取16KB后停止
+                            break
+                    
+                    actual_response_time = time.time() - start_read_time
                     response.close()
-                    return False, float('inf'), content_type, content_length
-                
-                response.close()
-                return True, response_time, content_type, content_length
-            else:
-                response.close()
-                return False, float('inf'), '', 0
+                    
+                    # 如果实际读取时间明显长于连接时间，使用实际时间
+                    if actual_response_time > response_time * 2:
+                        response_time = actual_response_time
+                    
+                    return True, response_time, content_type, content_length, response.status_code
+                else:
+                    response.close()
+                    return False, float('inf'), '', 0, response.status_code
                 
         except requests.exceptions.Timeout:
-            return False, float('inf'), '', 0
+            self._stats['timeout_count'] += 1
+            return False, float('inf'), '', 0, 0
         except requests.exceptions.ConnectionError:
-            return False, float('inf'), '', 0
+            self._stats['connection_error_count'] += 1
+            return False, float('inf'), '', 0, 0
         except requests.exceptions.RequestException as e:
             logging.debug(f"测速请求异常: {url} - {e}")
-            return False, float('inf'), '', 0
+            return False, float('inf'), '', 0, 0
         except Exception as e:
             logging.debug(f"测速未知异常: {url} - {e}")
-            return False, float('inf'), '', 0
+            return False, float('inf'), '', 0, 0
     
     def test_single_url(self, url: str) -> SpeedTestResult:
-        """测试单个URL - 智能优化版本"""
+        """测试单个URL - 增强版本"""
         if self._stop_event.is_set():
             return SpeedTestResult(url=url, accessible=False)
         
@@ -418,24 +478,28 @@ class SmartSpeedTestEngine:
             return result
         
         try:
-            # 执行自适应测速
-            accessible, speed, content_type, file_size = self._adaptive_speed_test(url)
+            # 执行高级测速
+            accessible, speed, content_type, file_size, status_code = self._advanced_speed_test(url)
             
             result.accessible = accessible
             result.speed = speed
             result.content_type = content_type
             result.file_size = file_size
-            result.stream_type = self._detect_stream_type(url)
+            result.response_code = status_code
+            result.stream_type = self._detect_stream_type(url, content_type)
             result.last_tested = time.time()
             
             if accessible:
                 self._stats['successful_tests'] += 1
                 # 更新平均速度
-                total_speed = self._stats['average_speed'] * (self._stats['successful_tests'] - 1)
-                self._stats['average_speed'] = (total_speed + speed) / self._stats['successful_tests']
+                if self._stats['successful_tests'] > 1:
+                    total_speed = self._stats['average_speed'] * (self._stats['successful_tests'] - 1)
+                    self._stats['average_speed'] = (total_speed + speed) / self._stats['successful_tests']
+                else:
+                    self._stats['average_speed'] = speed
             else:
                 self._stats['failed_tests'] += 1
-                result.error_message = "测速失败"
+                result.error_message = f"测速失败 (状态码: {status_code})"
                 
         except Exception as e:
             result.accessible = False
@@ -450,15 +514,16 @@ class SmartSpeedTestEngine:
     
     def batch_speed_test(self, urls: List[str], 
                         progress_callback: Callable = None) -> Dict[str, SpeedTestResult]:
-        """批量测速 - 智能优化版本"""
+        """批量测速 - 增强版本"""
         if not self.config.open_speed_test:
             # 如果测速关闭，返回所有URL为可访问
-            return {url: SpeedTestResult(url=url, accessible=True) for url in urls}
+            return {url: SpeedTestResult(url=url, accessible=True, speed=1.0) for url in urls}
         
         self._stop_event.clear()
         results = {}
         
         logging.info(f"🚀 开始批量测速，共 {len(urls)} 个URL，并发数: {self.config.speed_test_limit}")
+        logging.info(f"📊 测速策略: {self.config.speed_test_strategy}, 超时: {self.config.speed_test_timeout}秒")
         
         def test_with_callback(url: str) -> Tuple[str, SpeedTestResult]:
             if self._stop_event.is_set():
@@ -470,18 +535,20 @@ class SmartSpeedTestEngine:
             return url, result
         
         try:
-            # 智能分批测速
-            with ThreadPoolExecutor(max_workers=self.config.speed_test_limit) as executor:
-                # GitHub环境使用保守策略
-                batch_size = 20
+            # 智能分批测速，避免内存溢出
+            batch_size = min(50, max(10, self.config.speed_test_limit * 2))
+            
+            total_urls = len(urls)
+            completed = 0
+            
+            for i in range(0, total_urls, batch_size):
+                if self._stop_event.is_set():
+                    break
+                    
+                batch_urls = urls[i:i + batch_size]
+                logging.debug(f"处理批次 {i//batch_size + 1}/{(total_urls + batch_size - 1)//batch_size}: {len(batch_urls)}个URL")
                 
-                total_urls = len(urls)
-                
-                for i in range(0, total_urls, batch_size):
-                    if self._stop_event.is_set():
-                        break
-                        
-                    batch_urls = urls[i:i + batch_size]
+                with ThreadPoolExecutor(max_workers=self.config.speed_test_limit) as executor:
                     future_to_url = {
                         executor.submit(test_with_callback, url): url 
                         for url in batch_urls
@@ -491,8 +558,15 @@ class SmartSpeedTestEngine:
                         if self._stop_event.is_set():
                             break
                         try:
-                            url, result = future.result(timeout=self.config.speed_test_timeout + 10)
+                            url, result = future.result(timeout=self.config.speed_test_timeout + 15)
                             results[url] = result
+                            completed += 1
+                            
+                            # 实时进度更新
+                            if completed % 10 == 0:
+                                success_rate = (self._stats['successful_tests'] / completed * 100) if completed > 0 else 0
+                                logging.info(f"📊 测速进度: {completed}/{total_urls} ({success_rate:.1f}% 成功)")
+                                
                         except Exception as e:
                             url = future_to_url[future]
                             results[url] = SpeedTestResult(
@@ -500,33 +574,36 @@ class SmartSpeedTestEngine:
                                 accessible=False, 
                                 error_message=str(e)
                             )
+                            completed += 1
                         
         except Exception as e:
             logging.error(f"❌ 批量测速失败: {e}")
         
-        # 输出测速统计
+        # 输出详细的测速统计
         success_rate = (self._stats['successful_tests'] / self._stats['total_tests'] * 100) if self._stats['total_tests'] > 0 else 0
-        logging.info(f"📊 测速统计: 成功 {self._stats['successful_tests']}/{self._stats['total_tests']} ({success_rate:.1f}%)，平均速度: {self._stats['average_speed']:.2f}s")
+        logging.info(f"📈 测速统计:")
+        logging.info(f"  ✅ 成功: {self._stats['successful_tests']}/{self._stats['total_tests']} ({success_rate:.1f}%)")
+        logging.info(f"  🚀 平均速度: {self._stats['average_speed']:.2f}秒")
+        logging.info(f"  ⏰ 超时: {self._stats['timeout_count']}次")
+        logging.info(f"  🔌 连接错误: {self._stats['connection_error_count']}次")
         
         return results
+
+    def get_test_statistics(self) -> Dict[str, Any]:
+        """获取测速统计信息"""
+        return self._stats.copy()
 
 
 # ==================== IPTV智能管理器 ====================
 
 class IPTVManager:
-    """IPTV智能管理工具核心类 - GitHub Actions优化版"""
+    """IPTV智能管理工具核心类 - 测速优化版"""
     
-    def __init__(self, config: GitHubConfigManager = None) -> None:
-        # 检查是否在GitHub Actions环境中
-        if os.getenv('GITHUB_ACTIONS'):
-            self.config: GitHubConfigManager = GitHubConfigManager()
-            print("🏃 检测到GitHub Actions环境，使用优化配置")
-        else:
-            self.config: GitHubConfigManager = config or GitHubConfigManager()
-            
+    def __init__(self, config: ConfigManager = None) -> None:
+        self.config: ConfigManager = config or ConfigManager()
         self.stats: ProcessingStats = ProcessingStats()
-        self.progress: ProgressDisplay = ProgressDisplay()
-        self.speed_engine: SmartSpeedTestEngine = SmartSpeedTestEngine(self.config)
+        self.progress: ProgressDisplay = ProgressDisplay(self.config)
+        self.speed_engine: EnhancedSpeedTestEngine = EnhancedSpeedTestEngine(self.config)
         self._is_running: bool = True
         self._patterns: Dict[str, re.Pattern] = self._compile_patterns()
         self._setup_environment()
@@ -588,7 +665,7 @@ class IPTVManager:
             print()
 
     def validate_url(self, url: str) -> bool:
-        """验证URL格式和安全性 - 增强版本"""
+        """验证URL格式和安全性"""
         if not url or not isinstance(url, str) or len(url) > self.config.max_url_length:
             return False
         
@@ -616,13 +693,6 @@ class IPTVManager:
         except Exception:
             return False
 
-    def _get_url_priority(self, url: str) -> int:
-        """获取URL优先级"""
-        for domain, priority in self.config.source_priority.items():
-            if domain in url:
-                return priority
-        return 5  # 默认优先级
-
     @contextmanager
     def _request_context(self, url: str, timeout: int = None):
         """请求上下文管理器"""
@@ -644,27 +714,22 @@ class IPTVManager:
             logging.debug(f"请求 {url} 耗时: {elapsed:.2f}秒")
 
     def fetch_streams_from_url(self, url: str) -> Optional[str]:
-        """从URL获取流数据 - 智能优化版本"""
+        """从URL获取流数据 - 简化版本，只抓取不解析"""
         if not self.validate_url(url):
             logging.debug(f"❌ 无效的URL: {url}")
             return None
-        
-        # 根据优先级调整超时时间
-        priority = self._get_url_priority(url)
-        base_timeout = max(5, self.config.request_timeout - (priority - 5))
         
         for attempt in range(self.config.request_retries):
             if not self._is_running:
                 return None
             try:
-                # 智能超时调整
-                timeout = base_timeout + (attempt * 5)
+                timeout = self.config.request_timeout + (attempt * 5)
                 with self._request_context(url, timeout) as response:
                     if response.status_code == 200:
                         # 流式读取，内存优化
                         content_chunks = []
                         total_size = 0
-                        for chunk in response.iter_content(chunk_size=16384):  # 增大块大小
+                        for chunk in response.iter_content(chunk_size=32768):
                             if not self._is_running:
                                 return None
                             content_chunks.append(chunk)
@@ -711,19 +776,12 @@ class IPTVManager:
         return None
 
     def fetch_all_streams(self) -> str:
-        """获取所有源的流数据 - 智能优化版本"""
-        self.progress.update_substep("启动智能多源抓取...", "🌐")
+        """获取所有源的流数据 - 简化版本"""
+        self.progress.update_substep("启动URL抓取...", "🌐")
         
         if not self.config.source_urls:
             logging.error("❌ 没有配置源URL")
             return ""
-        
-        # 按优先级排序URL
-        sorted_urls = sorted(
-            self.config.source_urls,
-            key=self._get_url_priority,
-            reverse=True
-        )
         
         all_streams: List[str] = []
         successful_sources = 0
@@ -731,45 +789,36 @@ class IPTVManager:
         print("   抓取进度: ", end="", flush=True)
         
         try:
-            # 智能分批抓取
-            with ThreadPoolExecutor(max_workers=min(self.config.max_workers, len(sorted_urls))) as executor:
-                # 分批处理，避免内存峰值
-                batch_size = self.config.crawling_batch_size
+            # 使用线程池并发抓取
+            with ThreadPoolExecutor(max_workers=min(self.config.max_workers, len(self.config.source_urls))) as executor:
+                future_to_url = {
+                    executor.submit(self.fetch_streams_from_url, url): url 
+                    for url in self.config.source_urls
+                }
                 
-                for batch_start in range(0, len(sorted_urls), batch_size):
+                for future in as_completed(future_to_url):
                     if not self._is_running:
                         break
-                        
-                    batch_urls = sorted_urls[batch_start:batch_start + batch_size]
-                    future_to_url = {
-                        executor.submit(self.fetch_streams_from_url, url): url 
-                        for url in batch_urls
-                    }
+                    url = future_to_url[future]
+                    try:
+                        content = future.result(timeout=self.config.request_timeout + 20)
+                        if content:
+                            all_streams.append(content)
+                            successful_sources += 1
+                            print("✅", end="", flush=True)
+                        else:
+                            print("❌", end="", flush=True)
+                    except Exception as e:
+                        logging.debug(f"抓取失败: {url} - {e}")
+                        print("💥", end="", flush=True)
                     
-                    for future in as_completed(future_to_url):
-                        if not self._is_running:
-                            break
-                        url = future_to_url[future]
-                        try:
-                            content = future.result(timeout=self.config.request_timeout + 20)
-                            if content:
-                                all_streams.append(content)
-                                successful_sources += 1
-                                print("✅", end="", flush=True)
-                            else:
-                                print("❌", end="", flush=True)
-                        except Exception as e:
-                            logging.debug(f"抓取失败: {url} - {e}")
-                            print("💥", end="", flush=True)
-                        
-                        # 实时进度更新
-                        current_total = batch_start + len(future_to_url)
-                        self._print_progress_bar(
-                            current_total, 
-                            len(sorted_urls), 
-                            "   抓取进度", 
-                            f"{successful_sources}成功"
-                        )
+                    # 实时进度更新
+                    self._print_progress_bar(
+                        len(all_streams), 
+                        len(self.config.source_urls), 
+                        "   抓取进度", 
+                        f"{successful_sources}成功"
+                    )
         
         except Exception as e:
             logging.error(f"❌ 并发获取失败: {e}")
@@ -785,16 +834,15 @@ class IPTVManager:
             total_content = "\n".join(unique_lines)
         
         self.progress.update_substep(
-            f"抓取完成: {successful_sources}/{len(sorted_urls)} 个源, " 
-            f"总数据: {len(total_content)} 字符, "
-            f"去重后: {len(total_content.splitlines())} 行", 
+            f"抓取完成: {successful_sources}/{len(self.config.source_urls)} 个源, " 
+            f"总数据: {len(total_content)} 字符", 
             "✅"
         )
         
         return total_content
 
     def _extract_program_name(self, extinf_line: str) -> str:
-        """从EXTINF行提取节目名称 - 增强版本"""
+        """从EXTINF行提取节目名称"""
         if not extinf_line.startswith('#EXTINF'):
             return "未知频道"
         try:
@@ -817,7 +865,7 @@ class IPTVManager:
         return "未知频道"
 
     def parse_m3u(self, content: str) -> List[StreamInfo]:
-        """解析M3U格式内容 - 优化版本"""
+        """解析M3U格式内容"""
         if not content:
             return []
         
@@ -866,7 +914,7 @@ class IPTVManager:
         return streams
 
     def parse_txt(self, content: str) -> List[StreamInfo]:
-        """解析TXT格式内容 - 优化版本"""
+        """解析TXT格式内容"""
         if not content:
             return []
         
@@ -981,8 +1029,8 @@ class IPTVManager:
             return pd.DataFrame()
 
     def speed_test_and_filter(self, sources_df: pd.DataFrame) -> pd.DataFrame:
-        """测速和过滤 - 第二步：智能测速"""
-        self.progress.update_substep("启动智能测速...", "⏱️")
+        """测速和过滤 - 第二步：增强测速"""
+        self.progress.update_substep("启动增强测速...", "⏱️")
         
         if sources_df.empty:
             logging.error("❌ 没有需要测速的源")
@@ -1025,13 +1073,13 @@ class IPTVManager:
             if result.accessible:
                 accessible_count += 1
                 # 智能速度等级显示
-                if result.speed < 1.5: 
+                if result.speed < 1.0: 
                     print("🚀", end="", flush=True)  # 极快
-                elif result.speed < 3: 
+                elif result.speed < 2.0: 
                     print("⚡", end="", flush=True)  # 快速
-                elif result.speed < 6: 
+                elif result.speed < 4.0: 
                     print("✅", end="", flush=True)  # 可用
-                elif result.speed < 10: 
+                elif result.speed < 8.0: 
                     print("🐢", end="", flush=True)  # 慢速
                 else: 
                     print("🔴", end="", flush=True)  # 超慢
@@ -1079,11 +1127,16 @@ class IPTVManager:
             avg_speed = accessible_df['speed'].mean() if not accessible_df.empty else 0
             total_filtered = initial_count - len(accessible_df)
             
+            # 获取测速引擎统计
+            speed_stats = self.speed_engine.get_test_statistics()
+            
             self.progress.update_substep(
                 f"测速完成: {len(accessible_df)}/{len(sources_df)} 可用 "
                 f"(平均{avg_speed:.2f}秒, 过滤{total_filtered}个)", 
                 "✅"
             )
+            
+            logging.info(f"📊 测速详情: 超时{speed_stats['timeout_count']}次, 连接错误{speed_stats['connection_error_count']}次")
             
             return accessible_df
             
@@ -1138,7 +1191,7 @@ class IPTVManager:
         return categories
 
     def clean_channel_name(self, name: str) -> str:
-        """频道名称清理 - 智能版本"""
+        """频道名称清理"""
         if not name:
             return ""
         try:
@@ -1163,7 +1216,7 @@ class IPTVManager:
             return name.lower() if name else ""
 
     def similarity_score(self, str1: str, str2: str) -> int:
-        """计算两个字符串的相似度分数（0-100） - 智能优化版本"""
+        """计算两个字符串的相似度分数（0-100）"""
         if not str1 or not str2:
             return 0
         try:
@@ -1327,7 +1380,7 @@ class IPTVManager:
         try:
             with open(self.config.output_txt, 'w', encoding='utf-8') as f:
                 f.write("# IPTV播放列表 - 生成时间: " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n")
-                f.write("# 流程: 智能抓取 → 精准测速 → 模板匹配 → 生成文件\n")
+                f.write("# 流程: URL抓取 → 精准测速 → 模板匹配 → 生成文件\n")
                 f.write("# 每个频道提供多个备用源，按速度排序\n# 格式: 频道名称,直播流地址\n\n")
                 
                 for category, channels in final_data.items():
@@ -1349,20 +1402,20 @@ class IPTVManager:
             with open(self.config.output_m3u, 'w', encoding='utf-8') as f:
                 f.write("#EXTM3U\n#PLAYLIST: IPTV智能列表\n")
                 f.write("#GENERATED: " + time.strftime("%Y-%m-%d %H:%M:%S") + "\n")
-                f.write("#PROCESS: 智能抓取→精准测速→模板匹配→生成文件\n")
+                f.write("#PROCESS: URL抓取→精准测速→模板匹配→生成文件\n")
                 
                 for category, channels in final_data.items():
                     for channel, sources in channels.items():
                         for idx, source in enumerate(sources, 1):
                             # 智能质量标识
                             quality_info = ""
-                            if source['speed'] < 1.5:
+                            if source['speed'] < 1.0:
                                 quality_info = " [极速]"
-                            elif source['speed'] < 3:
+                            elif source['speed'] < 2.0:
                                 quality_info = " [快速]"
-                            elif source['speed'] < 6:
+                            elif source['speed'] < 4.0:
                                 quality_info = " [稳定]"
-                            elif source['speed'] < 10:
+                            elif source['speed'] < 8.0:
                                 quality_info = " [慢速]"
                             
                             display_name = f"{channel}{quality_info}" if len(sources) == 1 else f"{channel} [源{idx}]{quality_info}"
@@ -1527,8 +1580,8 @@ CCTV-5高清
     def run(self) -> None:
         """主运行函数 - 按照优化后的流程执行"""
         print("=" * 60)
-        print("🎬 IPTV智能管理工具 - GitHub Actions优化版 v6.1")
-        print("🔧 流程: 智能抓取 → 精准测速 → 模板匹配 → 生成文件")
+        print("🎬 IPTV智能管理工具 - 测速优化版 v6.2")
+        print("🔧 流程: URL抓取 → 精准测速 → 模板匹配 → 生成文件")
         print("=" * 60)
         
         start_time = time.time()
@@ -1537,9 +1590,9 @@ CCTV-5高清
             # 定义优化后的处理步骤
             step_names = [
                 "环境准备和备份",
-                "智能多源抓取", 
+                "URL数据抓取", 
                 "解析原始数据",
-                "精准测速过滤",
+                "增强测速过滤",
                 "加载频道模板", 
                 "智能匹配排序",
                 "生成播放列表",
@@ -1560,8 +1613,8 @@ CCTV-5高清
                     print("💡 请编辑模板文件后重新运行程序")
                     return
             
-            # 步骤2: 智能多源抓取
-            self.progress.next_step("从多个源抓取流数据")
+            # 步骤2: URL数据抓取
+            self.progress.next_step("从配置的URL列表抓取数据")
             content = self.fetch_all_streams()
             if not content:
                 logging.error("❌ 抓取阶段失败，无法继续")
@@ -1574,8 +1627,8 @@ CCTV-5高清
                 logging.error("❌ 解析阶段失败，无法继续")
                 return
             
-            # 步骤4: 精准测速和过滤
-            self.progress.next_step("精准测速和智能筛选")
+            # 步骤4: 增强测速和过滤
+            self.progress.next_step("增强测速和智能筛选")
             speed_tested_df = self.speed_test_and_filter(sources_df)
             if speed_tested_df.empty:
                 logging.error("❌ 测速阶段失败，没有可用的源")
@@ -1633,8 +1686,8 @@ CCTV-5高清
 
 
 def main():
-    """主函数 - GitHub Actions 优化版"""
-    # 简化的日志配置，适合GitHub Actions
+    """主函数"""
+    # 配置日志
     logging.basicConfig(
         level=logging.INFO,
         format='%(levelname)s: %(message)s',
@@ -1646,7 +1699,6 @@ def main():
         manager.run()
     except Exception as e:
         logging.error(f"程序运行失败: {e}")
-        # 在GitHub Actions中，非零退出码会标记工作流为失败
         sys.exit(1)
 
 
