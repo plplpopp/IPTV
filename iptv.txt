@@ -1,20 +1,50 @@
+# IPTV播放列表 - 生成时间: 2025-10-14 09:22:49
+# 流程: URL抓取 → 精准测速 → 模板匹配 → 生成文件
+# 每个频道提供多个备用源，按速度排序
+# 格式: 频道名称,直播流地址
 
 央视频道,#genre#
-CCTV1,https://cc06.tv12.xyz/1.m3u8 # 速度: 1.38MB/s
-CCTV2,https://cc06.tv12.xyz/2.m3u8 # 速度: 1.13MB/s
-CCTV3,https://cc06.tv12.xyz/3.m3u8 # 速度: 3.19MB/s
-CCTV4,https://cc06.tv12.xyz/4.m3u8 # 速度: 3.09MB/s
-CCTV5,https://cc06.tv12.xyz/5.m3u8 # 速度: 2.22MB/s
-CCTV5+,https://cc06.tv12.xyz/6.m3u8 # 速度: 3.24MB/s
-CCTV6,https://cc06.tv12.xyz/7.m3u8 # 速度: 2.95MB/s
-CCTV7,https://cc06.tv12.xyz/8.m3u8 # 速度: 2.27MB/s
-CCTV8,https://cc06.tv12.xyz/9.m3u8 # 速度: 1.86MB/s
-CCTV9,https://cc06.tv12.xyz/10.m3u8 # 速度: 3.23MB/s
+CCTV-1,https://cc06.tv12.xyz/6.m3u8
+CCTV-1,https://cc06.tv12.xyz/3.m3u8
+CCTV-1,https://cc06.tv12.xyz/9.m3u8
+CCTV-1,https://cc06.tv12.xyz/7.m3u8
+CCTV-1,https://cc06.tv12.xyz/4.m3u8
+CCTV-2,https://cc06.tv12.xyz/2.m3u8
+CCTV-3,https://cc06.tv12.xyz/3.m3u8
+CCTV-4,https://cc06.tv12.xyz/4.m3u8
+CCTV-5,https://cc06.tv12.xyz/6.m3u8
+CCTV-5,https://cc06.tv12.xyz/5.m3u8
+CCTV-5+,https://cc06.tv12.xyz/6.m3u8
+CCTV-5+,https://cc06.tv12.xyz/5.m3u8
+CCTV-6,https://cc06.tv12.xyz/7.m3u8
+CCTV-7,https://cc06.tv12.xyz/8.m3u8
+CCTV-8,https://cc06.tv12.xyz/9.m3u8
+CCTV-9,https://cc06.tv12.xyz/6.m3u8
+CCTV-9,https://cc06.tv12.xyz/3.m3u8
+CCTV-9,https://cc06.tv12.xyz/9.m3u8
+CCTV-9,https://cc06.tv12.xyz/7.m3u8
+CCTV-9,https://cc06.tv12.xyz/4.m3u8
+CCTV-10,https://cc06.tv12.xyz/6.m3u8
+CCTV-10,https://cc06.tv12.xyz/3.m3u8
+CCTV-10,https://cc06.tv12.xyz/9.m3u8
+CCTV-10,https://cc06.tv12.xyz/7.m3u8
+CCTV-10,https://cc06.tv12.xyz/4.m3u8
+CCTV-11,https://cc06.tv12.xyz/6.m3u8
+CCTV-11,https://cc06.tv12.xyz/3.m3u8
+CCTV-11,https://cc06.tv12.xyz/9.m3u8
+CCTV-11,https://cc06.tv12.xyz/7.m3u8
+CCTV-11,https://cc06.tv12.xyz/4.m3u8
+CCTV-12,https://cc06.tv12.xyz/2.m3u8
+CCTV-13,https://cc06.tv12.xyz/3.m3u8
+CCTV-14,https://cc06.tv12.xyz/4.m3u8
+CCTV-15,https://cc06.tv12.xyz/6.m3u8
+CCTV-15,https://cc06.tv12.xyz/5.m3u8
+CCTV-16,https://cc06.tv12.xyz/7.m3u8
+CCTV-17,https://cc06.tv12.xyz/8.m3u8
 
 卫视频道,#genre#
-广东卫视,https://txmov2.a.kwimgs.com/upic/2023/01/26/09/BMjAyMzAxMjYwOTE3NDVfNzM5MzQzNzIyXzk0NjI1OTUwNTA3XzBfMw==_b_B81ddda927d33445d544befd008e60109.mp4 # 速度: 0.64MB/s
-东方卫视,https://txmov2.a.kwimgs.com/bs3/video-hls/5219953535631090825_hlsb.m3u8 # 速度: 1.92MB/s
+浙江卫视,https://cc06.tv12.xyz/1.m3u8
+黑龙江卫视,https://cc06.tv12.xyz/1.m3u8
+江苏卫视,https://cc06.tv12.xyz/1.m3u8
+江西卫视,https://cc06.tv12.xyz/1.m3u8
 
-其他频道,#genre#
-武侠电影,http://iptv.jxpan.vip:18888/aio/huya/11342427 # 速度: 0.46MB/s
-猫和老鼠,http://iptv.jxpan.vip:18888/aio/huya/11352879 # 速度: 0.32MB/s
