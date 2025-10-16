@@ -1,46 +1,42 @@
-# IPTV播放列表 - 生成时间: 2025-10-17 03:11:50
+# IPTV播放列表 - 生成时间: 2025-10-17 03:55:02
 # 流程: URL抓取 → 精准测速 → 模板匹配 → 生成文件
 # 每个频道提供多个备用源，按速度排序
 # 格式: 频道名称,直播流地址
 
 央视频道,#genre#
-CCTV-1,https://cc06.tv12.xyz/4.m3u8
-CCTV-1,https://cc06.tv12.xyz/3.m3u8
-CCTV-1,https://cc06.tv12.xyz/5.m3u8
-CCTV-1,https://cc06.tv12.xyz/6.m3u8
-CCTV-1,https://cc06.tv12.xyz/9.m3u8
-CCTV-2,https://cc06.tv12.xyz/2.m3u8
-CCTV-3,https://cc06.tv12.xyz/3.m3u8
-CCTV-4,https://cc06.tv12.xyz/4.m3u8
+CCTV-1,https://cc06.tv12.xyz/1.m3u8
+CCTV-2,https://cc06.tv12.xyz/5.m3u8
+CCTV-2,https://cc06.tv12.xyz/7.m3u8
+CCTV-2,https://cc06.tv12.xyz/1.m3u8
+CCTV-2,https://cc06.tv12.xyz/8.m3u8
+CCTV-2,https://cc06.tv12.xyz/9.m3u8
+CCTV-3,https://cc06.tv12.xyz/5.m3u8
+CCTV-3,https://cc06.tv12.xyz/7.m3u8
+CCTV-3,https://cc06.tv12.xyz/1.m3u8
+CCTV-3,https://cc06.tv12.xyz/8.m3u8
+CCTV-3,https://cc06.tv12.xyz/9.m3u8
+CCTV-4,https://cc06.tv12.xyz/5.m3u8
+CCTV-4,https://cc06.tv12.xyz/7.m3u8
+CCTV-4,https://cc06.tv12.xyz/1.m3u8
+CCTV-4,https://cc06.tv12.xyz/8.m3u8
+CCTV-4,https://cc06.tv12.xyz/9.m3u8
 CCTV-5,https://cc06.tv12.xyz/5.m3u8
-CCTV-5,https://cc06.tv12.xyz/6.m3u8
 CCTV-5+,https://cc06.tv12.xyz/5.m3u8
-CCTV-5+,https://cc06.tv12.xyz/6.m3u8
 CCTV-6,https://cc06.tv12.xyz/7.m3u8
 CCTV-7,https://cc06.tv12.xyz/8.m3u8
 CCTV-8,https://cc06.tv12.xyz/9.m3u8
 CCTV-9,https://cc06.tv12.xyz/10.m3u8
-CCTV-10,https://cc06.tv12.xyz/4.m3u8
-CCTV-10,https://cc06.tv12.xyz/3.m3u8
-CCTV-10,https://cc06.tv12.xyz/5.m3u8
-CCTV-10,https://cc06.tv12.xyz/6.m3u8
-CCTV-10,https://cc06.tv12.xyz/9.m3u8
-CCTV-11,https://cc06.tv12.xyz/4.m3u8
-CCTV-11,https://cc06.tv12.xyz/3.m3u8
-CCTV-11,https://cc06.tv12.xyz/5.m3u8
-CCTV-11,https://cc06.tv12.xyz/6.m3u8
-CCTV-11,https://cc06.tv12.xyz/9.m3u8
-CCTV-12,https://cc06.tv12.xyz/2.m3u8
-CCTV-13,https://cc06.tv12.xyz/3.m3u8
-CCTV-14,https://cc06.tv12.xyz/4.m3u8
+CCTV-10,https://cc06.tv12.xyz/1.m3u8
+CCTV-11,https://cc06.tv12.xyz/1.m3u8
+CCTV-12,https://cc06.tv12.xyz/1.m3u8
+CCTV-13,https://cc06.tv12.xyz/1.m3u8
+CCTV-14,https://cc06.tv12.xyz/1.m3u8
 CCTV-15,https://cc06.tv12.xyz/5.m3u8
-CCTV-15,https://cc06.tv12.xyz/6.m3u8
+CCTV-15,https://cc06.tv12.xyz/1.m3u8
 CCTV-16,https://cc06.tv12.xyz/7.m3u8
+CCTV-16,https://cc06.tv12.xyz/1.m3u8
+CCTV-17,https://cc06.tv12.xyz/1.m3u8
 CCTV-17,https://cc06.tv12.xyz/8.m3u8
 
 卫视频道,#genre#
-浙江卫视,https://cc06.tv12.xyz/1.m3u8
-黑龙江卫视,https://cc06.tv12.xyz/1.m3u8
-江苏卫视,https://cc06.tv12.xyz/1.m3u8
-江西卫视,https://cc06.tv12.xyz/1.m3u8
 
