@@ -1,78 +1,78 @@
 #EXTM3U
 #PLAYLIST: IPTV智能列表
-#GENERATED: 2025-10-17 01:58:26
+#GENERATED: 2025-10-17 03:11:50
 #PROCESS: URL抓取→精准测速→模板匹配→生成文件
 #EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 [源1] [极速]
-https://cc06.tv12.xyz/3.m3u8
-#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 [源2] [极速]
 https://cc06.tv12.xyz/4.m3u8
+#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 [源2] [极速]
+https://cc06.tv12.xyz/3.m3u8
 #EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 [源3] [极速]
-https://cc06.tv12.xyz/9.m3u8
+https://cc06.tv12.xyz/5.m3u8
 #EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 [源4] [极速]
 https://cc06.tv12.xyz/6.m3u8
 #EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 [源5] [极速]
-https://cc06.tv12.xyz/2.m3u8
-#EXTINF:-1 tvg-name="CCTV-2" group-title="央视频道",CCTV-2 [极速]
+https://cc06.tv12.xyz/9.m3u8
+#EXTINF:-1 tvg-name="CCTV-2" group-title="央视频道",CCTV-2 [快速]
 https://cc06.tv12.xyz/2.m3u8
 #EXTINF:-1 tvg-name="CCTV-3" group-title="央视频道",CCTV-3 [极速]
 https://cc06.tv12.xyz/3.m3u8
 #EXTINF:-1 tvg-name="CCTV-4" group-title="央视频道",CCTV-4 [极速]
 https://cc06.tv12.xyz/4.m3u8
 #EXTINF:-1 tvg-name="CCTV-5" group-title="央视频道",CCTV-5 [源1] [极速]
-https://cc06.tv12.xyz/6.m3u8
-#EXTINF:-1 tvg-name="CCTV-5" group-title="央视频道",CCTV-5 [源2] [慢速]
 https://cc06.tv12.xyz/5.m3u8
+#EXTINF:-1 tvg-name="CCTV-5" group-title="央视频道",CCTV-5 [源2] [极速]
+https://cc06.tv12.xyz/6.m3u8
 #EXTINF:-1 tvg-name="CCTV-5+" group-title="央视频道",CCTV-5+ [源1] [极速]
-https://cc06.tv12.xyz/6.m3u8
-#EXTINF:-1 tvg-name="CCTV-5+" group-title="央视频道",CCTV-5+ [源2] [慢速]
 https://cc06.tv12.xyz/5.m3u8
+#EXTINF:-1 tvg-name="CCTV-5+" group-title="央视频道",CCTV-5+ [源2] [极速]
+https://cc06.tv12.xyz/6.m3u8
 #EXTINF:-1 tvg-name="CCTV-6" group-title="央视频道",CCTV-6 [快速]
 https://cc06.tv12.xyz/7.m3u8
-#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 [极速]
+#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 [快速]
 https://cc06.tv12.xyz/8.m3u8
 #EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 [极速]
 https://cc06.tv12.xyz/9.m3u8
-#EXTINF:-1 tvg-name="CCTV-9" group-title="央视频道",CCTV-9 [极速]
+#EXTINF:-1 tvg-name="CCTV-9" group-title="央视频道",CCTV-9 [快速]
 https://cc06.tv12.xyz/10.m3u8
 #EXTINF:-1 tvg-name="CCTV-10" group-title="央视频道",CCTV-10 [源1] [极速]
-https://cc06.tv12.xyz/3.m3u8
-#EXTINF:-1 tvg-name="CCTV-10" group-title="央视频道",CCTV-10 [源2] [极速]
 https://cc06.tv12.xyz/4.m3u8
+#EXTINF:-1 tvg-name="CCTV-10" group-title="央视频道",CCTV-10 [源2] [极速]
+https://cc06.tv12.xyz/3.m3u8
 #EXTINF:-1 tvg-name="CCTV-10" group-title="央视频道",CCTV-10 [源3] [极速]
-https://cc06.tv12.xyz/9.m3u8
+https://cc06.tv12.xyz/5.m3u8
 #EXTINF:-1 tvg-name="CCTV-10" group-title="央视频道",CCTV-10 [源4] [极速]
 https://cc06.tv12.xyz/6.m3u8
 #EXTINF:-1 tvg-name="CCTV-10" group-title="央视频道",CCTV-10 [源5] [极速]
-https://cc06.tv12.xyz/2.m3u8
-#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 [源1] [极速]
-https://cc06.tv12.xyz/3.m3u8
-#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 [源2] [极速]
-https://cc06.tv12.xyz/4.m3u8
-#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 [源3] [极速]
 https://cc06.tv12.xyz/9.m3u8
+#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 [源1] [极速]
+https://cc06.tv12.xyz/4.m3u8
+#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 [源2] [极速]
+https://cc06.tv12.xyz/3.m3u8
+#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 [源3] [极速]
+https://cc06.tv12.xyz/5.m3u8
 #EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 [源4] [极速]
 https://cc06.tv12.xyz/6.m3u8
 #EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 [源5] [极速]
-https://cc06.tv12.xyz/2.m3u8
-#EXTINF:-1 tvg-name="CCTV-12" group-title="央视频道",CCTV-12 [极速]
+https://cc06.tv12.xyz/9.m3u8
+#EXTINF:-1 tvg-name="CCTV-12" group-title="央视频道",CCTV-12 [快速]
 https://cc06.tv12.xyz/2.m3u8
 #EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 [极速]
 https://cc06.tv12.xyz/3.m3u8
 #EXTINF:-1 tvg-name="CCTV-14" group-title="央视频道",CCTV-14 [极速]
 https://cc06.tv12.xyz/4.m3u8
 #EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 [源1] [极速]
-https://cc06.tv12.xyz/6.m3u8
-#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 [源2] [慢速]
 https://cc06.tv12.xyz/5.m3u8
+#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 [源2] [极速]
+https://cc06.tv12.xyz/6.m3u8
 #EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 [快速]
 https://cc06.tv12.xyz/7.m3u8
-#EXTINF:-1 tvg-name="CCTV-17" group-title="央视频道",CCTV-17 [极速]
+#EXTINF:-1 tvg-name="CCTV-17" group-title="央视频道",CCTV-17 [快速]
 https://cc06.tv12.xyz/8.m3u8
-#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 [极速]
+#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 [快速]
 https://cc06.tv12.xyz/1.m3u8
-#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 [极速]
+#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 [快速]
 https://cc06.tv12.xyz/1.m3u8
-#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 [极速]
+#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 [快速]
 https://cc06.tv12.xyz/1.m3u8
-#EXTINF:-1 tvg-name="江西卫视" group-title="卫视频道",江西卫视 [极速]
+#EXTINF:-1 tvg-name="江西卫视" group-title="卫视频道",江西卫视 [快速]
 https://cc06.tv12.xyz/1.m3u8
