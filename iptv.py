@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-增强版IPTV频道搜索工具 - 完整优化版本
-支持多种IPTV源格式，自动检测和调试
+增强版IPTV频道搜索工具 - 针对streaml.freetv.fun优化
 """
 
 import requests
@@ -109,7 +108,7 @@ class AdvancedIPTVSearcher:
             'max_channels_to_test': 200,
             
             # 匹配配置
-            'fuzzy_match_threshold': 65,
+            'fuzzy_match_threshold': 60,
             'min_channel_name_length': 2,
             'max_channel_name_length': 100,
             
@@ -143,46 +142,6 @@ class AdvancedIPTVSearcher:
             "嘉佳卡通", "优漫卡通", "炫动卡通"
         ]
 
-    def analyze_content_format(self, content: str) -> Dict:
-        """分析内容格式并返回最佳提取策略"""
-        analysis = {
-            'format_type': 'unknown',
-            'total_lines': len(content.splitlines()),
-            'content_length': len(content),
-            'url_count': len(re.findall(r'https?://[^\s<>"\'{}|\\^`\[\]]+', content)),
-            'm3u_style': False,
-            'json_style': False,
-            'csv_style': False,
-            'recommended_patterns': []
-        }
-        
-        # 检测M3U格式
-        if '#EXTM3U' in content.upper():
-            analysis['format_type'] = 'm3u'
-            analysis['m3u_style'] = True
-            analysis['recommended_patterns'].append('m3u_standard')
-        
-        # 检测JSON格式
-        if content.strip().startswith('{') or content.strip().startswith('['):
-            analysis['format_type'] = 'json'
-            analysis['json_style'] = True
-            analysis['recommended_patterns'].append('json_format')
-        
-        # 检测CSV格式
-        lines = content.splitlines()
-        if lines and ',' in lines[0] and any('http' in line for line in lines[:10]):
-            analysis['format_type'] = 'csv'
-            analysis['csv_style'] = True
-            analysis['recommended_patterns'].append('csv_format')
-        
-        # 如果没有明确格式，尝试自动检测
-        if analysis['format_type'] == 'unknown':
-            if analysis['url_count'] > 0:
-                analysis['format_type'] = 'mixed'
-                analysis['recommended_patterns'].extend(['url_only', 'name_url_pairs'])
-        
-        return analysis
-
     def fetch_content(self) -> Optional[str]:
         """获取页面内容"""
         self.logger.info(f"开始获取IPTV源: {self.base_url}")
@@ -207,6 +166,11 @@ class AdvancedIPTVSearcher:
             fetch_time = time.time() - start_time
             self.logger.info(f"成功获取内容: {len(response.text)} 字符, 耗时: {fetch_time:.2f}s")
             
+            # 调试：保存原始内容用于分析
+            with open('debug_content.txt', 'w', encoding='utf-8') as f:
+                f.write(response.text)
+            self.logger.info("原始内容已保存到 debug_content.txt")
+            
             return response.text
             
         except requests.exceptions.Timeout:
@@ -218,88 +182,128 @@ class AdvancedIPTVSearcher:
         
         return None
 
-    def extract_channels_advanced(self, content: str) -> List[Dict]:
-        """高级频道提取方法"""
+    def extract_channels_optimized(self, content: str) -> List[Dict]:
+        """针对streaml.freetv.fun优化的频道提取方法"""
         start_time = time.time()
         channels = []
         
         if not content:
             return channels
         
-        # 分析内容格式
-        analysis = self.analyze_content_format(content)
-        self.logger.info(f"内容格式分析: {analysis['format_type']}")
+        self.logger.info("开始分析内容格式...")
         
-        # 根据分析结果选择提取模式
-        extraction_patterns = self._get_extraction_patterns(analysis)
+        # 分析内容中的URL模式
+        lines = content.splitlines()
+        self.logger.info(f"内容共 {len(lines)} 行")
+        
+        # 调试：显示前几行内容
+        for i, line in enumerate(lines[:10]):
+            self.logger.debug(f"第{i+1}行: {line[:100]}...")
+        
+        # 针对streaml.freetv.fun的特定格式
+        patterns = [
+            # 格式: 频道名称,https://streaml.freetv.fun/xxxx
+            (r'^([^,\r\n]+?)\s*,\s*(https?://streaml\.freetv\.fun/[^\s,\r\n]+)', 'streaml_freetv_format'),
+            
+            # 通用格式: 名称,URL
+            (r'^([^,\r\n]+?)\s*,\s*(https?://[^\s,\r\n]+)', 'comma_separated'),
+            
+            # 格式: 名称 URL (空格分隔)
+            (r'^([^,\r\n]+?)\s+(https?://[^\s]+)', 'space_separated'),
+            
+            # 包含CCTV或卫视关键词的行
+            (r'([Cc][Cc][Tt][Vv][^,\r\n]*?|卫视[^,\r\n]*?)[^https]*(https?://[^\s]+)', 'cctv_keyword'),
+        ]
         
         seen_channels: Set[str] = set()
+        total_matches = 0
         
-        for pattern_name, pattern in extraction_patterns:
+        for pattern, pattern_name in patterns:
             try:
                 matches = re.findall(pattern, content, re.IGNORECASE | re.MULTILINE)
-                self.logger.debug(f"模式 '{pattern_name}' 找到 {len(matches)} 个匹配")
+                self.logger.info(f"模式 '{pattern_name}' 找到 {len(matches)} 个匹配")
+                total_matches += len(matches)
                 
                 for match in matches:
                     if len(match) == 2:
                         name, url = match
                     else:
-                        # 处理单URL模式
-                        url = match[0] if match else None
-                        name = self._generate_channel_name(url)
+                        continue
                     
-                    if name and url:
-                        channel = self._process_channel_data(name, url)
+                    channel = self._process_channel_data(name, url)
+                    if channel and self._is_valid_channel(channel):
+                        channel_key = self._get_channel_key(channel)
+                        if channel_key not in seen_channels:
+                            seen_channels.add(channel_key)
+                            channels.append(channel)
+                            self.logger.debug(f"提取频道: {channel['name']} -> {channel['url']}")
+                            
+            except Exception as e:
+                self.logger.warning(f"模式 '{pattern_name}' 处理失败: {e}")
+                continue
+        
+        # 如果常规模式没有找到，尝试逐行分析
+        if not channels:
+            channels = self._line_by_line_analysis(lines)
+        
+        self.stats['total_channels_found'] = len(channels)
+        self.stats['extraction_time'] = time.time() - start_time
+        
+        self.logger.info(f"频道提取完成: 找到 {len(channels)} 个频道, 总匹配数: {total_matches}, 耗时: {self.stats['extraction_time']:.2f}s")
+        return channels
+
+    def _line_by_line_analysis(self, lines: List[str]) -> List[Dict]:
+        """逐行分析内容"""
+        channels = []
+        seen_channels: Set[str] = set()
+        
+        self.logger.info("开始逐行分析内容...")
+        
+        for line_num, line in enumerate(lines, 1):
+            line = line.strip()
+            if not line or len(line) < 10:
+                continue
+                
+            # 跳过明显的HTML标签
+            if line.startswith('<') and line.endswith('>'):
+                continue
+                
+            # 查找包含streaml.freetv.fun的行
+            if 'streaml.freetv.fun' in line:
+                # 尝试多种分割方式
+                parts = line.split(',')
+                if len(parts) >= 2:
+                    # 最后一个部分应该是URL
+                    url_candidate = parts[-1].strip()
+                    name_candidate = ','.join(parts[:-1]).strip()
+                    
+                    if url_candidate.startswith('http') and name_candidate:
+                        channel = self._process_channel_data(name_candidate, url_candidate)
                         if channel and self._is_valid_channel(channel):
                             channel_key = self._get_channel_key(channel)
                             if channel_key not in seen_channels:
                                 seen_channels.add(channel_key)
                                 channels.append(channel)
+                                self.logger.debug(f"行{line_num}: {channel['name']}")
+                
+                # 尝试空格分割
+                else:
+                    parts = line.split()
+                    if len(parts) >= 2:
+                        for i in range(len(parts) - 1):
+                            if parts[i+1].startswith('http') and 'streaml.freetv.fun' in parts[i+1]:
+                                name_candidate = ' '.join(parts[:i+1])
+                                url_candidate = parts[i+1]
                                 
-            except Exception as e:
-                self.logger.warning(f"模式 '{pattern_name}' 处理失败: {e}")
-                continue
+                                channel = self._process_channel_data(name_candidate, url_candidate)
+                                if channel and self._is_valid_channel(channel):
+                                    channel_key = self._get_channel_key(channel)
+                                    if channel_key not in seen_channels:
+                                        seen_channels.add(channel_key)
+                                        channels.append(channel)
+                                        self.logger.debug(f"行{line_num}: {channel['name']}")
         
-        # 如果没有找到频道，使用备选方法
-        if not channels:
-            channels = self._extract_fallback_channels(content)
-        
-        self.stats['total_channels_found'] = len(channels)
-        self.stats['extraction_time'] = time.time() - start_time
-        
-        self.logger.info(f"频道提取完成: 找到 {len(channels)} 个频道, 耗时: {self.stats['extraction_time']:.2f}s")
         return channels
-
-    def _get_extraction_patterns(self, analysis: Dict) -> List[Tuple[str, str]]:
-        """根据分析结果获取提取模式"""
-        patterns = []
-        
-        # M3U格式模式
-        patterns.extend([
-            ('m3u_standard', r'#EXTINF:.*?,(.+?)\s*\n\s*(https?://[^\s]+)'),
-            ('m3u_simple', r'#EXTINF:.*?,(.+?)\s*[\r\n]+\s*(https?://[^\s]+)'),
-        ])
-        
-        # 通用格式模式
-        patterns.extend([
-            ('name_url_comma', r'([^,\r\n]+?)\s*,\s*(https?://[^\s,\r\n]+)'),
-            ('name_url_space', r'([^,\r\n]+?)\s+(https?://[^\s]+)'),
-            ('quoted_pairs', r'["\']([^"\']+?)["\']\s*[,\|]\s*["\'](https?://[^"\']+)["\']'),
-        ])
-        
-        # JSON格式模式
-        patterns.extend([
-            ('json_name_url', r'"name"\s*:\s*"([^"]+)"[^}]*"url"\s*:\s*"([^"]+)"'),
-            ('json_title_url', r'"title"\s*:\s*"([^"]+)"[^}]*"url"\s*:\s*"([^"]+)"'),
-        ])
-        
-        # URL-only模式（最后尝试）
-        patterns.extend([
-            ('url_only_name', r'([Cc][Cc][Tt][Vv][^,\r\n]*?|卫视[^,\r\n]*?)[^https]*(https?://[^\s]+)'),
-            ('url_only', r'(https?://[^\s<>"\'{}|\\^`\[\]]+)'),
-        ])
-        
-        return patterns
 
     def _process_channel_data(self, name: str, url: str) -> Dict:
         """处理频道数据"""
@@ -347,15 +351,6 @@ class AdvancedIPTVSearcher:
         url = re.sub(r'[\s\r\n]+', '', url)
         return url
 
-    def _generate_channel_name(self, url: str) -> str:
-        """根据URL生成频道名称"""
-        try:
-            parsed = urlparse(url)
-            domain = parsed.netloc.replace('www.', '')
-            return f"Channel_{domain}"
-        except:
-            return f"Channel_{hash(url) % 10000:04d}"
-
     def _is_valid_channel(self, channel: Dict) -> bool:
         """验证频道有效性"""
         name = channel['name']
@@ -383,10 +378,14 @@ class AdvancedIPTVSearcher:
         if not url.startswith(('http://', 'https://')):
             return False
         
-        # 排除常见非视频URL
+        # 特别允许streaml.freetv.fun域名
+        if 'streaml.freetv.fun' in url_lower:
+            return True
+        
+        # 排除其他常见非视频URL
         non_video_domains = [
             'google', 'baidu', 'qq.com', 'github', 'localhost',
-            'wikipedia', 'twitter', 'facebook', 'youtube.com'
+            'wikipedia', 'twitter', 'facebook'
         ]
         
         if any(domain in url_lower for domain in non_video_domains):
@@ -432,29 +431,10 @@ class AdvancedIPTVSearcher:
         text = f"{name} {url}".lower()
         return any(indicator in text for indicator in live_indicators)
 
-    def _extract_fallback_channels(self, content: str) -> List[Dict]:
-        """备选频道提取方法"""
-        channels = []
-        url_pattern = r'(https?://[^\s<>"\'{}|\\^`\[\]]+)'
-        urls = re.findall(url_pattern, content)
-        
-        self.logger.info(f"使用备选方法提取URL: 找到 {len(urls)} 个URL")
-        
-        # 限制处理数量
-        urls = urls[:self.config['max_channels_to_test']]
-        
-        for i, url in enumerate(urls):
-            channel_name = self._generate_channel_name(url)
-            channel = self._process_channel_data(channel_name, url)
-            if self._is_valid_channel(channel):
-                channels.append(channel)
-        
-        return channels
-
     def test_channel_speed(self, channel: Dict) -> Dict:
         """测试频道速度和质量"""
         if not self.config['enable_speed_test']:
-            channel['score'] = 0.5  # 默认分数
+            channel['score'] = 0.5
             return channel
             
         try:
@@ -469,24 +449,20 @@ class AdvancedIPTVSearcher:
             if response.status_code == 200:
                 response_time = time.time() - start_time
                 
-                # 限制最大响应时间
                 if response_time > self.config['max_response_time']:
                     response_time = self.config['max_response_time']
                 
                 channel['response_time'] = response_time
                 channel['content_type'] = response.headers.get('Content-Type', '')
                 
-                # 计算综合评分
                 resolution_score = self._resolution_to_score(channel['resolution'])
                 speed_score = 1 - (response_time / self.config['max_response_time'])
                 
                 channel['score'] = (
                     self.config['response_time_weight'] * speed_score +
                     self.config['resolution_weight'] * resolution_score +
-                    self.config['bitrate_weight'] * 0.5  # 默认码率分数
+                    self.config['bitrate_weight'] * 0.5
                 )
-                
-                self.logger.debug(f"频道测试成功: {channel['name']} - 响应: {response_time:.2f}s - 评分: {channel['score']:.2f}")
                 
             else:
                 channel['response_time'] = float('inf')
@@ -495,7 +471,6 @@ class AdvancedIPTVSearcher:
         except Exception as e:
             channel['response_time'] = float('inf')
             channel['score'] = 0
-            self.logger.debug(f"频道测试失败: {channel['name']} - {e}")
             
         return channel
 
@@ -520,7 +495,6 @@ class AdvancedIPTVSearcher:
             
         start_time = time.time()
         
-        # 限制测试数量
         channels_to_test = channels[:self.config['max_channels_to_test']]
         self.logger.info(f"开始测试 {len(channels_to_test)} 个频道的速度...")
         
@@ -539,7 +513,6 @@ class AdvancedIPTVSearcher:
                     channel = futures[future]
                     self.logger.error(f"频道测试异常 {channel['name']}: {e}")
         
-        # 过滤无效频道并排序
         valid_channels = [c for c in channels_to_test if c['response_time'] != float('inf')]
         valid_channels.sort(key=lambda x: x['score'], reverse=True)
         
@@ -559,7 +532,6 @@ class AdvancedIPTVSearcher:
         for template in self.template_channels:
             matched = []
             for channel in all_channels:
-                # 使用多种匹配策略
                 match_score = max(
                     fuzz.token_set_ratio(template, channel['name']),
                     fuzz.partial_ratio(template, channel['name']),
@@ -571,7 +543,6 @@ class AdvancedIPTVSearcher:
                     matched.append(channel)
             
             if matched:
-                # 按匹配度和评分排序
                 matched.sort(key=lambda x: (-x['match_score'], -x['score']))
                 matched_channels[template] = matched[:self.config['zb_urls_limit']]
                 self.logger.info(f"频道 {template}: 匹配到 {len(matched_channels[template])} 个源")
@@ -580,7 +551,7 @@ class AdvancedIPTVSearcher:
         return matched_channels
 
     def _simple_channel_match(self, all_channels: List[Dict]) -> Dict[str, List[Dict]]:
-        """简单频道匹配（不使用模糊匹配）"""
+        """简单频道匹配"""
         matched_channels = {}
         
         for template in self.template_channels:
@@ -600,31 +571,25 @@ class AdvancedIPTVSearcher:
         """主搜索方法"""
         self.logger.info("开始IPTV频道搜索流程...")
         
-        # 重置统计信息
         self.stats = {key: 0 for key in self.stats}
         
-        # 1. 获取内容
         content = self.fetch_content()
         if not content:
             self.logger.error("无法获取IPTV源内容")
             return {}
         
-        # 2. 提取频道
-        all_channels = self.extract_channels_advanced(content)
+        all_channels = self.extract_channels_optimized(content)
         if not all_channels:
             self.logger.error("未提取到任何频道数据")
             return {}
         
-        # 3. 测试速度
         if self.config['enable_speed_test']:
             tested_channels = self.test_channels_speed(all_channels)
         else:
             tested_channels = all_channels
         
-        # 4. 匹配模板
         matched_channels = self.match_template_channels(tested_channels)
         
-        # 5. 输出统计
         self._print_statistics(matched_channels)
         
         return matched_channels
@@ -643,9 +608,7 @@ class AdvancedIPTVSearcher:
         print(f"最终频道源数: {total_matched}")
         print(f"提取耗时: {self.stats['extraction_time']:.2f}s")
         print(f"测试耗时: {self.stats['testing_time']:.2f}s")
-        print(f"总耗时: {self.stats['extraction_time'] + self.stats['testing_time']:.2f}s")
         
-        # 分辨率统计
         if channels_dict:
             resolutions = {}
             for channels in channels_dict.values():
@@ -661,18 +624,10 @@ class AdvancedIPTVSearcher:
         """保存为M3U格式"""
         try:
             with open(filename, 'w', encoding='utf-8') as f:
-                f.write('#EXTM3U x-tvg-url=""\n')
+                f.write('#EXTM3U\n')
                 for template, channels in channels_dict.items():
                     for channel in channels:
-                        # 构建EXTINF行
-                        extinf_line = f"#EXTINF:-1 tvg-name=\"{channel['name']}\""
-                        if channel['resolution'] != '未知':
-                            extinf_line += f" tvg-resolution=\"{channel['resolution']}\""
-                        if channel['response_time']:
-                            extinf_line += f" response-time=\"{channel['response_time']:.2f}\""
-                        extinf_line += f",{channel['name']}\n"
-                        
-                        f.write(extinf_line)
+                        f.write(f"#EXTINF:-1,{channel['name']}\n")
                         f.write(f"{channel['url']}\n")
             
             self.logger.info(f"M3U文件保存成功: {filename}")
@@ -700,8 +655,6 @@ class AdvancedIPTVSearcher:
                             if channel['response_time']:
                                 f.write(f"   响应时间: {channel['response_time']:.2f}s\n")
                             f.write(f"   综合评分: {channel['score']:.2f}\n")
-                            if channel['match_score']:
-                                f.write(f"   匹配度: {channel['match_score']}%\n")
                             f.write(f"   地址: {channel['url']}\n\n")
             
             self.logger.info(f"文本文件保存成功: {filename}")
@@ -711,57 +664,28 @@ class AdvancedIPTVSearcher:
             self.logger.error(f"保存文本文件失败: {e}")
             return False
 
-    def save_channels_to_json(self, channels_dict: Dict[str, List[Dict]], filename: str = "iptv_channels.json"):
-        """保存为JSON格式"""
-        try:
-            # 准备JSON数据
-            output_data = {
-                "metadata": {
-                    "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "source_url": self.base_url,
-                    "total_groups": len(channels_dict),
-                    "total_channels": sum(len(v) for v in channels_dict.values())
-                },
-                "channels": channels_dict
-            }
-            
-            with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(output_data, f, ensure_ascii=False, indent=2)
-            
-            self.logger.info(f"JSON文件保存成功: {filename}")
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"保存JSON文件失败: {e}")
-            return False
-
     def run_complete_search(self, output_formats: List[str] = None):
         """运行完整搜索流程"""
         if output_formats is None:
-            output_formats = ['m3u', 'txt', 'json']
+            output_formats = ['m3u', 'txt']
         
         print("开始完整IPTV频道搜索...")
         print(f"目标源: {self.base_url}")
         print(f"输出格式: {', '.join(output_formats)}")
         print("-" * 50)
         
-        # 执行搜索
         channels_dict = self.search_channels()
         
         if not channels_dict:
             print("搜索完成，但未找到匹配的频道。")
             return False
         
-        # 保存结果
         success_count = 0
         if 'm3u' in output_formats:
             if self.save_channels_to_m3u(channels_dict):
                 success_count += 1
         if 'txt' in output_formats:
             if self.save_channels_to_txt(channels_dict):
-                success_count += 1
-        if 'json' in output_formats:
-            if self.save_channels_to_json(channels_dict):
                 success_count += 1
         
         print(f"\n搜索完成！成功保存 {success_count} 个输出文件。")
@@ -770,27 +694,24 @@ class AdvancedIPTVSearcher:
 
 def main():
     """主函数"""
-    # 可以在这里修改IPTV源地址
     iptv_source = "http://188.68.248.8:55501/"
     
-    # 创建搜索器实例
     searcher = AdvancedIPTVSearcher(iptv_source)
     
-    # 可选：调整配置
+    # 调整配置以适应streaml.freetv.fun
     searcher.config.update({
         'zb_urls_limit': 8,
-        'fuzzy_match_threshold': 60,
-        'max_concurrent_tasks': 20,
+        'fuzzy_match_threshold': 50,  # 降低匹配阈值
+        'max_concurrent_tasks': 10,
+        'enable_speed_test': True,    # 可以设为False来加快速度
     })
     
-    # 运行完整搜索
-    success = searcher.run_complete_search(['m3u', 'txt', 'json'])
+    success = searcher.run_complete_search(['m3u', 'txt'])
     
     if success:
         print("\n使用说明:")
         print("1. M3U文件可用于VLC、PotPlayer等播放器")
         print("2. 文本文件包含详细的频道信息")
-        print("3. JSON文件可用于程序处理")
     else:
         print("\n搜索失败，请检查网络连接和源地址。")
 
