@@ -1,720 +1,839 @@
-#!/usr/bin/env python3
-"""
-增强版IPTV频道搜索工具 - 针对streaml.freetv.fun优化
-"""
-
 import requests
+import pandas as pd
 import re
-import json
+import os
 import time
-import logging
-import concurrent.futures
-from fuzzywuzzy import fuzz
-from typing import List, Dict, Optional, Set, Tuple
-import urllib3
-import sys
 from urllib.parse import urlparse
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
+import sys
 
-# 禁用SSL警告
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+###############################################################################
+#                           配置区域 - 所有配置集中在此处                     #
+###############################################################################
 
-class AdvancedIPTVSearcher:
-    def __init__(self, base_url: str = "http://188.68.248.8:55501/"):
-        self.base_url = base_url
-        self.session = self._create_robust_session()
-        self._setup_logging()
-        self._load_config()
-        self.template_channels = self._load_template_channels()
-        
-        # 统计信息
-        self.stats = {
-            'total_channels_found': 0,
-            'valid_channels_tested': 0,
-            'matched_channels': 0,
-            'extraction_time': 0,
-            'testing_time': 0
-        }
+# =============================================================================
+# 文件路径配置
+# =============================================================================
 
-    def _create_robust_session(self) -> requests.Session:
-        """创建健壮的会话连接"""
-        session = requests.Session()
-        
-        # 重试策略
-        retry_strategy = Retry(
-            total=3,
-            backoff_factor=0.5,
-            status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["HEAD", "GET", "OPTIONS"]
-        )
-        
-        adapter = HTTPAdapter(
-            max_retries=retry_strategy,
-            pool_connections=10,
-            pool_maxsize=20
-        )
-        session.mount("http://", adapter)
-        session.mount("https://", adapter)
-        
-        session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-            'Accept-Encoding': 'gzip, deflate',
-            'Connection': 'keep-alive',
-            'Cache-Control': 'no-cache'
-        })
-        
-        return session
+# 本地源文件路径：包含自定义的直播源，格式为"频道名称,URL"或直接URL
+LOCAL_SOURCE_FILE = "local.txt"
 
-    def _setup_logging(self):
-        """配置日志系统"""
-        logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
+# 频道模板文件路径：定义输出文件中频道的排序顺序，每行一个频道名称
+DEMO_TEMPLATE_FILE = "demo.txt"
+
+# 输出文件路径：生成的直播源文件
+OUTPUT_TXT_FILE = "iptv.txt"    # TXT格式输出文件
+OUTPUT_M3U_FILE = "iptv.m3u"    # M3U格式输出文件
+
+# =============================================================================
+# 网络请求配置
+# =============================================================================
+
+# 在线直播源URL列表：程序会从这些URL获取直播源数据
+ONLINE_SOURCE_URLS = [
+     "https://ghfast.top/raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
+     "https://gh-proxy.com/https://raw.githubusercontent.com/wwb521/live/main/tv.m3u",
+     "https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/ipv4/result.m3u",  
+     "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/cn.m3u",
+     "https://raw.githubusercontent.com/suxuang/myIPTV/main/ipv4.m3u",
+     "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt",
+     "https://gh-proxy.com/https://raw.githubusercontent.com/develop202/migu_video/refs/heads/main/interface.txt",
+     "http://47.120.41.246:8899/zb.txt",
+]
+
+# 请求超时时间（秒）：网络请求的最大等待时间
+REQUEST_TIMEOUT = 15
+
+# 用户代理头：模拟浏览器访问，避免被网站屏蔽
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+}
+
+# =============================================================================
+# 并发处理配置
+# =============================================================================
+
+# 最大工作线程数：同时进行的网络请求数量
+MAX_WORKERS = 5
+
+# 频道测试并发数：同时测试的频道数量
+CHANNEL_TEST_WORKERS = 10
+
+# URL测试并发数：单个频道内同时测试的URL数量
+URL_TEST_WORKERS = 10
+
+# =============================================================================
+# 频道处理配置
+# =============================================================================
+
+# 单个频道最大测试URL数量：每个频道最多测试多少个源（避免测试过多）
+SPEED_TEST_COUNT = 30
+
+# 单个频道最大保留URL数量：每个频道最终保留的最佳源数量
+MAX_URLS_PER_CHANNEL = 8
+
+# 最大测试频道数量：限制测试的频道总数（避免处理时间过长）
+MAX_TEST_CHANNELS = 20
+
+# =============================================================================
+# 评分权重配置
+# =============================================================================
+
+# 流媒体质量评分权重：用于计算每个源的最终得分
+WEIGHTS = {
+    'response_time': 0.5,   # 响应时间权重：值越大，响应时间对得分影响越大
+    'speed': 0.5,           # 下载速度权重：值越大，下载速度对得分影响越大
+}
+
+# =============================================================================
+# 流媒体测试配置
+# =============================================================================
+
+# 流测试超时时间（秒）：测试单个流媒体的最大时间
+STREAM_TEST_TIMEOUT = 10
+
+# 最大下载时间（秒）：速度测试的最大下载时间
+MAX_DOWNLOAD_TIME = 10
+
+# 测试数据量（字节）：速度测试时下载的数据量（50KB）
+TEST_DATA_SIZE = 51200
+
+# =============================================================================
+# 正则表达式配置
+# =============================================================================
+
+# IPv4地址匹配模式：识别IPv4格式的URL
+IPV4_PATTERN = re.compile(r'^https?://(\d{1,3}\.){3}\d{1,3}')
+
+# IPv6地址匹配模式：识别IPv6格式的URL
+IPV6_PATTERN = re.compile(r'^https?://\[([a-fA-F0-9:]+)\]')
+
+# M3U格式解析模式：从EXTINF行中提取频道名称
+EXTINF_PATTERN = re.compile(r'tvg-name="([^"]+)"')
+
+# TXT格式解析模式：匹配"频道名称,URL"格式
+TXT_LINE_PATTERN = re.compile(r"^(.+?),(?:\s*)(http.+)")
+
+# 频道名称清理模式：移除文件名中的非法字符
+CHANNEL_NAME_CLEAN_PATTERN = re.compile(r'[<>:"/\\|?*]')
+
+###############################################################################
+#                           程序代码区域 - 不要修改下面的代码                 #
+###############################################################################
+
+class StreamTester:
+    """流媒体测试器"""
+    
+    def __init__(self):
+        self.results_cache = {}
+        self.lock = threading.Lock()
+        self.test_count = 0
+        self.success_count = 0
+    
+    def test_stream(self, program_name, stream_url):
+        """测试单个流媒体的响应时间和速度"""
+        cache_key = f"{program_name}|{stream_url}"
         
-        if not logger.handlers:
-            # 控制台处理器
-            console_handler = logging.StreamHandler(sys.stdout)
-            console_handler.setLevel(logging.INFO)
-            
-            # 文件处理器
-            file_handler = logging.FileHandler('iptv_search.log', encoding='utf-8')
-            file_handler.setLevel(logging.DEBUG)
-            
-            # 格式化器
-            formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-            )
-            console_handler.setFormatter(formatter)
-            file_handler.setFormatter(formatter)
-            
-            logger.addHandler(console_handler)
-            logger.addHandler(file_handler)
+        # 检查缓存
+        if cache_key in self.results_cache:
+            return self.results_cache[cache_key]
         
-        self.logger = logging.getLogger(__name__)
-
-    def _load_config(self):
-        """加载配置参数"""
-        self.config = {
-            # 权重配置
-            'response_time_weight': 0.6,
-            'resolution_weight': 0.3,
-            'bitrate_weight': 0.1,
-            
-            # 限制配置
-            'zb_urls_limit': 10,
-            'max_concurrent_tasks': 15,
-            'max_channels_to_test': 200,
-            
-            # 匹配配置
-            'fuzzy_match_threshold': 60,
-            'min_channel_name_length': 2,
-            'max_channel_name_length': 100,
-            
-            # 超时配置
-            'request_timeout': 20,
-            'speed_test_timeout': 8,
-            'max_response_time': 10.0,
-            
-            # 功能开关
-            'enable_speed_test': True,
-            'enable_resolution_detection': True,
-            'enable_fuzzy_matching': True,
-            'remove_duplicates': True
-        }
-
-    def _load_template_channels(self) -> List[str]:
-        """加载频道模板"""
-        return [
-            # CCTV系列
-            "CCTV1", "CCTV2", "CCTV3", "CCTV4", "CCTV5", "CCTV5+", "CCTV6", "CCTV7", 
-            "CCTV8", "CCTV9", "CCTV10", "CCTV11", "CCTV12", "CCTV13", "CCTV14", "CCTV15",
-            "CCTV16", "CCTV17",
-            
-            # 卫视系列
-            "北京卫视", "湖南卫视", "浙江卫视", "江苏卫视", "东方卫视", "安徽卫视",
-            "山东卫视", "天津卫视", "湖北卫视", "广东卫视", "深圳卫视", "黑龙江卫视",
-            "辽宁卫视", "四川卫视", "河南卫视", "东南卫视", "重庆卫视",
-            
-            # 其他重要频道
-            "北京冬奥纪实", "中国教育1", "中国教育2", "金鹰卡通", "卡酷少儿",
-            "嘉佳卡通", "优漫卡通", "炫动卡通"
-        ]
-
-    def fetch_content(self) -> Optional[str]:
-        """获取页面内容"""
-        self.logger.info(f"开始获取IPTV源: {self.base_url}")
+        self.test_count += 1
+        start_time = time.time()
         
         try:
-            start_time = time.time()
-            response = self.session.get(
-                self.base_url,
-                timeout=self.config['request_timeout'],
-                verify=False,
+            # 使用配置的超时时间进行测试
+            test_timeout = min(STREAM_TEST_TIMEOUT, 5)
+            
+            # 首先进行HEAD请求检查可用性
+            head_response = requests.head(
+                stream_url, 
+                timeout=test_timeout,
+                headers=HEADERS,
                 allow_redirects=True
             )
+            head_response.close()
             
-            if response.status_code != 200:
-                self.logger.error(f"HTTP错误: {response.status_code}")
-                return None
+            response_time = (time.time() - start_time) * 1000  # 毫秒
             
-            # 自动检测编码
-            if response.encoding is None or response.encoding.lower() == 'iso-8859-1':
-                response.encoding = response.apparent_encoding or 'utf-8'
-            
-            fetch_time = time.time() - start_time
-            self.logger.info(f"成功获取内容: {len(response.text)} 字符, 耗时: {fetch_time:.2f}s")
-            
-            # 调试：保存原始内容用于分析
-            with open('debug_content.txt', 'w', encoding='utf-8') as f:
-                f.write(response.text)
-            self.logger.info("原始内容已保存到 debug_content.txt")
-            
-            return response.text
-            
-        except requests.exceptions.Timeout:
-            self.logger.error("请求超时")
-        except requests.exceptions.ConnectionError:
-            self.logger.error("连接错误")
-        except Exception as e:
-            self.logger.error(f"获取内容失败: {str(e)}")
-        
-        return None
-
-    def extract_channels_optimized(self, content: str) -> List[Dict]:
-        """针对streaml.freetv.fun优化的频道提取方法"""
-        start_time = time.time()
-        channels = []
-        
-        if not content:
-            return channels
-        
-        self.logger.info("开始分析内容格式...")
-        
-        # 分析内容中的URL模式
-        lines = content.splitlines()
-        self.logger.info(f"内容共 {len(lines)} 行")
-        
-        # 调试：显示前几行内容
-        for i, line in enumerate(lines[:10]):
-            self.logger.debug(f"第{i+1}行: {line[:100]}...")
-        
-        # 针对streaml.freetv.fun的特定格式
-        patterns = [
-            # 格式: 频道名称,https://streaml.freetv.fun/xxxx
-            (r'^([^,\r\n]+?)\s*,\s*(https?://streaml\.freetv\.fun/[^\s,\r\n]+)', 'streaml_freetv_format'),
-            
-            # 通用格式: 名称,URL
-            (r'^([^,\r\n]+?)\s*,\s*(https?://[^\s,\r\n]+)', 'comma_separated'),
-            
-            # 格式: 名称 URL (空格分隔)
-            (r'^([^,\r\n]+?)\s+(https?://[^\s]+)', 'space_separated'),
-            
-            # 包含CCTV或卫视关键词的行
-            (r'([Cc][Cc][Tt][Vv][^,\r\n]*?|卫视[^,\r\n]*?)[^https]*(https?://[^\s]+)', 'cctv_keyword'),
-        ]
-        
-        seen_channels: Set[str] = set()
-        total_matches = 0
-        
-        for pattern, pattern_name in patterns:
-            try:
-                matches = re.findall(pattern, content, re.IGNORECASE | re.MULTILINE)
-                self.logger.info(f"模式 '{pattern_name}' 找到 {len(matches)} 个匹配")
-                total_matches += len(matches)
-                
-                for match in matches:
-                    if len(match) == 2:
-                        name, url = match
-                    else:
-                        continue
-                    
-                    channel = self._process_channel_data(name, url)
-                    if channel and self._is_valid_channel(channel):
-                        channel_key = self._get_channel_key(channel)
-                        if channel_key not in seen_channels:
-                            seen_channels.add(channel_key)
-                            channels.append(channel)
-                            self.logger.debug(f"提取频道: {channel['name']} -> {channel['url']}")
-                            
-            except Exception as e:
-                self.logger.warning(f"模式 '{pattern_name}' 处理失败: {e}")
-                continue
-        
-        # 如果常规模式没有找到，尝试逐行分析
-        if not channels:
-            channels = self._line_by_line_analysis(lines)
-        
-        self.stats['total_channels_found'] = len(channels)
-        self.stats['extraction_time'] = time.time() - start_time
-        
-        self.logger.info(f"频道提取完成: 找到 {len(channels)} 个频道, 总匹配数: {total_matches}, 耗时: {self.stats['extraction_time']:.2f}s")
-        return channels
-
-    def _line_by_line_analysis(self, lines: List[str]) -> List[Dict]:
-        """逐行分析内容"""
-        channels = []
-        seen_channels: Set[str] = set()
-        
-        self.logger.info("开始逐行分析内容...")
-        
-        for line_num, line in enumerate(lines, 1):
-            line = line.strip()
-            if not line or len(line) < 10:
-                continue
-                
-            # 跳过明显的HTML标签
-            if line.startswith('<') and line.endswith('>'):
-                continue
-                
-            # 查找包含streaml.freetv.fun的行
-            if 'streaml.freetv.fun' in line:
-                # 尝试多种分割方式
-                parts = line.split(',')
-                if len(parts) >= 2:
-                    # 最后一个部分应该是URL
-                    url_candidate = parts[-1].strip()
-                    name_candidate = ','.join(parts[:-1]).strip()
-                    
-                    if url_candidate.startswith('http') and name_candidate:
-                        channel = self._process_channel_data(name_candidate, url_candidate)
-                        if channel and self._is_valid_channel(channel):
-                            channel_key = self._get_channel_key(channel)
-                            if channel_key not in seen_channels:
-                                seen_channels.add(channel_key)
-                                channels.append(channel)
-                                self.logger.debug(f"行{line_num}: {channel['name']}")
-                
-                # 尝试空格分割
-                else:
-                    parts = line.split()
-                    if len(parts) >= 2:
-                        for i in range(len(parts) - 1):
-                            if parts[i+1].startswith('http') and 'streaml.freetv.fun' in parts[i+1]:
-                                name_candidate = ' '.join(parts[:i+1])
-                                url_candidate = parts[i+1]
-                                
-                                channel = self._process_channel_data(name_candidate, url_candidate)
-                                if channel and self._is_valid_channel(channel):
-                                    channel_key = self._get_channel_key(channel)
-                                    if channel_key not in seen_channels:
-                                        seen_channels.add(channel_key)
-                                        channels.append(channel)
-                                        self.logger.debug(f"行{line_num}: {channel['name']}")
-        
-        return channels
-
-    def _process_channel_data(self, name: str, url: str) -> Dict:
-        """处理频道数据"""
-        clean_name = self._clean_channel_name(name)
-        clean_url = self._clean_channel_url(url)
-        
-        return {
-            'name': clean_name,
-            'url': clean_url,
-            'resolution': self._detect_resolution(clean_name),
-            'bitrate': self._detect_bitrate(clean_name),
-            'response_time': None,
-            'score': 0,
-            'match_score': 0,
-            'content_type': None,
-            'is_live': self._detect_live_stream(clean_name, clean_url)
-        }
-
-    def _clean_channel_name(self, name: str) -> str:
-        """清理频道名称"""
-        if not name or name.strip() == '':
-            return "Unknown_Channel"
-        
-        # 移除特殊字符和多余空格
-        name = re.sub(r'^[#\s\-_]*', '', name)
-        name = re.sub(r'[\s\r\n\-_]+', ' ', name)
-        
-        # 移除常见无用后缀
-        name = re.sub(r'\s*[\[\(].*?[\]\)]', '', name)
-        name = re.sub(r'\s*(直播|Live|LIVE|HD|hd|FHD|4K|.*p|超清|高清|标清|流畅)$', '', name)
-        
-        # 限制长度
-        name = name.strip()
-        if len(name) < self.config['min_channel_name_length']:
-            name = f"Channel_{hash(name) % 10000:04d}"
-        elif len(name) > self.config['max_channel_name_length']:
-            name = name[:self.config['max_channel_name_length']]
-        
-        return name
-
-    def _clean_channel_url(self, url: str) -> str:
-        """清理URL"""
-        url = url.strip()
-        # 移除URL中的多余空格和换行符
-        url = re.sub(r'[\s\r\n]+', '', url)
-        return url
-
-    def _is_valid_channel(self, channel: Dict) -> bool:
-        """验证频道有效性"""
-        name = channel['name']
-        url = channel['url']
-        
-        if not name or not url:
-            return False
-        
-        # 排除无效关键词
-        invalid_keywords = [
-            'example', 'test', 'demo', '样本', '测试', '备用', 
-            '#EXT', 'localhost', '127.0.0.1', '::1'
-        ]
-        
-        name_lower = name.lower()
-        url_lower = url.lower()
-        
-        if any(kw in name_lower for kw in invalid_keywords):
-            return False
-        
-        if any(kw in url_lower for kw in invalid_keywords):
-            return False
-        
-        # 检查URL格式
-        if not url.startswith(('http://', 'https://')):
-            return False
-        
-        # 特别允许streaml.freetv.fun域名
-        if 'streaml.freetv.fun' in url_lower:
-            return True
-        
-        # 排除其他常见非视频URL
-        non_video_domains = [
-            'google', 'baidu', 'qq.com', 'github', 'localhost',
-            'wikipedia', 'twitter', 'facebook'
-        ]
-        
-        if any(domain in url_lower for domain in non_video_domains):
-            return False
-        
-        return True
-
-    def _get_channel_key(self, channel: Dict) -> str:
-        """获取频道唯一标识"""
-        return f"{channel['name'].lower()}|{channel['url']}"
-
-    def _detect_resolution(self, name: str) -> str:
-        """检测分辨率"""
-        if not self.config['enable_resolution_detection']:
-            return '未知'
-            
-        text = name.lower()
-        resolution_patterns = [
-            ('3840x2160', r'3840x2160|4k|2160p|超高清'),
-            ('1920x1080', r'1920x1080|1080p|1080|高清|hd|high.definition'),
-            ('1280x720', r'1280x720|720p|720'),
-            ('1024x576', r'1024x576|576p|576'),
-            ('720x576', r'720x576'),
-            ('720x480', r'720x480'),
-            ('标清', r'标清|sd|480p|360p|流畅')
-        ]
-        
-        for res, pattern in resolution_patterns:
-            if re.search(pattern, text, re.IGNORECASE):
-                return res
-        return '未知'
-
-    def _detect_bitrate(self, name: str) -> Optional[str]:
-        """检测码率"""
-        bitrate_match = re.search(r'(\d+)\s*(kbps|mbps|k|m)', name.lower())
-        if bitrate_match:
-            return bitrate_match.group(0)
-        return None
-
-    def _detect_live_stream(self, name: str, url: str) -> bool:
-        """检测是否为直播流"""
-        live_indicators = ['live', '直播', 'rtmp', 'rtsp', 'mms', 'udp']
-        text = f"{name} {url}".lower()
-        return any(indicator in text for indicator in live_indicators)
-
-    def test_channel_speed(self, channel: Dict) -> Dict:
-        """测试频道速度和质量"""
-        if not self.config['enable_speed_test']:
-            channel['score'] = 0.5
-            return channel
-            
-        try:
-            start_time = time.time()
-            response = self.session.head(
-                channel['url'],
-                timeout=self.config['speed_test_timeout'],
-                allow_redirects=True,
-                verify=False
+            # 如果HEAD请求成功，进行GET请求测试速度
+            get_start_time = time.time()
+            response = requests.get(
+                stream_url, 
+                timeout=test_timeout,
+                headers=HEADERS,
+                stream=True
             )
             
-            if response.status_code == 200:
-                response_time = time.time() - start_time
-                
-                if response_time > self.config['max_response_time']:
-                    response_time = self.config['max_response_time']
-                
-                channel['response_time'] = response_time
-                channel['content_type'] = response.headers.get('Content-Type', '')
-                
-                resolution_score = self._resolution_to_score(channel['resolution'])
-                speed_score = 1 - (response_time / self.config['max_response_time'])
-                
-                channel['score'] = (
-                    self.config['response_time_weight'] * speed_score +
-                    self.config['resolution_weight'] * resolution_score +
-                    self.config['bitrate_weight'] * 0.5
-                )
-                
-            else:
-                channel['response_time'] = float('inf')
-                channel['score'] = 0
-                
-        except Exception as e:
-            channel['response_time'] = float('inf')
-            channel['score'] = 0
+            # 简单测速：下载配置的数据量计算速度
+            speed = 0
+            content_length = 0
+            download_start = time.time()
             
-        return channel
-
-    def _resolution_to_score(self, resolution: str) -> float:
-        """分辨率转分数"""
-        scores = {
-            '3840x2160': 1.0,
-            '1920x1080': 0.8,
-            '1280x720': 0.6,
-            '1024x576': 0.5,
-            '720x576': 0.4,
-            '720x480': 0.3,
-            '标清': 0.2,
-            '未知': 0.1
-        }
-        return scores.get(resolution, 0.1)
-
-    def test_channels_speed(self, channels: List[Dict]) -> List[Dict]:
-        """并发测试频道速度"""
-        if not channels:
-            return []
+            try:
+                for chunk in response.iter_content(chunk_size=1024):
+                    content_length += len(chunk)
+                    if content_length >= TEST_DATA_SIZE:
+                        break
+                    if time.time() - download_start > MAX_DOWNLOAD_TIME:
+                        break
+            finally:
+                response.close()
             
-        start_time = time.time()
-        
-        channels_to_test = channels[:self.config['max_channels_to_test']]
-        self.logger.info(f"开始测试 {len(channels_to_test)} 个频道的速度...")
-        
-        with concurrent.futures.ThreadPoolExecutor(
-            max_workers=self.config['max_concurrent_tasks']
-        ) as executor:
-            futures = {
-                executor.submit(self.test_channel_speed, channel): channel 
-                for channel in channels_to_test
+            if content_length > 0:
+                download_time = time.time() - download_start
+                speed = (content_length / 1024) / max(download_time, 0.1)  # KB/s
+            
+            result = {
+                'response_time': response_time,
+                'speed': speed,
+                'available': True,
+                'resolution': self.estimate_resolution(speed),
+                'content_type': response.headers.get('content-type', ''),
+                'status_code': response.status_code
             }
             
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    future.result()
-                except Exception as e:
-                    channel = futures[future]
-                    self.logger.error(f"频道测试异常 {channel['name']}: {e}")
-        
-        valid_channels = [c for c in channels_to_test if c['response_time'] != float('inf')]
-        valid_channels.sort(key=lambda x: x['score'], reverse=True)
-        
-        self.stats['valid_channels_tested'] = len(valid_channels)
-        self.stats['testing_time'] = time.time() - start_time
-        
-        self.logger.info(f"速度测试完成: 有效频道 {len(valid_channels)}/{len(channels_to_test)}, 耗时: {self.stats['testing_time']:.2f}s")
-        return valid_channels
-
-    def match_template_channels(self, all_channels: List[Dict]) -> Dict[str, List[Dict]]:
-        """匹配模板频道"""
-        if not self.config['enable_fuzzy_matching']:
-            return self._simple_channel_match(all_channels)
+            self.success_count += 1
             
-        matched_channels = {}
+        except Exception as e:
+            result = {
+                'response_time': 9999,
+                'speed': 0,
+                'available': False,
+                'resolution': 0,
+                'content_type': '',
+                'status_code': 0,
+                'error': str(e)
+            }
         
-        for template in self.template_channels:
-            matched = []
-            for channel in all_channels:
-                match_score = max(
-                    fuzz.token_set_ratio(template, channel['name']),
-                    fuzz.partial_ratio(template, channel['name']),
-                    fuzz.ratio(template, channel['name'])
-                )
-                
-                if match_score >= self.config['fuzzy_match_threshold']:
-                    channel['match_score'] = match_score
-                    matched.append(channel)
-            
-            if matched:
-                matched.sort(key=lambda x: (-x['match_score'], -x['score']))
-                matched_channels[template] = matched[:self.config['zb_urls_limit']]
-                self.logger.info(f"频道 {template}: 匹配到 {len(matched_channels[template])} 个源")
+        # 缓存结果
+        with self.lock:
+            self.results_cache[cache_key] = result
         
-        self.stats['matched_channels'] = sum(len(v) for v in matched_channels.values())
-        return matched_channels
-
-    def _simple_channel_match(self, all_channels: List[Dict]) -> Dict[str, List[Dict]]:
-        """简单频道匹配"""
-        matched_channels = {}
-        
-        for template in self.template_channels:
-            matched = []
-            for channel in all_channels:
-                if template.lower() in channel['name'].lower():
-                    channel['match_score'] = 100
-                    matched.append(channel)
-            
-            if matched:
-                matched.sort(key=lambda x: x['score'], reverse=True)
-                matched_channels[template] = matched[:self.config['zb_urls_limit']]
-        
-        return matched_channels
-
-    def search_channels(self) -> Dict[str, List[Dict]]:
-        """主搜索方法"""
-        self.logger.info("开始IPTV频道搜索流程...")
-        
-        self.stats = {key: 0 for key in self.stats}
-        
-        content = self.fetch_content()
-        if not content:
-            self.logger.error("无法获取IPTV源内容")
-            return {}
-        
-        all_channels = self.extract_channels_optimized(content)
-        if not all_channels:
-            self.logger.error("未提取到任何频道数据")
-            return {}
-        
-        if self.config['enable_speed_test']:
-            tested_channels = self.test_channels_speed(all_channels)
+        return result
+    
+    def estimate_resolution(self, speed):
+        """根据速度估算分辨率"""
+        if speed > 2000:  # 2MB/s
+            return 1080
+        elif speed > 1000:  # 1MB/s
+            return 720
+        elif speed > 500:   # 500KB/s
+            return 480
         else:
-            tested_channels = all_channels
+            return 360
+    
+    def calculate_score(self, test_result):
+        """计算综合得分"""
+        if not test_result['available']:
+            return 0
         
-        matched_channels = self.match_template_channels(tested_channels)
+        # 响应时间得分（响应时间越短得分越高）
+        rt_score = max(0, 100 - min(test_result['response_time'], 5000) / 50)
         
-        self._print_statistics(matched_channels)
+        # 速度得分
+        speed_score = min(100, test_result['speed'] / 20)
         
-        return matched_channels
+        # 分辨率加分
+        resolution_bonus = test_result['resolution'] * 0.1
+        
+        # 综合得分
+        total_score = (
+            rt_score * WEIGHTS['response_time'] +
+            speed_score * WEIGHTS['speed'] +
+            resolution_bonus
+        )
+        
+        return round(total_score, 2)
+    
+    def get_stats(self):
+        """获取测试统计"""
+        return {
+            'total_tests': self.test_count,
+            'successful_tests': self.success_count,
+            'success_rate': round(self.success_count / max(self.test_count, 1) * 100, 2),
+            'cache_size': len(self.results_cache)
+        }
 
-    def _print_statistics(self, channels_dict: Dict[str, List[Dict]]):
-        """打印统计信息"""
-        total_matched = sum(len(v) for v in channels_dict.values())
-        
-        print("\n" + "="*50)
-        print("IPTV频道搜索统计报告")
-        print("="*50)
-        print(f"总发现频道: {self.stats['total_channels_found']}")
-        print(f"有效测试频道: {self.stats['valid_channels_tested']}")
-        print(f"匹配模板频道: {self.stats['matched_channels']}")
-        print(f"最终频道组数: {len(channels_dict)}")
-        print(f"最终频道源数: {total_matched}")
-        print(f"提取耗时: {self.stats['extraction_time']:.2f}s")
-        print(f"测试耗时: {self.stats['testing_time']:.2f}s")
-        
-        if channels_dict:
-            resolutions = {}
-            for channels in channels_dict.values():
-                for channel in channels:
-                    res = channel['resolution']
-                    resolutions[res] = resolutions.get(res, 0) + 1
-            
-            print("\n分辨率分布:")
-            for res, count in sorted(resolutions.items(), key=lambda x: x[1], reverse=True):
-                print(f"  {res}: {count}个")
+def clean_channel_name(name):
+    """清理频道名称中的非法字符"""
+    if not name or not isinstance(name, str):
+        return "未知频道"
+    return CHANNEL_NAME_CLEAN_PATTERN.sub('_', name).strip()
 
-    def save_channels_to_m3u(self, channels_dict: Dict[str, List[Dict]], filename: str = "iptv_channels.m3u"):
-        """保存为M3U格式"""
-        try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                f.write('#EXTM3U\n')
-                for template, channels in channels_dict.items():
-                    for channel in channels:
-                        f.write(f"#EXTINF:-1,{channel['name']}\n")
-                        f.write(f"{channel['url']}\n")
-            
-            self.logger.info(f"M3U文件保存成功: {filename}")
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"保存M3U文件失败: {e}")
-            return False
-
-    def save_channels_to_txt(self, channels_dict: Dict[str, List[Dict]], filename: str = "iptv_channels.txt"):
-        """保存为文本格式"""
-        try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                f.write("IPTV频道列表\n")
-                f.write("=" * 50 + "\n\n")
+def load_local_sources():
+    """加载本地源"""
+    if not os.path.exists(LOCAL_SOURCE_FILE):
+        print(f"📝 本地源文件 {LOCAL_SOURCE_FILE} 不存在，跳过")
+        return []
+    
+    streams = []
+    try:
+        with open(LOCAL_SOURCE_FILE, 'r', encoding='utf-8') as f:
+            for line_num, line in enumerate(f, 1):
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
                 
-                for template in self.template_channels:
-                    if template in channels_dict and channels_dict[template]:
-                        f.write(f"【{template}】\n")
-                        f.write("-" * 30 + "\n")
-                        
-                        for i, channel in enumerate(channels_dict[template], 1):
-                            f.write(f"{i}. {channel['name']}\n")
-                            f.write(f"   分辨率: {channel['resolution']}\n")
-                            if channel['response_time']:
-                                f.write(f"   响应时间: {channel['response_time']:.2f}s\n")
-                            f.write(f"   综合评分: {channel['score']:.2f}\n")
-                            f.write(f"   地址: {channel['url']}\n\n")
-            
-            self.logger.info(f"文本文件保存成功: {filename}")
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"保存文本文件失败: {e}")
-            return False
+                # 支持多种格式
+                if ',' in line:
+                    parts = line.split(',', 1)
+                    if len(parts) == 2 and parts[1].startswith(('http://', 'https://')):
+                        program_name = clean_channel_name(parts[0].strip())
+                        stream_url = parts[1].strip()
+                        streams.append({
+                            "program_name": program_name,
+                            "stream_url": stream_url,
+                            "source": "local"
+                        })
+                elif line.startswith(('http://', 'https://')):
+                    program_name = f"本地频道_{line_num}"
+                    streams.append({
+                        "program_name": program_name,
+                        "stream_url": line.strip(),
+                        "source": "local"
+                    })
+    except Exception as e:
+        print(f"❌ 读取本地源文件失败: {e}")
+    
+    print(f"✅ 从本地源加载了 {len(streams)} 个频道")
+    return streams
 
-    def run_complete_search(self, output_formats: List[str] = None):
-        """运行完整搜索流程"""
-        if output_formats is None:
-            output_formats = ['m3u', 'txt']
+def load_demo_template():
+    """加载模板频道列表"""
+    if not os.path.exists(DEMO_TEMPLATE_FILE):
+        print(f"⚠️ 模板文件 {DEMO_TEMPLATE_FILE} 不存在，将按频道名排序")
+        return []
+    
+    channels = []
+    try:
+        with open(DEMO_TEMPLATE_FILE, 'r', encoding='utf-8') as f:
+            for line_num, line in enumerate(f, 1):
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    cleaned_name = clean_channel_name(line)
+                    if cleaned_name and cleaned_name != "未知频道":
+                        channels.append(cleaned_name)
+    except Exception as e:
+        print(f"❌ 读取模板文件失败: {e}")
+    
+    print(f"📋 从模板加载了 {len(channels)} 个频道")
+    return channels
+
+def fetch_streams_from_url(url):
+    """从URL获取直播源数据"""
+    print(f"🌐 正在爬取网站源: {url}")
+    try:
+        response = requests.get(url, timeout=REQUEST_TIMEOUT, headers=HEADERS)
+        response.encoding = 'utf-8'
+        response.raise_for_status()
         
-        print("开始完整IPTV频道搜索...")
-        print(f"目标源: {self.base_url}")
-        print(f"输出格式: {', '.join(output_formats)}")
-        print("-" * 50)
+        content_length = len(response.content)
+        print(f"✅ 成功获取 {url} 的数据 ({content_length} 字节)")
+        return response.text
         
-        channels_dict = self.search_channels()
+    except requests.exceptions.RequestException as e:
+        print(f"❌ 请求 {url} 时发生错误: {e}")
+        return None
+
+def fetch_online_sources(urls):
+    """获取在线源"""
+    if not urls:
+        print("⚠️ 未提供在线源URL，跳过在线源获取")
+        return []
+    
+    all_streams = []
+    
+    print("🚀 开始获取在线直播源...")
+    with ThreadPoolExecutor(max_workers=min(MAX_WORKERS, len(urls))) as executor:
+        future_to_url = {executor.submit(fetch_streams_from_url, url): url for url in urls}
         
-        if not channels_dict:
-            print("搜索完成，但未找到匹配的频道。")
-            return False
+        for future in as_completed(future_to_url):
+            url = future_to_url[future]
+            try:
+                if content := future.result():
+                    # 解析内容
+                    if content.startswith("#EXTM3U"):
+                        streams = parse_m3u(content)
+                    else:
+                        streams = parse_txt(content)
+                    
+                    # 标记来源并清理频道名
+                    for stream in streams:
+                        stream['source'] = 'online'
+                        stream['program_name'] = clean_channel_name(stream['program_name'])
+                    
+                    all_streams.extend(streams)
+                    print(f"📡 从 {url} 解析了 {len(streams)} 个频道")
+            except Exception as e:
+                print(f"❌ 处理 {url} 时发生错误: {e}")
+    
+    print(f"✅ 从在线源获取了 {len(all_streams)} 个频道")
+    return all_streams
+
+def parse_m3u(content):
+    """解析M3U格式"""
+    streams = []
+    current_program = None
+    
+    for line in content.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+            
+        if line.startswith("#EXTINF"):
+            current_program = "未知频道"
+            if match := EXTINF_PATTERN.search(line):
+                current_program = match.group(1).strip()
+            elif "," in line:
+                current_program = line.split(",", 1)[1].strip()
+            current_program = clean_channel_name(current_program)
+                
+        elif line.startswith(('http://', 'https://')):
+            if current_program:
+                streams.append({
+                    "program_name": current_program,
+                    "stream_url": line.strip()
+                })
+                current_program = None
+                
+    return streams
+
+def parse_txt(content):
+    """解析TXT格式"""
+    streams = []
+    for line in content.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
         
-        success_count = 0
-        if 'm3u' in output_formats:
-            if self.save_channels_to_m3u(channels_dict):
-                success_count += 1
-        if 'txt' in output_formats:
-            if self.save_channels_to_txt(channels_dict):
-                success_count += 1
+        # 尝试匹配 "频道名,URL" 格式
+        if match := TXT_LINE_PATTERN.match(line):
+            program_name = clean_channel_name(match.group(1).strip())
+            stream_url = match.group(2).strip()
+            
+            streams.append({
+                "program_name": program_name,
+                "stream_url": stream_url
+            })
+        elif line.startswith(('http://', 'https://')):
+            # 只有URL没有频道名的情况
+            streams.append({
+                "program_name": f"在线频道_{len(streams)}",
+                "stream_url": line.strip()
+            })
+            
+    return streams
+
+def merge_and_deduplicate_sources(local_sources, online_sources):
+    """合并并去重源"""
+    all_sources = []
+    seen_urls = set()
+    
+    # 优先添加本地源
+    for source in local_sources:
+        if source['stream_url'] not in seen_urls:
+            all_sources.append(source)
+            seen_urls.add(source['stream_url'])
+    
+    # 添加在线源（不重复的）
+    for source in online_sources:
+        if source['stream_url'] not in seen_urls:
+            all_sources.append(source)
+            seen_urls.add(source['stream_url'])
+    
+    print(f"🔄 合并后总频道数: {len(all_sources)} (本地: {len(local_sources)}, 在线: {len(online_sources)}, 去重: {len(local_sources) + len(online_sources) - len(all_sources)})")
+    return all_sources
+
+def group_by_channel(sources):
+    """按频道名分组"""
+    channels = {}
+    
+    for source in sources:
+        program_name = source['program_name']
+        if not program_name or program_name == "未知频道":
+            continue
+            
+        if program_name not in channels:
+            channels[program_name] = []
         
-        print(f"\n搜索完成！成功保存 {success_count} 个输出文件。")
+        channels[program_name].append({
+            'url': source['stream_url'],
+            'source': source.get('source', 'unknown')
+        })
+    
+    return channels
+
+def test_channel_urls(tester, program_name, urls):
+    """测试频道的所有URL并排序"""
+    if not urls:
+        return []
+    
+    test_results = []
+    
+    # 限制测试数量
+    test_urls = urls[:SPEED_TEST_COUNT]
+    
+    print(f"🔍 测试频道 '{program_name}' 的 {len(test_urls)} 个源...")
+    
+    with ThreadPoolExecutor(max_workers=min(URL_TEST_WORKERS, len(test_urls))) as executor:
+        future_to_url = {
+            executor.submit(tester.test_stream, program_name, url_info['url']): url_info 
+            for url_info in test_urls
+        }
+        
+        for future in as_completed(future_to_url):
+            url_info = future_to_url[future]
+            try:
+                test_result = future.result()
+                score = tester.calculate_score(test_result)
+                
+                test_results.append({
+                    'url': url_info['url'],
+                    'source': url_info['source'],
+                    'response_time': round(test_result['response_time'], 2),
+                    'speed': round(test_result['speed'], 2),
+                    'available': test_result['available'],
+                    'resolution': test_result['resolution'],
+                    'score': score
+                })
+                
+            except Exception as e:
+                print(f"❌ 测试URL {url_info['url']} 时发生错误: {e}")
+    
+    # 按得分排序，过滤不可用的
+    available_results = [r for r in test_results if r['available']]
+    sorted_results = sorted(available_results, key=lambda x: x['score'], reverse=True)
+    
+    # 限制每个频道的URL数量
+    final_results = sorted_results[:MAX_URLS_PER_CHANNEL]
+    
+    if final_results:
+        print(f"✅ {program_name}: 找到 {len(final_results)} 个可用源")
+    else:
+        print(f"❌ {program_name}: 无可用源")
+    
+    return final_results
+
+def organize_channels_by_template(template_channels, tested_channels):
+    """按照模板顺序整理频道"""
+    organized = []
+    missing_channels = []
+    added_channels = set()
+    
+    # 按照模板顺序添加频道
+    for channel_name in template_channels:
+        if channel_name in tested_channels and tested_channels[channel_name]:
+            channel_data = tested_channels[channel_name]
+            organized.append({
+                'program_name': channel_name,
+                'streams': channel_data
+            })
+            added_channels.add(channel_name)
+        else:
+            missing_channels.append(channel_name)
+    
+    # 添加模板中没有但源中有的频道
+    for channel_name, channel_data in tested_channels.items():
+        if channel_name not in added_channels and channel_data:
+            organized.append({
+                'program_name': channel_name,
+                'streams': channel_data
+            })
+    
+    # 报告缺失频道
+    if missing_channels:
+        print(f"⚠️ 以下 {len(missing_channels)} 个模板频道未找到或无可用的源: {', '.join(missing_channels[:5])}{'...' if len(missing_channels) > 5 else ''}")
+    
+    return organized
+
+def display_channel_stats(organized_channels, tester):
+    """显示频道统计信息"""
+    if not organized_channels:
+        print("❌ 没有可用的频道数据")
+        return
+    
+    print("\n" + "="*60)
+    print("📊 频道统计报告")
+    print("="*60)
+    
+    total_channels = len(organized_channels)
+    total_streams = sum(len(channel['streams']) for channel in organized_channels)
+    avg_streams_per_channel = round(total_streams / max(total_channels, 1), 2)
+    
+    # 统计源类型
+    ipv4_count = 0
+    ipv6_count = 0
+    local_count = 0
+    online_count = 0
+    
+    # 统计每个频道的接口数量
+    channel_stream_counts = {}
+    for channel in organized_channels:
+        stream_count = len(channel['streams'])
+        channel_stream_counts[channel['program_name']] = stream_count
+    
+    for channel in organized_channels:
+        for stream in channel['streams']:
+            if IPV4_PATTERN.match(stream['url']):
+                ipv4_count += 1
+            elif IPV6_PATTERN.match(stream['url']):
+                ipv6_count += 1
+            if stream.get('source') == 'local':
+                local_count += 1
+            else:
+                online_count += 1
+    
+    # 显示基本信息
+    print(f"📺 总频道数: {total_channels}")
+    print(f"🔗 总流媒体源: {total_streams}")
+    print(f"📈 平均每个频道源数: {avg_streams_per_channel}")
+    print(f"🌐 IPv4 源: {ipv4_count}")
+    print(f"🔷 IPv6 源: {ipv6_count}")
+    print(f"💾 本地源: {local_count}")
+    print(f"🌍 在线源: {online_count}")
+    
+    # 显示测试统计
+    test_stats = tester.get_stats()
+    print(f"🧪 测试统计: {test_stats['successful_tests']}/{test_stats['total_tests']} 成功 ({test_stats['success_rate']}%)")
+    
+    # 显示频道接口数量分布
+    print(f"\n📋 频道接口数量分布:")
+    count_distribution = {}
+    for count in channel_stream_counts.values():
+        count_distribution[count] = count_distribution.get(count, 0) + 1
+    
+    for count in sorted(count_distribution.keys()):
+        channel_count = count_distribution[count]
+        print(f"  {count}个接口: {channel_count}个频道")
+    
+    print("="*60)
+
+def save_to_txt(organized_channels, filename=OUTPUT_TXT_FILE):
+    """保存为TXT格式，显示每个频道的接口数量"""
+    try:
+        with open(filename, 'w', encoding='utf-8') as f:
+            # 写入文件头信息
+            f.write(f"# IPTV直播源列表\n")
+            f.write(f"# 生成时间: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"# 总频道数: {len(organized_channels)}\n")
+            f.write(f"# 总接口数: {sum(len(channel['streams']) for channel in organized_channels)}\n\n")
+            
+            # 写入频道统计
+            f.write("# 频道接口数量统计:\n")
+            for channel in organized_channels:
+                stream_count = len(channel['streams'])
+                f.write(f"# {channel['program_name']}: {stream_count}个接口\n")
+            f.write("\n")
+            
+            # 写入IPv4源
+            ipv4_streams = []
+            ipv6_streams = []
+            other_streams = []
+            
+            for channel in organized_channels:
+                for stream in channel['streams']:
+                    line = f"{channel['program_name']},{stream['url']}"
+                    if IPV4_PATTERN.match(stream['url']):
+                        ipv4_streams.append(line)
+                    elif IPV6_PATTERN.match(stream['url']):
+                        ipv6_streams.append(line)
+                    else:
+                        other_streams.append(line)
+            
+            if ipv4_streams:
+                f.write("# IPv4 Streams\n")
+                f.write("\n".join(ipv4_streams))
+                if ipv6_streams or other_streams:
+                    f.write("\n\n")
+            
+            if ipv6_streams:
+                f.write("# IPv6 Streams\n")
+                f.write("\n".join(ipv6_streams))
+                if other_streams:
+                    f.write("\n\n")
+            
+            if other_streams:
+                f.write("# Other Streams\n")
+                f.write("\n".join(other_streams))
+        
+        print(f"✅ 文本文件已保存: {os.path.abspath(filename)}")
+        
+        # 显示文件中的频道接口信息
+        print(f"📋 生成的TXT文件中包含:")
+        for channel in organized_channels:
+            stream_count = len(channel['streams'])
+            print(f"   {channel['program_name']}: {stream_count}个接口")
+            
         return True
+    except Exception as e:
+        print(f"❌ 保存TXT文件失败: {e}")
+        return False
 
+def save_to_m3u(organized_channels, filename=OUTPUT_M3U_FILE):
+    """保存为M3U格式，在注释中显示接口数量"""
+    try:
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write("#EXTM3U\n")
+            f.write(f"# 生成时间: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"# 总频道数: {len(organized_channels)}\n")
+            f.write(f"# 总接口数: {sum(len(channel['streams']) for channel in organized_channels)}\n")
+            
+            # 写入频道统计
+            f.write("# 频道接口数量统计:\n")
+            for channel in organized_channels:
+                stream_count = len(channel['streams'])
+                f.write(f"# {channel['program_name']}: {stream_count}个接口\n")
+            
+            # 写入频道数据
+            for channel in organized_channels:
+                stream_count = len(channel['streams'])
+                for i, stream in enumerate(channel['streams']):
+                    # 在EXTINF行中添加接口序号信息
+                    f.write(f'#EXTINF:-1 tvg-name="{channel["program_name"]}",{channel["program_name"]} [接口{i+1}/{stream_count}]\n')
+                    f.write(f"{stream['url']}\n")
+        
+        print(f"✅ M3U文件已保存: {os.path.abspath(filename)}")
+        
+        # 显示文件中的频道接口信息
+        print(f"📋 生成的M3U文件中包含:")
+        for channel in organized_channels:
+            stream_count = len(channel['streams'])
+            print(f"   {channel['program_name']}: {stream_count}个接口")
+            
+        return True
+    except Exception as e:
+        print(f"❌ 保存M3U文件失败: {e}")
+        return False
+
+def create_sample_files():
+    """创建示例文件"""
+    # 创建本地源示例
+    if not os.path.exists(LOCAL_SOURCE_FILE):
+        sample_local = """# 本地直播源示例
+# 格式: 频道名称,URL
+CCTV-1,http://example.com/cctv1.m3u8
+CCTV-2,http://example.com/cctv2.m3u8
+湖南卫视,http://example.com/hunan.m3u8
+浙江卫视,http://example.com/zhejiang.m3u8
+"""
+        with open(LOCAL_SOURCE_FILE, 'w', encoding='utf-8') as f:
+            f.write(sample_local)
+        print(f"📝 已创建示例本地源文件: {LOCAL_SOURCE_FILE}")
+    
+    # 创建模板示例
+    if not os.path.exists(DEMO_TEMPLATE_FILE):
+        sample_demo = """# 频道模板示例
+# 每行一个频道名称，将按此顺序排列输出
+CCTV-1
+CCTV-2
+湖南卫视
+浙江卫视
+江苏卫视
+北京卫视
+东方卫视
+"""
+        with open(DEMO_TEMPLATE_FILE, 'w', encoding='utf-8') as f:
+            f.write(sample_demo)
+        print(f"📋 已创建示例模板文件: {DEMO_TEMPLATE_FILE}")
 
 def main():
     """主函数"""
-    iptv_source = "http://188.68.248.8:55501/"
+    print("🎬 IPTV直播源整理工具")
+    print("=" * 50)
     
-    searcher = AdvancedIPTVSearcher(iptv_source)
+    # 创建示例文件（如果不存在）
+    create_sample_files()
     
-    # 调整配置以适应streaml.freetv.fun
-    searcher.config.update({
-        'zb_urls_limit': 8,
-        'fuzzy_match_threshold': 50,  # 降低匹配阈值
-        'max_concurrent_tasks': 10,
-        'enable_speed_test': True,    # 可以设为False来加快速度
-    })
+    start_time = time.time()
     
-    success = searcher.run_complete_search(['m3u', 'txt'])
+    # 初始化测试器
+    tester = StreamTester()
     
-    if success:
-        print("\n使用说明:")
-        print("1. M3U文件可用于VLC、PotPlayer等播放器")
-        print("2. 文本文件包含详细的频道信息")
-    else:
-        print("\n搜索失败，请检查网络连接和源地址。")
-
+    try:
+        # 1. 加载本地源（优先）
+        local_sources = load_local_sources()
+        
+        # 2. 加载在线源
+        online_sources = fetch_online_sources(ONLINE_SOURCE_URLS)
+        
+        # 3. 合并源（本地源优先）
+        all_sources = merge_and_deduplicate_sources(local_sources, online_sources)
+        
+        if not all_sources:
+            print("❌ 错误: 没有找到任何直播源")
+            return
+        
+        # 4. 按频道分组
+        channel_groups = group_by_channel(all_sources)
+        print(f"🔍 发现 {len(channel_groups)} 个唯一频道")
+        
+        if not channel_groups:
+            print("❌ 错误: 没有有效的频道数据")
+            return
+        
+        # 5. 测试和排序每个频道的URL
+        print("\n🚀 开始测试频道源...")
+        tested_channels = {}
+        
+        # 限制并发测试的频道数量，避免过多请求
+        test_channels = dict(list(channel_groups.items())[:MAX_TEST_CHANNELS])
+        
+        with ThreadPoolExecutor(max_workers=CHANNEL_TEST_WORKERS) as executor:
+            future_to_channel = {
+                executor.submit(test_channel_urls, tester, name, urls): name 
+                for name, urls in test_channels.items()
+            }
+            
+            for future in as_completed(future_to_channel):
+                channel_name = future_to_channel[future]
+                try:
+                    tested_urls = future.result()
+                    if tested_urls:
+                        tested_channels[channel_name] = tested_urls
+                except Exception as e:
+                    print(f"❌ 测试频道 {channel_name} 时发生错误: {e}")
+        
+        if not tested_channels:
+            print("❌ 错误: 没有找到任何可用的直播源")
+            return
+        
+        # 6. 按照模板排序
+        template_channels = load_demo_template()
+        organized_channels = organize_channels_by_template(template_channels, tested_channels)
+        
+        print(f"✅ 整理完成: {len(organized_channels)} 个频道")
+        
+        # 7. 显示统计信息
+        display_channel_stats(organized_channels, tester)
+        
+        # 8. 保存文件
+        success_txt = save_to_txt(organized_channels)
+        success_m3u = save_to_m3u(organized_channels)
+        
+        total_time = time.time() - start_time
+        
+        if success_txt and success_m3u:
+            print(f"\n🎉 处理完成! 总耗时: {total_time:.2f}秒")
+            print(f"📁 输出文件: {OUTPUT_TXT_FILE}, {OUTPUT_M3U_FILE}")
+            
+            # 显示最终文件信息
+            if os.path.exists(OUTPUT_TXT_FILE):
+                file_size = os.path.getsize(OUTPUT_TXT_FILE)
+                print(f"📄 {OUTPUT_TXT_FILE}: {file_size} 字节")
+            if os.path.exists(OUTPUT_M3U_FILE):
+                file_size = os.path.getsize(OUTPUT_M3U_FILE)
+                print(f"📄 {OUTPUT_M3U_FILE}: {file_size} 字节")
+        else:
+            print(f"\n⚠️ 处理完成，但部分文件保存失败")
+            
+    except KeyboardInterrupt:
+        print("\n⏹️ 用户中断处理")
+    except Exception as e:
+        print(f"\n❌ 处理过程中发生错误: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()
