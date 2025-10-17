@@ -43,7 +43,7 @@ ONLINE_SOURCE_URLS = [
 ]
 
 # 请求超时时间（秒）：网络请求的最大等待时间
-REQUEST_TIMEOUT = 15
+REQUEST_TIMEOUT = 10
 
 # 用户代理头：模拟浏览器访问，避免被网站屏蔽
 HEADERS = {
@@ -55,49 +55,23 @@ HEADERS = {
 # =============================================================================
 
 # 最大工作线程数：同时进行的网络请求数量
-MAX_WORKERS = 5
+MAX_WORKERS = 10
 
 # 频道测试并发数：同时测试的频道数量
-CHANNEL_TEST_WORKERS = 10
+CHANNEL_TEST_WORKERS = 5
 
 # URL测试并发数：单个频道内同时测试的URL数量
-URL_TEST_WORKERS = 10
+URL_TEST_WORKERS = 8
 
 # =============================================================================
 # 频道处理配置
 # =============================================================================
 
-# 单个频道最大测试URL数量：每个频道最多测试多少个源（避免测试过多）
-SPEED_TEST_COUNT = 30
-
 # 单个频道最大保留URL数量：每个频道最终保留的最佳源数量
 MAX_URLS_PER_CHANNEL = 8
 
-# 最大测试频道数量：限制测试的频道总数（避免处理时间过长）
-MAX_TEST_CHANNELS = 20
-
-# =============================================================================
-# 评分权重配置
-# =============================================================================
-
-# 流媒体质量评分权重：用于计算每个源的最终得分
-WEIGHTS = {
-    'response_time': 0.5,   # 响应时间权重：值越大，响应时间对得分影响越大
-    'speed': 0.5,           # 下载速度权重：值越大，下载速度对得分影响越大
-}
-
-# =============================================================================
-# 流媒体测试配置
-# =============================================================================
-
 # 流测试超时时间（秒）：测试单个流媒体的最大时间
-STREAM_TEST_TIMEOUT = 10
-
-# 最大下载时间（秒）：速度测试的最大下载时间
-MAX_DOWNLOAD_TIME = 10
-
-# 测试数据量（字节）：速度测试时下载的数据量（50KB）
-TEST_DATA_SIZE = 51200
+STREAM_TEST_TIMEOUT = 8
 
 # =============================================================================
 # 正则表达式配置
@@ -105,9 +79,6 @@ TEST_DATA_SIZE = 51200
 
 # IPv4地址匹配模式：识别IPv4格式的URL
 IPV4_PATTERN = re.compile(r'^https?://(\d{1,3}\.){3}\d{1,3}')
-
-# IPv6地址匹配模式：识别IPv6格式的URL
-IPV6_PATTERN = re.compile(r'^https?://\[([a-fA-F0-9:]+)\]')
 
 # M3U格式解析模式：从EXTINF行中提取频道名称
 EXTINF_PATTERN = re.compile(r'tvg-name="([^"]+)"')
@@ -123,7 +94,7 @@ CHANNEL_NAME_CLEAN_PATTERN = re.compile(r'[<>:"/\\|?*]')
 ###############################################################################
 
 class StreamTester:
-    """流媒体测试器"""
+    """流媒体测试器 - 只测试响应延时"""
     
     def __init__(self):
         self.results_cache = {}
@@ -132,7 +103,7 @@ class StreamTester:
         self.success_count = 0
     
     def test_stream(self, program_name, stream_url):
-        """测试单个流媒体的响应时间和速度"""
+        """测试单个流媒体的响应时间"""
         cache_key = f"{program_name}|{stream_url}"
         
         # 检查缓存
@@ -143,54 +114,20 @@ class StreamTester:
         start_time = time.time()
         
         try:
-            # 使用配置的超时时间进行测试
-            test_timeout = min(STREAM_TEST_TIMEOUT, 5)
-            
-            # 首先进行HEAD请求检查可用性
-            head_response = requests.head(
+            # 使用HEAD请求测试响应时间
+            response = requests.head(
                 stream_url, 
-                timeout=test_timeout,
+                timeout=STREAM_TEST_TIMEOUT,
                 headers=HEADERS,
                 allow_redirects=True
             )
-            head_response.close()
+            response.close()
             
             response_time = (time.time() - start_time) * 1000  # 毫秒
             
-            # 如果HEAD请求成功，进行GET请求测试速度
-            get_start_time = time.time()
-            response = requests.get(
-                stream_url, 
-                timeout=test_timeout,
-                headers=HEADERS,
-                stream=True
-            )
-            
-            # 简单测速：下载配置的数据量计算速度
-            speed = 0
-            content_length = 0
-            download_start = time.time()
-            
-            try:
-                for chunk in response.iter_content(chunk_size=1024):
-                    content_length += len(chunk)
-                    if content_length >= TEST_DATA_SIZE:
-                        break
-                    if time.time() - download_start > MAX_DOWNLOAD_TIME:
-                        break
-            finally:
-                response.close()
-            
-            if content_length > 0:
-                download_time = time.time() - download_start
-                speed = (content_length / 1024) / max(download_time, 0.1)  # KB/s
-            
             result = {
                 'response_time': response_time,
-                'speed': speed,
                 'available': True,
-                'resolution': self.estimate_resolution(speed),
-                'content_type': response.headers.get('content-type', ''),
                 'status_code': response.status_code
             }
             
@@ -199,10 +136,7 @@ class StreamTester:
         except Exception as e:
             result = {
                 'response_time': 9999,
-                'speed': 0,
                 'available': False,
-                'resolution': 0,
-                'content_type': '',
                 'status_code': 0,
                 'error': str(e)
             }
@@ -213,39 +147,22 @@ class StreamTester:
         
         return result
     
-    def estimate_resolution(self, speed):
-        """根据速度估算分辨率"""
-        if speed > 2000:  # 2MB/s
-            return 1080
-        elif speed > 1000:  # 1MB/s
-            return 720
-        elif speed > 500:   # 500KB/s
-            return 480
-        else:
-            return 360
-    
     def calculate_score(self, test_result):
-        """计算综合得分"""
+        """计算得分 - 基于响应时间，响应时间越短得分越高"""
         if not test_result['available']:
             return 0
         
         # 响应时间得分（响应时间越短得分越高）
-        rt_score = max(0, 100 - min(test_result['response_time'], 5000) / 50)
+        # 响应时间0-100ms得100分，100-500ms线性递减，500ms以上得0分
+        response_time = test_result['response_time']
+        if response_time <= 100:
+            score = 100
+        elif response_time <= 500:
+            score = 100 - (response_time - 100) / 4  # 100-500ms线性递减
+        else:
+            score = 0
         
-        # 速度得分
-        speed_score = min(100, test_result['speed'] / 20)
-        
-        # 分辨率加分
-        resolution_bonus = test_result['resolution'] * 0.1
-        
-        # 综合得分
-        total_score = (
-            rt_score * WEIGHTS['response_time'] +
-            speed_score * WEIGHTS['speed'] +
-            resolution_bonus
-        )
-        
-        return round(total_score, 2)
+        return round(score, 2)
     
     def get_stats(self):
         """获取测试统计"""
@@ -472,15 +389,12 @@ def test_channel_urls(tester, program_name, urls):
     
     test_results = []
     
-    # 限制测试数量
-    test_urls = urls[:SPEED_TEST_COUNT]
+    print(f"🔍 测试频道 '{program_name}' 的 {len(urls)} 个源...")
     
-    print(f"🔍 测试频道 '{program_name}' 的 {len(test_urls)} 个源...")
-    
-    with ThreadPoolExecutor(max_workers=min(URL_TEST_WORKERS, len(test_urls))) as executor:
+    with ThreadPoolExecutor(max_workers=min(URL_TEST_WORKERS, len(urls))) as executor:
         future_to_url = {
             executor.submit(tester.test_stream, program_name, url_info['url']): url_info 
-            for url_info in test_urls
+            for url_info in urls
         }
         
         for future in as_completed(future_to_url):
@@ -493,9 +407,7 @@ def test_channel_urls(tester, program_name, urls):
                     'url': url_info['url'],
                     'source': url_info['source'],
                     'response_time': round(test_result['response_time'], 2),
-                    'speed': round(test_result['speed'], 2),
                     'available': test_result['available'],
-                    'resolution': test_result['resolution'],
                     'score': score
                 })
                 
@@ -510,7 +422,8 @@ def test_channel_urls(tester, program_name, urls):
     final_results = sorted_results[:MAX_URLS_PER_CHANNEL]
     
     if final_results:
-        print(f"✅ {program_name}: 找到 {len(final_results)} 个可用源")
+        best_time = final_results[0]['response_time']
+        print(f"✅ {program_name}: 找到 {len(final_results)} 个可用源 (最佳响应: {best_time}ms)")
     else:
         print(f"❌ {program_name}: 无可用源")
     
@@ -563,8 +476,6 @@ def display_channel_stats(organized_channels, tester):
     avg_streams_per_channel = round(total_streams / max(total_channels, 1), 2)
     
     # 统计源类型
-    ipv4_count = 0
-    ipv6_count = 0
     local_count = 0
     online_count = 0
     
@@ -576,10 +487,6 @@ def display_channel_stats(organized_channels, tester):
     
     for channel in organized_channels:
         for stream in channel['streams']:
-            if IPV4_PATTERN.match(stream['url']):
-                ipv4_count += 1
-            elif IPV6_PATTERN.match(stream['url']):
-                ipv6_count += 1
             if stream.get('source') == 'local':
                 local_count += 1
             else:
@@ -589,8 +496,6 @@ def display_channel_stats(organized_channels, tester):
     print(f"📺 总频道数: {total_channels}")
     print(f"🔗 总流媒体源: {total_streams}")
     print(f"📈 平均每个频道源数: {avg_streams_per_channel}")
-    print(f"🌐 IPv4 源: {ipv4_count}")
-    print(f"🔷 IPv6 源: {ipv6_count}")
     print(f"💾 本地源: {local_count}")
     print(f"🌍 在线源: {online_count}")
     
@@ -627,36 +532,15 @@ def save_to_txt(organized_channels, filename=OUTPUT_TXT_FILE):
                 f.write(f"# {channel['program_name']}: {stream_count}个接口\n")
             f.write("\n")
             
-            # 写入IPv4源
-            ipv4_streams = []
-            ipv6_streams = []
-            other_streams = []
+            # 写入所有源
+            all_streams = []
             
             for channel in organized_channels:
                 for stream in channel['streams']:
                     line = f"{channel['program_name']},{stream['url']}"
-                    if IPV4_PATTERN.match(stream['url']):
-                        ipv4_streams.append(line)
-                    elif IPV6_PATTERN.match(stream['url']):
-                        ipv6_streams.append(line)
-                    else:
-                        other_streams.append(line)
+                    all_streams.append(line)
             
-            if ipv4_streams:
-                f.write("# IPv4 Streams\n")
-                f.write("\n".join(ipv4_streams))
-                if ipv6_streams or other_streams:
-                    f.write("\n\n")
-            
-            if ipv6_streams:
-                f.write("# IPv6 Streams\n")
-                f.write("\n".join(ipv6_streams))
-                if other_streams:
-                    f.write("\n\n")
-            
-            if other_streams:
-                f.write("# Other Streams\n")
-                f.write("\n".join(other_streams))
+            f.write("\n".join(all_streams))
         
         print(f"✅ 文本文件已保存: {os.path.abspath(filename)}")
         
@@ -773,17 +657,14 @@ def main():
             print("❌ 错误: 没有有效的频道数据")
             return
         
-        # 5. 测试和排序每个频道的URL
-        print("\n🚀 开始测试频道源...")
+        # 5. 测试所有频道的URL（不限制数量）
+        print("\n🚀 开始测试所有频道源...")
         tested_channels = {}
-        
-        # 限制并发测试的频道数量，避免过多请求
-        test_channels = dict(list(channel_groups.items())[:MAX_TEST_CHANNELS])
         
         with ThreadPoolExecutor(max_workers=CHANNEL_TEST_WORKERS) as executor:
             future_to_channel = {
                 executor.submit(test_channel_urls, tester, name, urls): name 
-                for name, urls in test_channels.items()
+                for name, urls in channel_groups.items()
             }
             
             for future in as_completed(future_to_channel):
