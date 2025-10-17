@@ -153,6 +153,48 @@ class AdvancedIPTVSearcher:
             'm3u_style': False,
             'json_style': False,
             'csv_style': False,
+            'recommend            'max_channel_name_length': 100,
+            
+            # 超时配置
+            'request_timeout': 20,
+            'speed_test_timeout': 8,
+            'max_response_time': 10.0,
+            
+            # 功能开关
+            'enable_speed_test': True,
+            'enable_resolution_detection': True,
+            'enable_fuzzy_matching': True,
+            'remove_duplicates': True
+        }
+
+    def _load_template_channels(self) -> List[str]:
+        """加载频道模板"""
+        return [
+            # CCTV系列
+            "CCTV1", "CCTV2", "CCTV3", "CCTV4", "CCTV5", "CCTV5+", "CCTV6", "CCTV7", 
+            "CCTV8", "CCTV9", "CCTV10", "CCTV11", "CCTV12", "CCTV13", "CCTV14", "CCTV15",
+            "CCTV16", "CCTV17",
+            
+            # 卫视系列
+            "北京卫视", "湖南卫视", "浙江卫视", "江苏卫视", "东方卫视", "安徽卫视",
+            "山东卫视", "天津卫视", "湖北卫视", "广东卫视", "深圳卫视", "黑龙江卫视",
+            "辽宁卫视", "四川卫视", "河南卫视", "东南卫视", "重庆卫视",
+            
+            # 其他重要频道
+            "北京冬奥纪实", "中国教育1", "中国教育2", "金鹰卡通", "卡酷少儿",
+            "嘉佳卡通", "优漫卡通", "炫动卡通"
+        ]
+
+    def analyze_content_format(self, content: str) -> Dict:
+        """分析内容格式并返回最佳提取策略"""
+        analysis = {
+            'format_type': 'unknown',
+            'total_lines': len(content.splitlines()),
+            'content_length': len(content),
+            'url_count': len(re.findall(r'https?://[^\s<>"\'{}|\\^`\[\]]+', content)),
+            'm3u_style': False,
+            'json_style': False,
+            'csv_style': False,
             'recommended_patterns': []
         }
         
