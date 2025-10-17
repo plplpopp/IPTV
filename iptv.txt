@@ -1,5 +1,5 @@
 # IPTV直播源列表
-# 生成时间: 2025-10-17 23:15:02
+# 生成时间: 2025-10-17 23:26:46
 # 总频道数: 20
 # 总接口数: 136
 
@@ -17,150 +17,150 @@
 # 山东卫视: 8个接口
 # 深圳卫视: 8个接口
 # 新疆卫视: 8个接口
-# 安徽卫视高清: 5个接口
 # 天津卫视高清: 5个接口
+# 安徽卫视高清: 5个接口
 # 江西卫视高清: 5个接口
 # 吉林卫视高清: 5个接口
-# 广东卫视高清: 5个接口
 # 东南卫视高清: 4个接口
+# 广东卫视高清: 5个接口
 # 江苏卫视高清: 3个接口
 
 # IPv4 Streams
-浙江卫视,http://58.57.40.22:9901/tsfile/live/1029_1.m3u8
+浙江卫视,http://112.27.235.94:8000/hls/29/index.m3u8
+浙江卫视,http://101.35.240.114:88/live.php?id=浙江卫视
 北京卫视,http://112.27.235.94:8000/hls/27/index.m3u8
 北京卫视,http://101.35.240.114:88/live.php?id=北京卫视
 北京卫视,http://58.57.40.22:9901/tsfile/live/1032_1.m3u8
-湖北卫视,http://101.35.240.114:88/live.php?id=湖北卫视
+湖北卫视,http://112.27.235.94:8000/hls/41/index.m3u8
 黑龙江卫视,http://148.135.93.213/live.php?id=黑龙江卫视
+黑龙江卫视,http://39.164.180.36:19901/tsfile/live/0143_1.m3u8?key=txiptv&playlive=0&authid=0
 黑龙江卫视,http://112.27.235.94:8000/hls/48/index.m3u8
 黑龙江卫视,http://111.43.126.240:9003/hls/6/index.m3u8
 黑龙江卫视,http://58.57.40.22:9901/tsfile/live/1040_1.m3u8
 重庆卫视,http://148.135.93.213/live.php?id=重庆卫视
 重庆卫视,http://112.27.235.94:8000/hls/36/index.m3u8
 东方卫视,http://58.57.40.22:9901/tsfile/live/1030_1.m3u8
-东方卫视,http://183.215.134.239:19901/tsfile/live/0107_1.m3u8?key=txiptv&playlive=1&authid=0
 东方卫视,http://101.35.240.114:88/live.php?id=东方卫视
-东方卫视,http://36.32.174.67:60080/newlive/live/hls/24/live.m3u8
+东方卫视,http://183.215.134.239:19901/tsfile/live/0107_1.m3u8?key=txiptv&playlive=1&authid=0
+东南卫视,http://148.135.93.213/live.php?id=东南卫视
+东南卫视,http://39.164.180.36:19901/tsfile/live/0137_1.m3u8?key=txiptv&playlive=0&authid=0
 东南卫视,http://112.27.235.94:8000/hls/38/index.m3u8
-东南卫视,http://58.19.43.46:9901/tsfile/live/1046_1.m3u8
-东南卫视,http://153.0.171.163:9901/tsfile/live/0137_1.m3u8?key=txiptv&playlive=1&authid=0
 河北卫视,http://148.135.93.213/live.php?id=河北卫视
+河北卫视,http://39.164.180.36:19901/tsfile/live/0117_1.m3u8?key=txiptv&playlive=0&authid=0
 河北卫视,http://112.27.235.94:8000/hls/39/index.m3u8
-河北卫视,http://58.57.40.22:9901/tsfile/live/1044_1.m3u8
 河北卫视,http://120.76.248.139/live/bfgd/4200000108.m3u8
+河北卫视,http://58.57.40.22:9901/tsfile/live/1044_1.m3u8
 河北卫视,http://36.32.174.67:60080/newlive/live/hls/36/live.m3u8
 河南卫视,http://148.135.93.213/live.php?id=河南卫视
 河南卫视,http://112.27.235.94:8000/hls/37/index.m3u8
 河南卫视,http://1.94.31.214/php/hntv.php?id=hnws
 江苏卫视,http://112.27.235.94:8000/hls/32/index.m3u8
 江苏卫视,http://101.35.240.114:88/live.php?id=江苏卫视
-江苏卫视,http://183.11.239.36:808/hls/38/index.m3u8
 山东卫视,http://148.135.93.213/live.php?id=山东卫视
 山东卫视,http://112.27.235.94:8000/hls/34/index.m3u8
 山东卫视,http://120.76.248.139/live/bfgd/4200000099.m3u8
-山东卫视,http://183.11.239.36:808/hls/43/index.m3u8
 新疆卫视,http://111.43.126.240:9003/hls/64/index.m3u8
 新疆卫视,http://218.17.33.178:53290/tsfile/live/0110_1.m3u8?key=txiptv
+新疆卫视,http://58.57.40.22:9901/tsfile/live/1055_1.m3u8
 新疆卫视,http://101.35.240.114:88/live.php?id=新疆卫视
-新疆卫视,http://113.26.202.52:1299/tsfile/live/0110_1.m3u8
-安徽卫视高清,http://111.43.126.240:9003/hls/43/index.m3u8
 天津卫视高清,http://111.43.126.240:9003/hls/46/index.m3u8
+安徽卫视高清,http://111.43.126.240:9003/hls/43/index.m3u8
 江西卫视高清,http://111.43.126.240:9003/hls/49/index.m3u8
 吉林卫视高清,http://111.43.126.240:9003/hls/45/index.m3u8
-广东卫视高清,http://111.43.126.240:9003/hls/42/index.m3u8
 东南卫视高清,http://111.43.126.240:9003/hls/47/index.m3u8
+广东卫视高清,http://111.43.126.240:9003/hls/42/index.m3u8
 江苏卫视高清,http://111.43.126.240:9003/hls/38/index.m3u8
 
 # Other Streams
 浙江卫视,https://zby.130519.xyz/PLTV/11/224/3221225727/index.m3u8
 浙江卫视,http://t.061899.xyz/tl/dq.php?id=zjws
 浙江卫视,https://stream1.freetv.fun/zhe-jiang-wei-shi-86.m3u8
-浙江卫视,https://stream1.freetv.fun/d9a1b492bfe8ec9d5d9daeb61db5c2966aaa2dff1d41702447be179f00df7b51.m3u8
 浙江卫视,https://stream1.freetv.fun/c3445f71ab03dfbec38f46a40778b536475e5736996834655bb0d636a001204d.m3u8
-浙江卫视,http://l.cztvcloud.com/channels/lantian/SXpinghu3/720p.m3u8
-浙江卫视,http://ali-m-l.cztv.com:80/channels/lantian/channel001/1080p.m3u8$LR•IPV4『线路55』
+浙江卫视,https://stream1.freetv.fun/zhe-jiang-wei-shi-43.m3u8
+浙江卫视,https://stream1.freetv.fun/d9a1b492bfe8ec9d5d9daeb61db5c2966aaa2dff1d41702447be179f00df7b51.m3u8
 北京卫视,https://zby.130519.xyz/PLTV/11/224/3221225724/index.m3u8
 北京卫视,https://stream1.freetv.fun/bei-jing-wei-shi-19.m3u8
-北京卫视,http://t.061899.xyz/tl/dq.php?id=bjws
 北京卫视,https://stream1.freetv.fun/cda7c4b88dacb6176794416673b481491e36101e865efc5c29b972fcded01773.m3u8
-北京卫视,https://stream1.freetv.fun/40da048b4d21ffd89da3290a944d0fc6f5c15d1288d1bcdf9cb70c72ad9ffb15.m3u8
-湖北卫视,https://zby.130519.xyz/PLTV/11/224/3221225729/index.m3u8
-湖北卫视,http://t.061899.xyz/tl/dq.php?id=hubws
+北京卫视,https://stream1.freetv.fun/bei-jing-wei-shi-71.m3u8
+北京卫视,https://stream1.freetv.fun/5e40b2e656954c5b54000099a9711fb4d3490e8ff31c5c857f85df49b4f4a8ba.m3u8
+湖北卫视,https://stream1.freetv.fun/11a27a1eb12a1c6020ea2f80804d50db752fbd4c2c7cf3c456dd309d9033a98c.m3u8
+湖北卫视,https://stream1.freetv.fun/50bc22715c1891286506f27fd6cd34cb9dd6d1b5e94b25916e8f31e80ba2efd1.m3u8
 湖北卫视,https://stream1.freetv.fun/7278e895e1e512f548f3fd2c2e503a83f6946006f1aba27c986e95fd5960f592.m3u8
-湖北卫视,https://stream1.freetv.fun/hu-bei-wei-shi-21.m3u8
-湖北卫视,https://stream1.freetv.fun/hu-bei-wei-shi-102.m3u8
-湖北卫视,https://stream1.freetv.fun/3ed50eaa9b525447fbea0b393b648febe06da23bc2101f0d9aa019251d1adb06.m3u8
 湖北卫视,https://stream1.freetv.fun/hu-bei-wei-shi-49.m3u8
-黑龙江卫视,https://stream1.freetv.fun/hei-long-jiang-wei-shi-45.m3u8
-黑龙江卫视,https://stream1.freetv.fun/hei-long-jiang-wei-shi-79.m3u8
+湖北卫视,https://stream1.freetv.fun/hu-bei-wei-shi-58.m3u8
+湖北卫视,https://stream1.freetv.fun/hu-bei-wei-shi-21.m3u8
+湖北卫视,https://stream1.freetv.fun/3ed50eaa9b525447fbea0b393b648febe06da23bc2101f0d9aa019251d1adb06.m3u8
 黑龙江卫视,https://stream1.freetv.fun/91f980623df2d6f6e2bdc1ade976bc8930d4e6cad8e116fd5f3c6fe91e60345c.m3u8
 黑龙江卫视,https://stream1.freetv.fun/c502a906b9e38fa6be2377f3ba900c5802f3b68a586a172ed17a05508d092b8e.m3u8
-重庆卫视,https://stream1.freetv.fun/zhong-qing-wei-shi-42.m3u8
-重庆卫视,https://stream1.freetv.fun/zhong-qing-wei-shi-27.m3u8
-重庆卫视,https://stream1.freetv.fun/zhong-qing-wei-shi-4.m3u8
-重庆卫视,https://stream1.freetv.fun/zhong-qing-wei-shi-48.m3u8
-重庆卫视,https://stream1.freetv.fun/zhong-qing-wei-shi-76.m3u8
+黑龙江卫视,https://stream1.freetv.fun/hei-long-jiang-wei-shi-45.m3u8
 重庆卫视,https://stream1.freetv.fun/2af0c7392453c9de383e05a4ae3af9a959fb2ed1172733a27f7b5286bd6be067.m3u8
+重庆卫视,https://stream1.freetv.fun/0d2429c7e09cf4c6753cd0782edbe7ad2e0567eb6bf3bbfafd7171035e5f73d5.m3u8
+重庆卫视,https://stream1.freetv.fun/db87bc979d1c5004a4b6403aa42c8cc09da751ecd2f1cf27806cf13032ea15e4.m3u8
+重庆卫视,https://stream1.freetv.fun/6b02ca587457cae05973fc43e56528776dd7f992da37d4f74f3c3829b8d4821d.m3u8
+重庆卫视,https://stream1.freetv.fun/b6af4654cff784a3c2e7edd6a23b27c804fe4f54623331338e81dd36d6a9bb20.m3u8
+重庆卫视,https://stream1.freetv.fun/e0bf6964d3e369d7c7a570dae78ea3476b66f02fe8c0f2670847f96cab05ce89.m3u8
 东方卫视,https://zby.130519.xyz/PLTV/11/224/3221225725/index.m3u8
+东方卫视,https://stream1.freetv.fun/dong-fang-wei-shi-24.m3u8
 东方卫视,https://stream1.freetv.fun/eca23fbcbe23cf3b791af20b7e30324478e3086baf66e4fb9302e24b114021ae.m3u8
 东方卫视,https://stream1.freetv.fun/dong-fang-wei-shi-84.m3u8
-东方卫视,https://stream1.freetv.fun/dong-fang-wei-shi-24.m3u8
+东方卫视,https://stream1.freetv.fun/dong-fang-wei-shi-52.m3u8
 东南卫视,https://zby.130519.xyz/PLTV/11/224/3221225745/index.m3u8
 东南卫视,http://t.061899.xyz/tl/dq.php?id=dnws
-东南卫视,https://stream1.freetv.fun/bf437d113b5326c63689e186eb8889b90b03e72e8d76ce2b53632abc40872343.m3u8
-东南卫视,http://mg.hmysapp.cn:177/ckmg/zb.php?id=dnws
-东南卫视,https://stream1.freetv.fun/0d99a9f51ddeac599837edb17e8e7f077991333b896ad5b5cb11cc6d1138284d.m3u8
-河北卫视,https://zby.130519.xyz/PLTV/11/224/3221226107/index.m3u8
-河北卫视,https://stream1.freetv.fun/53800b472ac1869f0e75f5c2b17fdee144590e10b746f523425fd6ee5cc9b490.m3u8
+东南卫视,https://stream1.freetv.fun/ece9b040569e5766b592af0a4b6fa356e04d0a806973f7e105db06a44c8f58be.m3u8
+东南卫视,https://stream1.freetv.fun/dong-nan-wei-shi-38.m3u8
+东南卫视,https://stream1.freetv.fun/341570be10f7c776aa556f23f7e5ff3cbeecbd9cc578b731147312c1f5bc2229.m3u8
 河北卫视,https://stream1.freetv.fun/he-bei-wei-shi-31.m3u8
+河北卫视,https://zby.130519.xyz/PLTV/11/224/3221226107/index.m3u8
 河南卫视,https://zby.130519.xyz/PLTV/11/224/3221226132/index.m3u8
-河南卫视,http://t.061899.xyz/tl/dq.php?id=hnws
-河南卫视,https://stream1.freetv.fun/8424862171388d8252614140a47da045a6ca967228f9d00629529506296953b9.m3u8
 河南卫视,https://stream1.freetv.fun/he-nan-wei-shi-75.m3u8
+河南卫视,https://stream1.freetv.fun/8424862171388d8252614140a47da045a6ca967228f9d00629529506296953b9.m3u8
 河南卫视,https://stream1.freetv.fun/he-nan-wei-shi-18.m3u8
+河南卫视,http://t.061899.xyz/tl/dq.php?id=hnws
 江苏卫视,https://zby.130519.xyz/PLTV/11/224/3221225720/index.m3u8
 江苏卫视,https://stream1.freetv.fun/8803542d7a49d90fc141b3373ac76d8caca473c22cd4e19370f290989600b03f.m3u8
+江苏卫视,https://stream1.freetv.fun/jiang-su-wei-shi-16.m3u8
 江苏卫视,https://stream1.freetv.fun/53214d261ed41d49872c97bde06c1b2a6fe620fb91a7cb3aed41fa303b502eac.m3u8
-江苏卫视,https://stream1.freetv.fun/4b3a79c01c9ae45646cd792c7c7818c22a58ed5cb47262cfd65e9895464207bf.m3u8
+江苏卫视,https://stream1.freetv.fun/jiang-su-wei-shi-19.m3u8
 江苏卫视,https://stream1.freetv.fun/jiang-su-wei-shi-53.ctv
-山东卫视,http://t.061899.xyz/tl/dq.php?id=sdws
 山东卫视,https://zby.130519.xyz/PLTV/11/224/3221225733/index.m3u8
-山东卫视,https://stream1.freetv.fun/220190fbb76291005f7129d1553ddad9ecc1d70bceaeca80ca0caef936c06861.m3u8
+山东卫视,http://t.061899.xyz/tl/dq.php?id=sdws
 山东卫视,https://stream1.freetv.fun/shan-dong-wei-shi-78.m3u8
-深圳卫视,https://stream1.freetv.fun/shen-zhen-wei-shi-34.ctv
-深圳卫视,https://stream1.freetv.fun/04aee00ba8c53c27c7c2f458492d3cfbbbb465711cb20de5cea3f37a2ef5e696.m3u8
+山东卫视,https://stream1.freetv.fun/shan-dong-wei-shi-89.m3u8
+山东卫视,https://stream1.freetv.fun/54140857d1dea7def315a7141a74cec5181f89f5ed55245835852979617e582a.m3u8
 深圳卫视,https://stream1.freetv.fun/shen-zhen-wei-shi-49.ctv
-深圳卫视,https://stream1.freetv.fun/shen-zhen-wei-shi-24.m3u8
-深圳卫视,https://stream1.freetv.fun/shen-zhen-wei-shi-98.m3u8
 深圳卫视,https://stream1.freetv.fun/shen-zhen-wei-shi-26.m3u8
+深圳卫视,https://stream1.freetv.fun/shen-zhen-wei-shi-34.ctv
+深圳卫视,https://stream1.freetv.fun/shen-zhen-wei-shi-24.m3u8
 深圳卫视,https://stream1.freetv.fun/e194e3ce356d2158d336b3f91c210a2b945dc64bca802cd640e20c9075554c29.m3u8
-深圳卫视,https://stream1.freetv.fun/50ebb71eff356541b042553352cac6f9dc5fd3e8bb4f3a712b798227c7129c94.m3u8
-新疆卫视,http://t.061899.xyz/tl/dq.php?id=xjws
-新疆卫视,https://stream1.freetv.fun/ff50600dd45b1b1656f2f7535c04f361a6e8c33606e19dbc9b0316bd173f9408.m3u8
+深圳卫视,https://stream1.freetv.fun/04aee00ba8c53c27c7c2f458492d3cfbbbb465711cb20de5cea3f37a2ef5e696.m3u8
+深圳卫视,https://stream1.freetv.fun/shen-zhen-wei-shi-58.m3u8
+深圳卫视,https://stream1.freetv.fun/0779d9959e86d4ea7c1c316e929c57da7a6245591584ef1de6c4281380c0822a.m3u8
 新疆卫视,https://stream1.freetv.fun/xin-jiang-wei-shi-5.m3u8
+新疆卫视,https://stream1.freetv.fun/xin-jiang-wei-shi-37.m3u8
 新疆卫视,https://stream1.freetv.fun/xin-jiang-wei-shi-9.m3u8
+新疆卫视,https://stream1.freetv.fun/xin-jiang-wei-shi-44.m3u8
+天津卫视高清,https://stream1.freetv.fun/tian-jin-wei-shi-gao-qing-2.ctv
+天津卫视高清,https://stream1.freetv.fun/052968c9284a227eddd5d240cff4ce2782fdfcf4ee94320c311137729e0ca96a.ctv
+天津卫视高清,https://stream1.freetv.fun/a0f286c8210867ca9c77bad169e54aea5b8850cb33e7cfaf07887b56724ac0c4.ctv
+天津卫视高清,https://stream1.freetv.fun/tian-jin-wei-shi-gao-qing-6.ctv
 安徽卫视高清,https://stream1.freetv.fun/an-hui-wei-shi-gao-qing-4.ctv
 安徽卫视高清,https://stream1.freetv.fun/38e95eca4f190912de95311108bac58a0b0181e04d06e029844c16a21ffd6bbb.ctv
-安徽卫视高清,https://stream1.freetv.fun/9092d03a036d336f18ad05e71c70c77eed87f4e6ac0a199f58cf220893ad68f3.ctv
 安徽卫视高清,https://stream1.freetv.fun/an-hui-wei-shi-gao-qing-5.ctv
-天津卫视高清,https://stream1.freetv.fun/052968c9284a227eddd5d240cff4ce2782fdfcf4ee94320c311137729e0ca96a.ctv
-天津卫视高清,https://stream1.freetv.fun/tian-jin-wei-shi-gao-qing-2.ctv
-天津卫视高清,https://stream1.freetv.fun/tian-jin-wei-shi-gao-qing-6.ctv
-天津卫视高清,https://stream1.freetv.fun/a0f286c8210867ca9c77bad169e54aea5b8850cb33e7cfaf07887b56724ac0c4.ctv
+安徽卫视高清,https://stream1.freetv.fun/9092d03a036d336f18ad05e71c70c77eed87f4e6ac0a199f58cf220893ad68f3.ctv
 江西卫视高清,https://stream1.freetv.fun/ad13f9bd813eff7745a581d85f8b9f55728d65c08b9d01120aebd6d19b282f4e.ctv
 江西卫视高清,https://stream1.freetv.fun/jiang-xi-wei-shi-gao-qing-6.ctv
-江西卫视高清,https://stream1.freetv.fun/jiang-xi-wei-shi-gao-qing-4.ctv
 江西卫视高清,https://stream1.freetv.fun/a32e40c2a2e5c0d83a6d07049bf35b650ce2b41e72f8a78862470bb20a969ca7.ctv
+江西卫视高清,https://stream1.freetv.fun/jiang-xi-wei-shi-gao-qing-4.ctv
 吉林卫视高清,https://stream1.freetv.fun/d1ce3adccc1cde82361e7331bff60ac12782893b523a711d39bce8bd83ca7572.ctv
 吉林卫视高清,https://stream1.freetv.fun/ji-lin-wei-shi-gao-qing-4.ctv
 吉林卫视高清,https://stream1.freetv.fun/ji-lin-wei-shi-gao-qing-5.ctv
 吉林卫视高清,https://stream1.freetv.fun/2876eb7d53dcc2c371be6188ee4de235d6038d6b8e7a396c63d71cd62362f5c5.ctv
-广东卫视高清,https://stream1.freetv.fun/yan-dong-wei-shi-gao-qing-2.ctv
+东南卫视高清,https://stream1.freetv.fun/dong-nan-wei-shi-gao-qing-1.ctv
+东南卫视高清,https://stream1.freetv.fun/0ef67a86028c378587ac8455a301c0d42d2175851cd6a67fd560c4ccbbe593cc.ctv
+东南卫视高清,https://stream1.freetv.fun/79161fcd3edce77af8cc5deefe59296806b7906d2bb17d6ee790c1aa1d5d2914.ctv
 广东卫视高清,https://stream1.freetv.fun/1f3a9d078faf4fcdd27d3a86b95f13bcad63b6a82f9497c478cb30b1efb76be3.ctv
+广东卫视高清,https://stream1.freetv.fun/yan-dong-wei-shi-gao-qing-2.ctv
 广东卫视高清,https://stream1.freetv.fun/yan-dong-wei-shi-gao-qing-5.ctv
 广东卫视高清,https://stream1.freetv.fun/e6a0313731293b051570c1d85bc6cb796d153bed28661d5b12ff9dc0dd2ca878.ctv
-东南卫视高清,https://stream1.freetv.fun/0ef67a86028c378587ac8455a301c0d42d2175851cd6a67fd560c4ccbbe593cc.ctv
-东南卫视高清,https://stream1.freetv.fun/dong-nan-wei-shi-gao-qing-1.ctv
-东南卫视高清,https://stream1.freetv.fun/79161fcd3edce77af8cc5deefe59296806b7906d2bb17d6ee790c1aa1d5d2914.ctv
-江苏卫视高清,https://stream1.freetv.fun/201bc6a223bdc6a156faed559f05f3b9fa676c987f5f44cbdf62123f6977d5e9.ctv
 江苏卫视高清,https://stream1.freetv.fun/jiang-su-wei-shi-gao-qing-5.ctv
+江苏卫视高清,https://stream1.freetv.fun/201bc6a223bdc6a156faed559f05f3b9fa676c987f5f44cbdf62123f6977d5e9.ctv
