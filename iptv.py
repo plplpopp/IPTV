@@ -149,6 +149,13 @@ def clean_channel_name(channel_name):
     
     return cleaned_name
 
+def format_channel_name_for_output(template_channel):
+    """
+    格式化输出用的频道名称，确保显示完整的标准名称
+    """
+    # 保持模板中的原始名称，不做清理
+    return template_channel.strip()
+
 def load_template_channels():
     """加载模板频道列表（只有频道名称）"""
     if not os.path.exists(TEMPLATE_FILE):
@@ -169,8 +176,7 @@ def load_template_channels():
                     
                     # 只提取频道名称（非分组行）
                     if '#genre#' not in line and ',' not in line:
-                        cleaned_name = clean_channel_name(line)
-                        template_channel_names.append(cleaned_name)
+                        template_channel_names.append(line)
         
         # 统计信息
         genre_lines = [line for line in template_channels if '#genre#' in line]
@@ -299,7 +305,7 @@ def build_complete_channel_database(local_streams, online_streams):
         result = parse_stream_line(source, line)
         if result:
             channel_name, url, source_info = result
-            # 清理频道名称
+            # 清理频道名称用于匹配
             cleaned_name = clean_channel_name(channel_name)
             
             if cleaned_name not in channel_db:
@@ -580,26 +586,30 @@ def match_template_channels(template_channels, channel_db):
         
         # 模板行只有频道名称（没有URL）
         if line and not line.endswith('#genre#'):
-            template_channel = clean_channel_name(line)
+            # 使用原始模板名称，不进行清理
+            template_channel_original = line
+            # 用于匹配的清理后名称
+            template_channel_for_match = clean_channel_name(line)
             
-            print(f"  🔍 查找频道: {template_channel}")
+            print(f"  🔍 查找频道: {template_channel_original}")
             
-            matched_urls = find_matching_channels(template_channel, channel_db)
+            matched_urls = find_matching_channels(template_channel_for_match, channel_db)
             
             if matched_urls:
                 matched_urls.sort(key=lambda x: x[2].get('score', 0), reverse=True)
                 best_urls = matched_urls[:MAX_STREAMS_PER_CHANNEL]
                 
                 for url, source, info in best_urls:
-                    # 简化输出格式：只保留频道名称和URL
-                    txt_lines.append(f"{template_channel},{url}")
-                    m3u_lines.append(f'#EXTINF:-1 group-title="{current_group}",{template_channel}')
+                    # 使用原始模板名称输出，确保显示完整的"CCTV-1"等名称
+                    output_channel_name = format_channel_name_for_output(template_channel_original)
+                    txt_lines.append(f"{output_channel_name},{url}")
+                    m3u_lines.append(f'#EXTINF:-1 group-title="{current_group}",{output_channel_name}')
                     m3u_lines.append(url)
                 
                 matched_count += 1
-                print(f"  ✅ {template_channel}: 找到 {len(best_urls)} 个优质流")
+                print(f"  ✅ {template_channel_original}: 找到 {len(best_urls)} 个优质流")
             else:
-                print(f"  ❌ {template_channel}: 未找到有效流")
+                print(f"  ❌ {template_channel_original}: 未找到有效流")
     
     try:
         with open(OUTPUT_TXT, 'w', encoding='utf-8') as f:
