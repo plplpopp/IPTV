@@ -505,7 +505,7 @@ def calculate_stream_score(is_alive, response_time, download_speed):
 
 def is_channel_match(template_channel, db_channel):
     """
-    模糊匹配频道名称
+    精准匹配频道名称，特别是CCTV频道
     """
     template_lower = template_channel.lower().strip()
     db_lower = db_channel.lower().strip()
@@ -514,36 +514,38 @@ def is_channel_match(template_channel, db_channel):
     if template_lower == db_lower:
         return True
     
-    # 包含匹配
-    if template_lower in db_lower or db_lower in template_lower:
-        return True
-    
-    # 去除空格后匹配
-    template_no_space = template_lower.replace(' ', '')
-    db_no_space = db_lower.replace(' ', '')
-    if template_no_space in db_no_space or db_no_space in template_no_space:
-        return True
-    
-    # 处理CCTV频道
+    # 对于CCTV频道进行精准匹配
     if 'cctv' in template_lower and 'cctv' in db_lower:
-        # 提取数字部分进行匹配
-        template_num = re.findall(r'\d+', template_lower)
-        db_num = re.findall(r'\d+', db_lower)
-        if template_num and db_num and template_num[0] == db_num[0]:
+        # 提取CCTV数字部分
+        template_nums = re.findall(r'cctv[-\s]*(\d+\+?)', template_lower)
+        db_nums = re.findall(r'cctv[-\s]*(\d+\+?)', db_lower)
+        
+        if template_nums and db_nums:
+            # 数字部分完全匹配
+            if template_nums[0] == db_nums[0]:
+                return True
+        
+        # 处理CCTV-5+等特殊情况
+        if 'cctv-5+' in template_lower and any(x in db_lower for x in ['cctv5+', 'cctv-5+', 'cctv5plus']):
+            return True
+        if 'cctv5+' in template_lower and any(x in db_lower for x in ['cctv5+', 'cctv-5+', 'cctv5plus']):
             return True
     
-    # 处理卫视频道
+    # 对于卫视频道进行精准匹配
     if '卫视' in template_channel and '卫视' in db_channel:
         template_province = template_channel.replace('卫视', '').strip()
         db_province = db_channel.replace('卫视', '').strip()
-        if template_province and db_province and template_province in db_province:
+        if template_province == db_province:
+            return True
+        # 处理简称匹配
+        if template_province in db_province or db_province in template_province:
             return True
     
-    # 关键词匹配
-    template_words = set(template_lower.split())
-    db_words = set(db_lower.split())
-    common_words = template_words.intersection(db_words)
-    if len(common_words) >= 1 and len(template_words) > 1:
+    # 其他频道的宽松匹配
+    template_no_space = template_lower.replace(' ', '').replace('-', '')
+    db_no_space = db_lower.replace(' ', '').replace('-', '')
+    
+    if template_no_space in db_no_space or db_no_space in template_no_space:
         return True
     
     return False
