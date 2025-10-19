@@ -32,13 +32,13 @@ OUTPUT_TXT = "iptv.txt"
 OUTPUT_M3U = "iptv.m3u"
 
 # 每个频道保留的接口数量
-MAX_STREAMS_PER_CHANNEL = 5
+MAX_STREAMS_PER_CHANNEL = 8
 
 # 请求超时时间（秒）
-REQUEST_TIMEOUT = 8
+REQUEST_TIMEOUT = 10
 
 # 测速超时时间（秒）
-SPEED_TEST_TIMEOUT = 12
+SPEED_TEST_TIMEOUT = 15
 
 # 最大线程数
 MAX_WORKERS = 20
