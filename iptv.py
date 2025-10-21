@@ -29,7 +29,7 @@ CONFIG = {
     'ENABLE_RESOLUTION_FILTER': True,   # 启用分辨率过滤
     'MIN_RESOLUTION': 720,              # 最低分辨率要求 (720p)
     'ENABLE_CVT_SOURCE': True,          # 启用.cvt源处理
-    'ENABLE_FFMPEG_TEST': True,         # 启用FFmpeg测速 (需要安装FFmpeg) - 已开启
+    'ENABLE_FFMPEG_TEST': True,         # 启用FFmpeg测速 (需要安装FFmpeg)
     'ENABLE_SPEED_TEST': True,          # 启用常规测速
     'ENABLE_LOCAL_SOURCE': True,        # 启用本地源
     'ENABLE_ONLINE_SOURCE': True,       # 启用在线源
@@ -38,9 +38,9 @@ CONFIG = {
     'MAX_STREAMS_PER_CHANNEL': 8,       # 每个频道保留的接口数量
     'REQUEST_TIMEOUT': 10,              # 请求超时时间（秒）
     'SPEED_TEST_TIMEOUT': 15,           # 测速超时时间（秒）
-    'FFMPEG_TIMEOUT': 25,               # FFmpeg测速超时时间（秒）- 增加到25秒
-    'FFMPEG_TEST_DURATION': 10,         # FFmpeg测试时长（秒）- 设置为10秒
-    'MAX_WORKERS': 15,                  # 最大线程数 - 降低以减少系统负载
+    'FFMPEG_TIMEOUT': 25,               # FFmpeg测速超时时间（秒）
+    'FFMPEG_TEST_DURATION': 10,         # FFmpeg测试时长（秒）
+    'MAX_WORKERS': 15,                  # 最大线程数
 }
 
 # 特殊格式支持
@@ -957,7 +957,7 @@ def speed_test_all_channels(channel_db):
                     if speed_stats['response_times']:
                         postfix_info['avg_time'] = f"{sum(speed_stats['response_times'])/len(speed_stats['response_times']):.0f}ms"
                     if CONFIG['ENABLE_FFMPEG_TEST']:
-                        postfix_info['ffmpeg'] = f"{speed_stats['ffmpeg_success_count']}✅"
+                        postfix_info['ffmpeg'] = f"{speed_stats['ffmpeg_success_count']}PASS"
                     
                     pbar.set_postfix(**postfix_info)
                     pbar.update(1)
@@ -986,59 +986,22 @@ def speed_test_all_channels(channel_db):
     
     return channel_db, speed_stats
 
-def is_channel_match(template_channel, db_channel):
+def is_exact_channel_match(template_channel, db_channel):
     """
-    精准匹配频道名称，特别是CCTV频道
+    精准匹配频道名称 - 只进行完全匹配
     """
-    template_lower = template_channel.lower().strip()
-    db_lower = db_channel.lower().strip()
+    template_clean = clean_channel_name(template_channel)
+    db_clean = clean_channel_name(db_channel)
     
     # 完全匹配
-    if template_lower == db_lower:
-        return True
-    
-    # 对于CCTV频道进行精准匹配
-    if 'cctv' in template_lower and 'cctv' in db_lower:
-        # 提取CCTV数字部分
-        template_nums = re.findall(r'cctv[-\s]*(\d+\+?)', template_lower)
-        db_nums = re.findall(r'cctv[-\s]*(\d+\+?)', db_lower)
-        
-        if template_nums and db_nums:
-            # 数字部分完全匹配
-            if template_nums[0] == db_nums[0]:
-                return True
-        
-        # 处理CCTV-5+等特殊情况
-        if 'cctv-5+' in template_lower and any(x in db_lower for x in ['cctv5+', 'cctv-5+', 'cctv5plus']):
-            return True
-        if 'cctv5+' in template_lower and any(x in db_lower for x in ['cctv5+', 'cctv-5+', 'cctv5plus']):
-            return True
-    
-    # 对于卫视频道进行精准匹配
-    if '卫视' in template_channel and '卫视' in db_channel:
-        template_province = template_channel.replace('卫视', '').strip()
-        db_province = db_channel.replace('卫视', '').strip()
-        if template_province == db_province:
-            return True
-        # 处理简称匹配
-        if template_province in db_province or db_province in template_province:
-            return True
-    
-    # 其他频道的宽松匹配
-    template_no_space = template_lower.replace(' ', '').replace('-', '')
-    db_no_space = db_lower.replace(' ', '').replace('-', '')
-    
-    if template_no_space in db_no_space or db_no_space in template_no_space:
-        return True
-    
-    return False
+    return template_clean == db_clean
 
 def find_matching_channels(template_channel, channel_db):
-    """查找匹配的频道"""
+    """查找精准匹配的频道"""
     matched_urls = []
     
     for db_channel, urls in channel_db.items():
-        if is_channel_match(template_channel, db_channel):
+        if is_exact_channel_match(template_channel, db_channel):
             valid_urls = [(url, source, resolution, info) for url, source, resolution, info in urls 
                         if info.get('alive', False)]
             matched_urls.extend(valid_urls)
@@ -1047,7 +1010,7 @@ def find_matching_channels(template_channel, channel_db):
 
 def match_template_channels(template_channels, channel_db):
     """匹配模板频道并选择最佳流"""
-    print("\n🎯 开始模板频道匹配...")
+    print("\n🎯 开始模板频道精准匹配...")
     
     txt_lines = []
     m3u_lines = ['#EXTM3U']
@@ -1065,37 +1028,31 @@ def match_template_channels(template_channels, channel_db):
         if line and not line.endswith('#genre#'):
             # 使用原始模板名称，不进行清理
             template_channel_original = line
-            # 用于匹配的清理后名称
-            template_channel_for_match = clean_channel_name(line)
             
-            print(f"  🔍 查找频道: {template_channel_original}")
+            print(f"  🔍 精准查找频道: {template_channel_original}")
             
-            matched_urls = find_matching_channels(template_channel_for_match, channel_db)
+            matched_urls = find_matching_channels(template_channel_original, channel_db)
             
             if matched_urls:
                 matched_urls.sort(key=lambda x: x[3].get('score', 0), reverse=True)
                 best_urls = matched_urls[:CONFIG['MAX_STREAMS_PER_CHANNEL']]
                 
                 for url, source, resolution, info in best_urls:
-                    # 使用原始模板名称输出，确保显示完整的"CCTV-1"等名称
+                    # 使用原始模板名称输出，确保显示完整的标准名称
                     output_channel_name = format_channel_name_for_output(template_channel_original)
                     
-                    # 添加分辨率信息到频道名称
+                    # 添加分辨率信息到频道名称（不添加✅标记）
                     if resolution and CONFIG['ENABLE_RESOLUTION_FILTER']:
                         output_channel_name = f"{output_channel_name}({resolution}p)"
-                    
-                    # 添加FFmpeg测试标记
-                    if info.get('ffmpeg_alive'):
-                        output_channel_name = f"{output_channel_name}✅"
                     
                     txt_lines.append(f"{output_channel_name},{url}")
                     m3u_lines.append(f'#EXTINF:-1 group-title="{current_group}",{output_channel_name}')
                     m3u_lines.append(url)
                 
                 matched_count += 1
-                print(f"  ✅ {template_channel_original}: 找到 {len(best_urls)} 个优质流")
+                print(f"  ✅ {template_channel_original}: 找到 {len(best_urls)} 个精准匹配的优质流")
             else:
-                print(f"  ❌ {template_channel_original}: 未找到有效流")
+                print(f"  ❌ {template_channel_original}: 未找到精准匹配的有效流")
     
     try:
         with open(FILES['OUTPUT_TXT'], 'w', encoding='utf-8') as f:
@@ -1111,7 +1068,7 @@ def match_template_channels(template_channels, channel_db):
     except Exception as e:
         print(f"❌ 写入M3U文件失败: {e}")
     
-    print(f"🎯 模板匹配完成: {matched_count} 个频道匹配成功")
+    print(f"🎯 模板精准匹配完成: {matched_count} 个频道匹配成功")
     return matched_count
 
 def print_config_summary():
@@ -1126,6 +1083,7 @@ def print_config_summary():
     print(f"  - 直接流测试: {'✅' if CONFIG['ENABLE_DIRECT_STREAM_TEST'] else '❌'}")
     print(f"  - 本地源: {'✅' if CONFIG['ENABLE_LOCAL_SOURCE'] else '❌'}")
     print(f"  - 在线源: {'✅' if CONFIG['ENABLE_ONLINE_SOURCE'] else '❌'}")
+    print(f"  - 精准匹配: ✅ (已启用)")
     print(f"  - 每频道最大流数: {CONFIG['MAX_STREAMS_PER_CHANNEL']}")
     print(f"  - 最大线程数: {CONFIG['MAX_WORKERS']}")
 
@@ -1159,7 +1117,7 @@ def test_freetv_ctv_stream():
         if CONFIG['ENABLE_FFMPEG_TEST']:
             print(f"🎬 进行FFmpeg深度测试...")
             ffmpeg_alive, ffmpeg_time, ffmpeg_msg = ffmpeg_speed_test(test_url)
-            print(f"FFmpeg结果: {'✅' if ffmpeg_alive else '❌'} - {ffmpeg_msg}")
+            print(f"FFmpeg结果: {'通过' if ffmpeg_alive else '失败'} - {ffmpeg_msg}")
         
     except Exception as e:
         print(f"❌ 测试失败: {e}")
@@ -1207,7 +1165,7 @@ def main():
     
     # 6. 加载模板并进行匹配
     print("\n" + "="*50)
-    print("步骤6: 模板频道匹配")
+    print("步骤6: 模板频道精准匹配")
     template_channels = load_template_channels()
     if template_channels:
         matched_count = match_template_channels(template_channels, channel_db)
@@ -1229,7 +1187,7 @@ def main():
     print(f"  ✅ 有效流数量: {speed_stats['success_count']}")
     if CONFIG['ENABLE_FFMPEG_TEST']:
         print(f"  🎬 FFmpeg验证成功: {speed_stats['ffmpeg_success_count']}")
-    print(f"  🎯 模板匹配: {matched_count} 个频道")
+    print(f"  🎯 精准匹配: {matched_count} 个频道")
     if speed_stats['response_times']:
         print(f"  📈 平均响应: {sum(speed_stats['response_times'])/len(speed_stats['response_times']):.0f}ms")
     print(f"\n📁 输出文件:")
