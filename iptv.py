@@ -7,6 +7,12 @@ import concurrent.futures
 from urllib.parse import urlparse
 from tqdm import tqdm
 import sys
+import json
+import urllib3
+from collections import defaultdict
+
+# 禁用SSL警告
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ============================ 配置文件 ============================
 # 源URL列表
@@ -32,16 +38,77 @@ OUTPUT_TXT = "iptv.txt"
 OUTPUT_M3U = "iptv.m3u"
 
 # 每个频道保留的接口数量
-MAX_STREAMS_PER_CHANNEL = 8
+MAX_STREAMS_PER_CHANNEL = 5
 
 # 请求超时时间（秒）
-REQUEST_TIMEOUT = 10
+REQUEST_TIMEOUT = 8
 
 # 测速超时时间（秒）
-SPEED_TEST_TIMEOUT = 15
+SPEED_TEST_TIMEOUT = 12
 
 # 最大线程数
-MAX_WORKERS = 20
+MAX_WORKERS = 15
+
+# ============================ 频道名称映射和规则 ============================
+CHANNEL_MAPPING_RULES = {
+    # CCTV频道映射
+    'CCTV-1': ['CCTV1', 'CCTV-1', 'CCTV 1', '央视1套', '中央1套', 'CCTV1综合'],
+    'CCTV-2': ['CCTV2', 'CCTV-2', 'CCTV 2', '央视2套', '中央2套', 'CCTV2财经'],
+    'CCTV-3': ['CCTV3', 'CCTV-3', 'CCTV 3', '央视3套', '中央3套', 'CCTV3综艺'],
+    'CCTV-4': ['CCTV4', 'CCTV-4', 'CCTV 4', '央视4套', '中央4套', 'CCTV4中文国际'],
+    'CCTV-5': ['CCTV5', 'CCTV-5', 'CCTV 5', '央视5套', '中央5套', 'CCTV5体育'],
+    'CCTV-5+': ['CCTV5+', 'CCTV5plus', 'CCTV-5+', 'CCTV5 Plus', '央视5+'],
+    'CCTV-6': ['CCTV6', 'CCTV-6', 'CCTV 6', '央视6套', '中央6套', 'CCTV6电影'],
+    'CCTV-7': ['CCTV7', 'CCTV-7', 'CCTV 7', '央视7套', '中央7套', 'CCTV7国防军事'],
+    'CCTV-8': ['CCTV8', 'CCTV-8', 'CCTV 8', '央视8套', '中央8套', 'CCTV8电视剧'],
+    'CCTV-9': ['CCTV9', 'CCTV-9', 'CCTV 9', '央视9套', '中央9套', 'CCTV9纪录'],
+    'CCTV-10': ['CCTV10', 'CCTV-10', 'CCTV 10', '央视10套', '中央10套', 'CCTV10科教'],
+    'CCTV-11': ['CCTV11', 'CCTV-11', 'CCTV 11', '央视11套', '中央11套', 'CCTV11戏曲'],
+    'CCTV-12': ['CCTV12', 'CCTV-12', 'CCTV 12', '央视12套', '中央12套', 'CCTV12社会与法'],
+    'CCTV-13': ['CCTV13', 'CCTV-13', 'CCTV 13', '央视13套', '中央13套', 'CCTV13新闻'],
+    'CCTV-14': ['CCTV14', 'CCTV-14', 'CCTV 14', '央视14套', '中央14套', 'CCTV14少儿'],
+    'CCTV-15': ['CCTV15', 'CCTV-15', 'CCTV 15', '央视15套', '中央15套', 'CCTV15音乐'],
+    'CCTV-16': ['CCTV16', 'CCTV-16', 'CCTV 16', '央视16套', '中央16套', 'CCTV16奥林匹克'],
+    'CCTV-17': ['CCTV17', 'CCTV-17', 'CCTV 17', '央视17套', '中央17套', 'CCTV17农业农村'],
+    
+    # 卫视频道映射
+    '北京卫视': ['北京卫视', '北京电视台', 'BTV', '北京台'],
+    '湖南卫视': ['湖南卫视', '湖南电视台', 'HUNAN'],
+    '浙江卫视': ['浙江卫视', '浙江电视台', 'ZHEJIANG'],
+    '江苏卫视': ['江苏卫视', '江苏电视台', 'JIANGSU'],
+    '东方卫视': ['东方卫视', '上海东方', 'DRAGON'],
+    '安徽卫视': ['安徽卫视', '安徽电视台', 'ANHUI'],
+    '广东卫视': ['广东卫视', '广东电视台', 'GUANGDONG'],
+    '深圳卫视': ['深圳卫视', '深圳电视台', 'SHENZHEN'],
+    '山东卫视': ['山东卫视', '山东电视台', 'SHANDONG'],
+    '天津卫视': ['天津卫视', '天津电视台', 'TIANJIN'],
+    '湖北卫视': ['湖北卫视', '湖北电视台', 'HUBEI'],
+    '四川卫视': ['四川卫视', '四川电视台', 'SICHUAN'],
+    '辽宁卫视': ['辽宁卫视', '辽宁电视台', 'LIAONING'],
+    '河南卫视': ['河南卫视', '河南电视台', 'HENAN'],
+    '重庆卫视': ['重庆卫视', '重庆电视台', 'CHONGQING'],
+    '黑龙江卫视': ['黑龙江卫视', '黑龙江电视台', 'HEILONGJIANG'],
+    '河北卫视': ['河北卫视', '河北电视台', 'HEBEI'],
+    '吉林卫视': ['吉林卫视', '吉林电视台', 'JILIN'],
+    '陕西卫视': ['陕西卫视', '陕西电视台', 'SHAANXI'],
+    '山西卫视': ['山西卫视', '山西电视台', 'SHANXI'],
+    '甘肃卫视': ['甘肃卫视', '甘肃电视台', 'GANSU'],
+    '青海卫视': ['青海卫视', '青海电视台', 'QINGHAI'],
+    '福建卫视': ['福建卫视', '福建电视台', 'FUJIAN'],
+    '江西卫视': ['江西卫视', '江西电视台', 'JIANGXI'],
+    '广西卫视': ['广西卫视', '广西电视台', 'GUANGXI'],
+    '贵州卫视': ['贵州卫视', '贵州电视台', 'GUIZHOU'],
+    '云南卫视': ['云南卫视', '云南电视台', 'YUNNAN'],
+    '内蒙古卫视': ['内蒙古卫视', '内蒙古电视台', 'NEIMENGGU'],
+    '新疆卫视': ['新疆卫视', '新疆电视台', 'XINJIANG'],
+    '西藏卫视': ['西藏卫视', '西藏电视台', 'XIZANG'],
+    '宁夏卫视': ['宁夏卫视', '宁夏电视台', 'NINGXIA'],
+    '海南卫视': ['海南卫视', '海南电视台', 'HAINAN'],
+    
+    # 其他频道
+    '凤凰卫视': ['凤凰卫视', '凤凰中文', '凤凰台', 'FENG HUANG'],
+    '凤凰卫视香港': ['凤凰卫视香港', '凤凰香港'],
+}
 
 # ============================ 正则表达式 ============================
 # IPv4地址匹配
@@ -77,7 +144,6 @@ CCTV-14
 CCTV-15
 CCTV-16
 CCTV-17
-
 卫视频道,#genre#
 安徽卫视
 广东卫视
@@ -111,7 +177,6 @@ CCTV-17
 西藏卫视
 新疆卫视
 云南卫视
-
 其他频道,#genre#
 安徽国际
 安徽影视
@@ -129,23 +194,51 @@ CCTV-17
 
 def clean_channel_name(channel_name):
     """
-    清理频道名称，去除不需要的后缀
+    深度清理频道名称，去除不需要的后缀和修饰词
     """
-    # 去除常见的后缀
-    suffixes = ['综合', '高清', '超清', '标清', 'HD', 'FHD', '4K', '直播', '频道', '卫视台']
-    pattern = r'[\(（].*?[\)）]|\s*-\s*.*$|\s*–\s*.*$'
+    if not channel_name:
+        return ""
     
-    cleaned_name = channel_name.strip()
+    # 去除常见的后缀和质量标识
+    suffixes = [
+        '高清', '超清', '标清', 'HD', 'FHD', '4K', '8K', '直播', '频道', '卫视台', 
+        '电视台', '台', '频道', 'CHANNEL', 'CCTV', '卫视', '综合', '源码', '稳定',
+        '流畅', '秒开', '独家', '精品', '优质', '推荐', '最佳', '备用', '线路'
+    ]
     
-    # 去除括号内容
-    cleaned_name = re.sub(pattern, '', cleaned_name)
+    # 去除括号内容（包括各种括号）
+    cleaned_name = re.sub(r'[\(（\[【].*?[\)）\]】]', '', channel_name)
     
-    # 去除后缀
+    # 去除质量标识
+    quality_patterns = [
+        r'\d{3,4}[PpXx]',  # 1080p, 720p等
+        r'[Pp]高清',        # P高清
+        r'[Hh]265',         # H265
+        r'[Hh]264',         # H264
+        r'[Aa][Vv][Cc]',    # AVC
+        r'[Hh][Ee][Vv][Cc]', # HEVC
+    ]
+    
+    for pattern in quality_patterns:
+        cleaned_name = re.sub(pattern, '', cleaned_name)
+    
+    # 去除后缀词
     for suffix in suffixes:
-        cleaned_name = cleaned_name.replace(suffix, '').strip()
+        cleaned_name = cleaned_name.replace(suffix, '')
     
-    # 去除多余空格
+    # 标准化CCTV名称
+    cctv_match = re.search(r'CCTV[\-\s]*(\d+\+?)', cleaned_name, re.IGNORECASE)
+    if cctv_match:
+        num = cctv_match.group(1)
+        cleaned_name = f"CCTV-{num}" if '+' not in num else f"CCTV-{num}"
+    
+    # 标准化卫视名称
+    if '卫视' not in cleaned_name and any(prov in cleaned_name for prov in ['北京', '湖南', '浙江', '江苏', '东方', '安徽', '广东']):
+        cleaned_name = cleaned_name + '卫视'
+    
+    # 去除多余空格和特殊字符
     cleaned_name = re.sub(r'\s+', ' ', cleaned_name).strip()
+    cleaned_name = re.sub(r'[丨|]', '', cleaned_name).strip()
     
     return cleaned_name
 
@@ -153,7 +246,6 @@ def format_channel_name_for_output(template_channel):
     """
     格式化输出用的频道名称，确保显示完整的标准名称
     """
-    # 保持模板中的原始名称，不做清理
     return template_channel.strip()
 
 def load_template_channels():
@@ -211,10 +303,29 @@ def load_local_sources():
     try:
         print(f"📁 正在优先加载本地源文件: {LOCAL_SOURCE_FILE}")
         with open(LOCAL_SOURCE_FILE, 'r', encoding='utf-8') as f:
-            for line_num, line in enumerate(f, 1):
+            content = f.read()
+        
+        # 处理M3U格式
+        if content.strip().startswith('#EXTM3U'):
+            lines = content.splitlines()
+            current_channel = None
+            for line in lines:
+                line = line.strip()
+                if line.startswith('#EXTINF'):
+                    # 提取频道名称
+                    match = extinf_name_pattern.search(line)
+                    if match:
+                        current_channel = match.group(1).strip()
+                elif line.startswith('http') and current_channel:
+                    local_streams.append(('local', f"{current_channel},{line}"))
+                    current_channel = None
+        else:
+            # 处理普通格式
+            for line_num, line in enumerate(content.splitlines(), 1):
                 line = line.strip()
                 if line and not line.startswith('#'):
                     local_streams.append(('local', line))
+                    
         print(f"✅ 本地源文件加载完成，共 {len(local_streams)} 个流")
     except Exception as e:
         print(f"❌ 加载本地源文件失败: {e}")
@@ -270,10 +381,6 @@ def fetch_online_sources():
 
 def parse_stream_line(source, line):
     """解析流数据行，提取频道名称和URL"""
-    # 跳过M3U格式的EXTINF行
-    if line.startswith('#EXTINF'):
-        return None
-    
     # 跳过注释行和空行
     if not line or line.startswith('#'):
         return None
@@ -298,25 +405,37 @@ def build_complete_channel_database(local_streams, online_streams):
     print("📊 正在构建完整频道数据库...")
     channel_db = {}
     processed_count = 0
+    duplicate_count = 0
     
     all_streams = local_streams + online_streams
+    
+    # 用于去重的URL集合
+    seen_urls = set()
     
     for source, line in all_streams:
         result = parse_stream_line(source, line)
         if result:
             channel_name, url, source_info = result
-            # 清理频道名称用于匹配
+            
+            # URL去重
+            if url in seen_urls:
+                duplicate_count += 1
+                continue
+            seen_urls.add(url)
+            
+            # 深度清理频道名称用于匹配
             cleaned_name = clean_channel_name(channel_name)
             
-            if cleaned_name not in channel_db:
-                channel_db[cleaned_name] = []
-            
-            if not any(existing_url == url for existing_url, _, _ in channel_db[cleaned_name]):
+            if cleaned_name and url:
+                if cleaned_name not in channel_db:
+                    channel_db[cleaned_name] = []
+                
                 channel_db[cleaned_name].append((url, source_info, {}))
-            processed_count += 1
+                processed_count += 1
     
     print(f"✅ 完整频道数据库构建完成:")
     print(f"  - 处理数据行: {processed_count}")
+    print(f"  - 去重URL数: {duplicate_count}")
     print(f"  - 唯一频道数: {len(channel_db)}")
     print(f"  - 总流数量: {sum(len(urls) for urls in channel_db.values())}")
     
@@ -390,6 +509,16 @@ def speed_test_all_channels(channel_db):
     
     total_urls = sum(len(urls) for urls in channel_db.values())
     print(f"📊 需要测速的URL总数: {total_urls}")
+    
+    if total_urls == 0:
+        print("⚠️  没有需要测速的URL，跳过测速步骤")
+        return channel_db, {
+            'total_tested': 0,
+            'success_count': 0,
+            'timeout_count': 0,
+            'error_count': 0,
+            'response_times': []
+        }
     
     all_urls_to_test = []
     url_to_channel_map = {}
@@ -468,9 +597,10 @@ def speed_test_all_channels(channel_db):
     print(f"  - 成功: {speed_stats['success_count']} ({speed_stats['success_count']/speed_stats['total_tested']*100:.1f}%)")
     print(f"  - 超时: {speed_stats['timeout_count']}")
     print(f"  - 错误: {speed_stats['error_count']}")
-    print(f"  - 平均响应: {avg_response_time:.0f}ms")
-    print(f"  - 最快响应: {min_response_time}ms")
-    print(f"  - 最慢响应: {max_response_time}ms")
+    if speed_stats['response_times']:
+        print(f"  - 平均响应: {avg_response_time:.0f}ms")
+        print(f"  - 最快响应: {min_response_time}ms")
+        print(f"  - 最慢响应: {max_response_time}ms")
     
     return channel_db, speed_stats
 
@@ -511,14 +641,35 @@ def calculate_stream_score(is_alive, response_time, download_speed):
 
 def is_channel_match(template_channel, db_channel):
     """
-    精准匹配频道名称，特别是CCTV频道
+    精准匹配频道名称，使用映射规则
     """
-    template_lower = template_channel.lower().strip()
-    db_lower = db_channel.lower().strip()
+    template_clean = clean_channel_name(template_channel)
+    db_clean = clean_channel_name(db_channel)
+    
+    template_lower = template_clean.lower().strip()
+    db_lower = db_clean.lower().strip()
     
     # 完全匹配
     if template_lower == db_lower:
         return True
+    
+    # 使用映射规则匹配
+    for standard_name, variants in CHANNEL_MAPPING_RULES.items():
+        standard_clean = clean_channel_name(standard_name).lower()
+        
+        # 如果模板频道在标准名称中
+        if template_lower == standard_clean:
+            # 检查数据库频道是否在变体列表中
+            for variant in variants:
+                if db_lower == clean_channel_name(variant).lower():
+                    return True
+        
+        # 如果数据库频道是标准名称
+        if db_lower == standard_clean:
+            # 检查模板频道是否在变体列表中
+            for variant in variants:
+                if template_lower == clean_channel_name(variant).lower():
+                    return True
     
     # 对于CCTV频道进行精准匹配
     if 'cctv' in template_lower and 'cctv' in db_lower:
@@ -538,9 +689,9 @@ def is_channel_match(template_channel, db_channel):
             return True
     
     # 对于卫视频道进行精准匹配
-    if '卫视' in template_channel and '卫视' in db_channel:
-        template_province = template_channel.replace('卫视', '').strip()
-        db_province = db_channel.replace('卫视', '').strip()
+    if '卫视' in template_clean and '卫视' in db_clean:
+        template_province = template_clean.replace('卫视', '').strip()
+        db_province = db_clean.replace('卫视', '').strip()
         if template_province == db_province:
             return True
         # 处理简称匹配
@@ -552,7 +703,9 @@ def is_channel_match(template_channel, db_channel):
     db_no_space = db_lower.replace(' ', '').replace('-', '')
     
     if template_no_space in db_no_space or db_no_space in template_no_space:
-        return True
+        similarity = len(set(template_no_space) & set(db_no_space)) / len(set(template_no_space) | set(db_no_space))
+        if similarity > 0.7:  # 相似度阈值
+            return True
     
     return False
 
@@ -576,6 +729,7 @@ def match_template_channels(template_channels, channel_db):
     m3u_lines = ['#EXTM3U']
     current_group = "默认分组"
     matched_count = 0
+    total_matched_streams = 0
     
     for line in template_channels:
         if '#genre#' in line:
@@ -607,7 +761,8 @@ def match_template_channels(template_channels, channel_db):
                     m3u_lines.append(url)
                 
                 matched_count += 1
-                print(f"  ✅ {template_channel_original}: 找到 {len(best_urls)} 个优质流")
+                total_matched_streams += len(best_urls)
+                print(f"  ✅ {template_channel_original}: 找到 {len(best_urls)} 个优质流 (评分: {best_urls[0][2].get('score', 0) if best_urls else 0})")
             else:
                 print(f"  ❌ {template_channel_original}: 未找到有效流")
     
@@ -625,13 +780,83 @@ def match_template_channels(template_channels, channel_db):
     except Exception as e:
         print(f"❌ 写入M3U文件失败: {e}")
     
-    print(f"🎯 模板匹配完成: {matched_count} 个频道匹配成功")
+    print(f"🎯 模板匹配完成: {matched_count} 个频道匹配成功，共 {total_matched_streams} 个流")
     return matched_count
+
+def test_code_integrity():
+    """测试代码完整性"""
+    print("🧪 开始代码完整性测试...")
+    
+    tests_passed = 0
+    tests_failed = 0
+    
+    # 测试1: 频道名称清理
+    try:
+        test_cases = [
+            ("CCTV-1高清", "CCTV-1"),
+            ("湖南卫视HD", "湖南卫视"),
+            ("CCTV5+ 超清", "CCTV-5+"),
+            ("北京电视台", "北京卫视"),
+        ]
+        
+        for input_name, expected in test_cases:
+            result = clean_channel_name(input_name)
+            assert result == expected, f"清理测试失败: {input_name} -> {result} (期望: {expected})"
+        
+        print("✅ 频道名称清理测试通过")
+        tests_passed += 1
+    except Exception as e:
+        print(f"❌ 频道名称清理测试失败: {e}")
+        tests_failed += 1
+    
+    # 测试2: 频道匹配
+    try:
+        test_cases = [
+            ("CCTV-1", "CCTV1", True),
+            ("湖南卫视", "湖南电视台", True),
+            ("CCTV-1", "湖南卫视", False),
+        ]
+        
+        for template, db_channel, expected in test_cases:
+            result = is_channel_match(template, db_channel)
+            assert result == expected, f"匹配测试失败: {template} vs {db_channel} -> {result} (期望: {expected})"
+        
+        print("✅ 频道匹配测试通过")
+        tests_passed += 1
+    except Exception as e:
+        print(f"❌ 频道匹配测试失败: {e}")
+        tests_failed += 1
+    
+    # 测试3: 流评分计算
+    try:
+        test_cases = [
+            (True, 100, 500, 100),  # 优质流
+            (False, 100, 500, 0),   # 无效流
+            (True, 2000, 50, 25),   # 慢速流
+        ]
+        
+        for alive, response_time, download_speed, expected_min in test_cases:
+            result = calculate_stream_score(alive, response_time, download_speed)
+            assert result >= expected_min, f"评分测试失败: 得到 {result} (期望至少: {expected_min})"
+        
+        print("✅ 流评分测试通过")
+        tests_passed += 1
+    except Exception as e:
+        print(f"❌ 流评分测试失败: {e}")
+        tests_failed += 1
+    
+    print(f"\n📊 完整性测试结果: {tests_passed} 通过, {tests_failed} 失败")
+    return tests_failed == 0
 
 def main():
     """主函数"""
     print("🎬 IPTV频道整理工具开始运行...")
     start_time = time.time()
+    
+    # 代码完整性测试
+    if not test_code_integrity():
+        print("❌ 代码完整性测试失败，停止执行")
+        return
     
     # 1. 优先加载本地源
     print("\n" + "="*50)
@@ -647,6 +872,10 @@ def main():
     print("\n" + "="*50)
     print("步骤3: 合并所有源构建完整数据库")
     channel_db = build_complete_channel_database(local_streams, online_streams)
+    
+    if not channel_db:
+        print("❌ 无法构建频道数据库，停止执行")
+        return
     
     # 4. 对所有频道进行测速
     print("\n" + "="*50)
@@ -676,12 +905,12 @@ def main():
     print(f"  🔗 总流数量: {sum(len(urls) for urls in channel_db.values())}")
     print(f"  ✅ 有效流数量: {speed_stats['success_count']}")
     print(f"  🎯 模板匹配: {matched_count} 个频道")
-    print(f"  📈 平均响应: {sum(speed_stats['response_times'])/len(speed_stats['response_times']) if speed_stats['response_times'] else 0:.0f}ms")
+    if speed_stats['response_times']:
+        print(f"  📈 平均响应: {sum(speed_stats['response_times'])/len(speed_stats['response_times']):.0f}ms")
     print(f"\n📁 输出文件:")
     print(f"  - {OUTPUT_TXT} (频道列表)")
     print(f"  - {OUTPUT_M3U} (M3U播放列表)")
     print("="*60)
 
 if __name__ == "__main__":
-    requests.packages.urllib3.disable_warnings()
     main()
