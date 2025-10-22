@@ -3,7 +3,7 @@
 
 """
 IPTV直播源智能处理工具
-功能：多源抓取 + FFmpeg测速 + 智能排序 + 模板匹配
+功能：多源抓取 + FFmpeg测速 + 智能排序 + 模板匹配 + 智能频道匹配
 """
 
 import requests
@@ -21,14 +21,9 @@ from tqdm import tqdm
 
 # 源配置
 URLS = [
-     "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
-    "https://raw.githubusercontent.com/wwb521/live/main/tv.m3u",
-    "https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/ipv4/result.m3u",  
-    "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/cn.m3u",
-    "https://raw.githubusercontent.com/suxuang/myIPTV/main/ipv4.m3u",
-    "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt",
-    "https://raw.githubusercontent.com/develop202/migu_video/refs/heads/main/interface.txt",
-    "http://47.120.41.246:8899/zb.txt",
+    "https://raw.githubusercontent.com/zwc456baby/iptv_alive/master/live.txt",
+    "https://live.zbds.top/tv/iptv6.txt",
+    "https://live.zbds.top/tv/iptv4.txt",
 ]
 
 # 功能开关
@@ -37,6 +32,7 @@ ENABLE_SPEED_TEST = True          # 智能测速开关
 ENABLE_RESPONSE_TEST = True       # 响应延时测试开关
 ENABLE_TEMPLATE_FILTER = True     # 模板过滤开关
 ENABLE_BLACKLIST_FILTER = True    # 黑名单过滤开关
+ENABLE_SMART_MATCH = True         # 智能频道匹配开关
 
 # 权重配置
 SPEED_WEIGHT = 0.5                # 测速权重
@@ -71,6 +67,7 @@ all_streams = []
 test_results = {}
 template_channels = []
 blacklist_keywords = []
+channel_mapping = {}  # 频道名称映射
 
 # ============================ 文件处理函数 ============================
 
@@ -115,7 +112,7 @@ def load_template_channels():
         # 创建示例模板文件
         try:
             with open(TEMPLATE_FILE, 'w', encoding='utf-8') as f:
-                f.write("# 模板频道列表\nCCTV1\nCCTV2\n湖南卫视\n浙江卫视\n")
+                f.write("# 模板频道列表\nCCTV-1\nCCTV-2\n湖南卫视\n浙江卫视\n安徽卫视\n")
             print(f"ℹ 已创建示例模板文件: {TEMPLATE_FILE}")
         except Exception as e:
             print(f"✗ 创建示例模板文件失败: {e}")
@@ -138,6 +135,106 @@ def load_blacklist():
     else:
         print(f"ℹ 黑名单文件不存在: {BLACKLIST_FILE}")
     return keywords
+
+# ============================ 智能频道匹配函数 ============================
+
+def normalize_channel_name(name):
+    """标准化频道名称"""
+    if not name:
+        return ""
+    
+    # 转换为小写并移除空格
+    normalized = name.lower().replace(' ', '')
+    
+    # 移除常见后缀
+    suffixes = ['hd', '高清', '4k', '超清', 'fhd', 'uhd', 'live', '卫视', '电视台']
+    for suffix in suffixes:
+        if normalized.endswith(suffix):
+            normalized = normalized[:-len(suffix)]
+    
+    # 处理CCTV特殊格式
+    if 'cctv' in normalized:
+        # 移除cctv后的非数字字符，只保留数字
+        normalized = re.sub(r'cctv[^\d]*(\d+)', r'cctv\1', normalized)
+        # 确保cctv和数字之间没有分隔符
+        normalized = normalized.replace('-', '')
+    
+    return normalized
+
+def build_channel_mapping(template_channels, actual_channels):
+    """构建频道名称映射表"""
+    mapping = {}
+    
+    # 标准化模板频道名称
+    template_normalized = {}
+    for template in template_channels:
+        normalized = normalize_channel_name(template)
+        template_normalized[normalized] = template
+    
+    # 对每个实际频道名称寻找最佳匹配
+    for actual in actual_channels:
+        actual_normalized = normalize_channel_name(actual)
+        
+        # 寻找最佳匹配的模板频道
+        best_match = None
+        best_score = 0
+        
+        for template_norm, template_orig in template_normalized.items():
+            # 完全匹配
+            if actual_normalized == template_norm:
+                best_match = template_orig
+                best_score = 1.0
+                break
+            
+            # 包含关系匹配
+            if template_norm in actual_normalized or actual_normalized in template_norm:
+                score = len(template_norm) / max(len(actual_normalized), len(template_norm))
+                if score > best_score:
+                    best_match = template_orig
+                    best_score = score
+        
+        # 如果找到匹配且置信度足够高，则建立映射
+        if best_match and best_score > 0.6:
+            mapping[actual] = best_match
+            print(f"  📺 频道匹配: '{actual}' -> '{best_match}' (置信度: {best_score:.2f})")
+    
+    return mapping
+
+def smart_channel_match(streams):
+    """智能频道匹配"""
+    if not ENABLE_SMART_MATCH or not template_channels:
+        return streams
+    
+    print("开始智能频道匹配...")
+    
+    # 收集所有实际频道名称
+    actual_channels = set(stream["program_name"] for stream in streams)
+    
+    # 构建频道映射表
+    global channel_mapping
+    channel_mapping = build_channel_mapping(template_channels, actual_channels)
+    
+    if not channel_mapping:
+        print("ℹ 未找到可匹配的频道")
+        return streams
+    
+    # 应用频道映射
+    matched_streams = []
+    unmatched_count = 0
+    
+    for stream in streams:
+        original_name = stream["program_name"]
+        if original_name in channel_mapping:
+            # 更新为标准化频道名称
+            stream["program_name"] = channel_mapping[original_name]
+            matched_streams.append(stream)
+        else:
+            unmatched_count += 1
+    
+    print(f"✓ 频道匹配完成: {len(matched_streams)} 个流已匹配, {unmatched_count} 个流未匹配")
+    return matched_streams
+
+# ============================ 黑名单过滤函数 ============================
 
 def extract_domain_and_ip(url):
     """从URL中提取域名和IP地址"""
@@ -392,6 +489,11 @@ def filter_by_template(streams):
         print("ℹ 模板过滤已禁用或模板为空")
         return streams
     
+    # 先进行智能匹配
+    if ENABLE_SMART_MATCH:
+        streams = smart_channel_match(streams)
+    
+    # 然后进行精确过滤
     filtered_streams = []
     template_set = set(template_channels)
     
@@ -605,7 +707,7 @@ def main():
     
     print(f"✓ 总共收集到: {len(all_streams)} 个流")
     
-    # 模板过滤
+    # 模板过滤（包含智能匹配）
     if ENABLE_TEMPLATE_FILTER:
         all_streams = filter_by_template(all_streams)
     
