@@ -19,7 +19,7 @@ from urllib.parse import urlparse
 
 # ============================ 配置文件 ============================
 
-# 源配置
+# 源配置 - 更新为您的URL列表
 URLS = [
     "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
     "https://raw.githubusercontent.com/wwb521/live/main/tv.m3u",
@@ -85,6 +85,7 @@ ipv4_pattern = re.compile(r'^https?://(\d{1,3}\.){3}\d{1,3}')
 ipv6_pattern = re.compile(r'^https?://\[([a-fA-F0-9:]+)\]')
 domain_pattern = re.compile(r'^https?://([^/:]+)')
 channel_pattern = re.compile(r'(.+?)[,\t]\s*(http.+)')
+m3u_channel_pattern = re.compile(r'#EXTINF:.+?,(.+?)\s*(?:\(.*?\))?\s*\n(http.+)', re.IGNORECASE)
 
 # 存储数据
 all_streams = []
@@ -123,7 +124,7 @@ def load_local_sources():
     """加载本地源文件"""
     local_streams = []
     if os.path.exists(LOCAL_SOURCE_FILE):
-        print(f"正在加载本地源: {LOCAL_SOURCE_FILE}\n")
+        print(f"正在加载本地源: {LOCAL_SOURCE_FILE}")
         try:
             with open(LOCAL_SOURCE_FILE, 'r', encoding='utf-8') as f:
                 for line_num, line in enumerate(f, 1):
@@ -155,7 +156,7 @@ def load_template_channels():
     """加载模板频道列表"""
     channels = []
     if os.path.exists(TEMPLATE_FILE):
-        print(f"正在加载模板频道: {TEMPLATE_FILE}\n")
+        print(f"正在加载模板频道: {TEMPLATE_FILE}")
         try:
             with open(TEMPLATE_FILE, 'r', encoding='utf-8') as f:
                 for line_num, line in enumerate(f, 1):
@@ -180,7 +181,7 @@ def load_blacklist():
     """加载黑名单关键词"""
     keywords = []
     if os.path.exists(BLACKLIST_FILE):
-        print(f"正在加载黑名单: {BLACKLIST_FILE}\n")
+        print(f"正在加载黑名单: {BLACKLIST_FILE}")
         try:
             with open(BLACKLIST_FILE, 'r', encoding='utf-8') as f:
                 for line_num, line in enumerate(f, 1):
@@ -332,7 +333,7 @@ def smart_channel_match(streams):
     if not ENABLE_SMART_MATCH or not template_channels:
         return streams
     
-    print("开始智能频道匹配...\n")
+    print("开始智能频道匹配...")
     
     # 收集所有实际频道名称
     actual_channels = set(stream["program_name"] for stream in streams)
@@ -420,16 +421,57 @@ def fetch_streams_from_url(url):
         response = requests.get(url, timeout=15, headers=headers)
         response.encoding = 'utf-8'
         if response.status_code == 200:
-            print(f"✓ 成功获取: {len(response.text)} 字符\n")
+            print(f"✓ 成功获取: {len(response.text)} 字符")
             return response.text
         else:
-            print(f"✗ 获取失败: HTTP {response.status_code}\n")
+            print(f"✗ 获取失败: HTTP {response.status_code}")
     except Exception as e:
-        print(f"✗ 请求错误: {e}\n")
+        print(f"✗ 请求错误: {e}")
     return None
 
-def parse_content(content, source_url="unknown"):
-    """解析直播源内容"""
+def parse_m3u_content(content, source_url="unknown"):
+    """解析M3U格式内容"""
+    streams = []
+    if not content:
+        return streams
+    
+    try:
+        # 匹配M3U格式： #EXTINF:... 和 URL
+        lines = content.splitlines()
+        i = 0
+        while i < len(lines) - 1:
+            line = lines[i].strip()
+            if line.startswith('#EXTINF:'):
+                # 提取频道名称
+                channel_name_match = re.search(r'#EXTINF:.*?,(.+)', line)
+                if channel_name_match:
+                    channel_name = channel_name_match.group(1).strip()
+                    # 清理频道名称中的额外信息
+                    channel_name = re.sub(r'\s*\(.*?\)\s*', '', channel_name)
+                    
+                    # 下一行应该是URL
+                    if i + 1 < len(lines):
+                        url_line = lines[i + 1].strip()
+                        if url_line and not url_line.startswith('#'):
+                            stream_url = url_line
+                            
+                            # 黑名单过滤
+                            if not is_blacklisted(stream_url):
+                                streams.append({
+                                    "program_name": channel_name,
+                                    "stream_url": stream_url,
+                                    "source": source_url,
+                                    "line_num": i + 1
+                                })
+                            i += 1  # 跳过URL行
+            i += 1
+    except Exception as e:
+        print(f"解析M3U内容错误: {e}")
+    
+    return streams
+
+def parse_txt_content(content, source_url="unknown"):
+    """解析TXT格式内容"""
     streams = []
     if not content:
         return streams
@@ -445,31 +487,52 @@ def parse_content(content, source_url="unknown"):
             stream_url = match.group(2).strip()
             
             # 黑名单过滤
-            if is_blacklisted(stream_url):
-                continue
-                
-            streams.append({
-                "program_name": program_name,
-                "stream_url": stream_url,
-                "source": source_url,
-                "line_num": line_num
-            })
+            if not is_blacklisted(stream_url):
+                streams.append({
+                    "program_name": program_name,
+                    "stream_url": stream_url,
+                    "source": source_url,
+                    "line_num": line_num
+                })
+    
+    return streams
+
+def parse_content(content, source_url="unknown"):
+    """自动检测并解析内容格式"""
+    streams = []
+    if not content:
+        return streams
+    
+    # 检测格式类型
+    if content.startswith('#EXTM3U'):
+        # M3U格式
+        streams = parse_m3u_content(content, source_url)
+    else:
+        # TXT格式
+        streams = parse_txt_content(content, source_url)
     
     return streams
 
 def fetch_all_online_sources():
     """获取所有在线源"""
     online_streams = []
-    print("开始获取在线源...\n")
+    print("开始获取在线源...")
+    
+    successful_sources = 0
+    failed_sources = 0
     
     for url in URLS:
         if content := fetch_streams_from_url(url):
             streams = parse_content(content, url)
             online_streams.extend(streams)
-            print(f"  ✓ 从 {url} 获取 {len(streams)} 个流\n")
+            print(f"  ✓ 从 {url} 获取 {len(streams)} 个流")
+            successful_sources += 1
         else:
-            print(f"  ✗ 跳过: {url}\n")
+            print(f"  ✗ 跳过: {url}")
+            failed_sources += 1
+        print()  # 空行分隔
     
+    print(f"在线源获取完成: {successful_sources} 成功, {failed_sources} 失败\n")
     return online_streams
 
 # ============================ 增强测速函数 ============================
@@ -527,7 +590,7 @@ def test_connection_speed(stream_url):
 def test_stream_response_time(stream_url):
     """增强版响应时间测试"""
     if not ENABLE_RESPONSE_TEST:
-        return 0
+        return MAX_RESPONSE_TIME
     
     response_times = []
     
@@ -755,7 +818,7 @@ def test_all_streams_enhanced(streams):
     if not streams:
         return []
     
-    print(f"开始增强测试 {len(streams)} 个流...\n")
+    print(f"开始增强测试 {len(streams)} 个流...")
     
     tested_streams = []
     failed_count = 0
@@ -865,7 +928,7 @@ def generate_quality_report(streams):
     if not streams:
         return
     
-    print("生成质量分析报告...\n")
+    print("生成质量分析报告...")
     
     report = {
         "generated_time": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -949,8 +1012,8 @@ def generate_quality_report(streams):
 # ============================ 输出函数 ============================
 
 def save_to_txt(streams):
-    """保存为TXT格式"""
-    print(f"保存到: {OUTPUT_TXT}\n")
+    """保存为TXT格式，按央视和卫视分类"""
+    print(f"保存到: {OUTPUT_TXT}")
     
     if not streams:
         print("✗ 没有数据可保存\n")
@@ -964,48 +1027,87 @@ def save_to_txt(streams):
             channels_dict[name] = []
         channels_dict[name].append({
             "url": stream["stream_url"],
-            "score": stream.get("score", 0),
-            "response_time": stream.get("response_time", 0),
-            "speed": stream.get("actual_speed_kbps", 0)
+            "score": stream.get("score", 0)
         })
     
     try:
         with open(OUTPUT_TXT, 'w', encoding='utf-8') as f:
-            # 写入文件头
-            f.write("# IPTV直播源 - 自动生成（增强版）\n")
-            f.write(f"# 生成时间: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"# 频道数量: {len(channels_dict)}\n")
-            f.write(f"# 流数量: {len(streams)}\n")
-            f.write("# 格式: 频道名称,直播流URL,质量得分,响应时间(ms),速度(kbps)\n\n")
-            
             total_channels = 0
             total_streams = 0
             
-            # 按模板顺序写入
+            # 分类处理频道
+            cctv_channels = []
+            satellite_channels = []
+            other_channels = []
+            
             for channel_name in template_channels:
                 if channel_name in channels_dict:
-                    # 按得分排序并限制数量
+                    # 判断频道类型
+                    if 'CCTV' in channel_name.upper() or '央视' in channel_name:
+                        cctv_channels.append(channel_name)
+                    elif '卫视' in channel_name:
+                        satellite_channels.append(channel_name)
+                    else:
+                        other_channels.append(channel_name)
+            
+            # 写入央视频道
+            if cctv_channels:
+                f.write("央视频道,#genre#\n")
+                for channel_name in cctv_channels:
                     streams_list = sorted(channels_dict[channel_name], 
                                         key=lambda x: x["score"], reverse=True)
                     if FINAL_SOURCES_PER_CHANNEL > 0:
                         streams_list = streams_list[:FINAL_SOURCES_PER_CHANNEL]
                     
                     for stream_info in streams_list:
-                        f.write(f"{channel_name},{stream_info['url']},"
-                               f"{stream_info['score']:.3f},{stream_info['response_time']:.0f},"
-                               f"{stream_info['speed']:.0f}\n")
+                        f.write(f"{channel_name},{stream_info['url']}\n")
+                        total_streams += 1
                     
                     total_channels += 1
-                    total_streams += len(streams_list)
+                f.write("\n")
             
-        print(f"✓ TXT文件保存成功: {total_channels} 个频道, {total_streams} 个流\n")
+            # 写入卫视频道
+            if satellite_channels:
+                f.write("卫视频道,#genre#\n")
+                for channel_name in satellite_channels:
+                    streams_list = sorted(channels_dict[channel_name], 
+                                        key=lambda x: x["score"], reverse=True)
+                    if FINAL_SOURCES_PER_CHANNEL > 0:
+                        streams_list = streams_list[:FINAL_SOURCES_PER_CHANNEL]
+                    
+                    for stream_info in streams_list:
+                        f.write(f"{channel_name},{stream_info['url']}\n")
+                        total_streams += 1
+                    
+                    total_channels += 1
+                f.write("\n")
+            
+            # 写入其他频道（可选）
+            if other_channels:
+                f.write("其他频道,#genre#\n")
+                for channel_name in other_channels:
+                    streams_list = sorted(channels_dict[channel_name], 
+                                        key=lambda x: x["score"], reverse=True)
+                    if FINAL_SOURCES_PER_CHANNEL > 0:
+                        streams_list = streams_list[:FINAL_SOURCES_PER_CHANNEL]
+                    
+                    for stream_info in streams_list:
+                        f.write(f"{channel_name},{stream_info['url']}\n")
+                        total_streams += 1
+                    
+                    total_channels += 1
+        
+        print(f"✓ TXT文件保存成功: {total_channels} 个频道, {total_streams} 个流")
+        print(f"  - 央视频道: {len(cctv_channels)} 个")
+        print(f"  - 卫视频道: {len(satellite_channels)} 个")
+        print(f"  - 其他频道: {len(other_channels)} 个\n")
         
     except Exception as e:
         print(f"✗ TXT文件保存失败: {e}\n")
 
 def save_to_m3u(streams):
     """保存为M3U格式"""
-    print(f"保存到: {OUTPUT_M3U}\n")
+    print(f"保存到: {OUTPUT_M3U}")
     
     if not streams:
         print("✗ 没有数据可保存\n")
@@ -1047,9 +1149,9 @@ def save_to_m3u(streams):
                                f'group-title="Live" tvg-logo="",{channel_name} '
                                f'(得分:{stream_info["score"]:.2f} 响应:{stream_info["response_time"]:.0f}ms)\n')
                         f.write(f'{stream_info["url"]}\n')
+                        total_streams += 1
                     
                     total_channels += 1
-                    total_streams += len(streams_list)
             
         print(f"✓ M3U文件保存成功: {total_channels} 个频道, {total_streams} 个流\n")
             
@@ -1115,7 +1217,7 @@ def display_channel_stats(streams):
 
 def verify_output_files():
     """验证输出文件完整性"""
-    print("验证输出文件...\n")
+    print("验证输出文件...")
     
     for filename in [OUTPUT_TXT, OUTPUT_M3U]:
         if os.path.exists(filename):
@@ -1128,6 +1230,7 @@ def verify_output_files():
                 print(f"✗ {filename} 验证失败: {e}")
         else:
             print(f"✗ {filename} 不存在")
+    print()
 
 # ============================ 主函数 ============================
 
@@ -1187,7 +1290,7 @@ def main():
             return
         
         # 分组选择最佳流
-        print("正在选择最佳流...\n")
+        print("正在选择最佳流...")
         selected_streams = group_and_select_streams(tested_streams)
         
         # 按模板排序
@@ -1200,7 +1303,7 @@ def main():
         generate_quality_report(final_streams)
         
         # 保存文件
-        print("正在保存文件...\n")
+        print("正在保存文件...")
         save_to_txt(final_streams)
         save_to_m3u(final_streams)
         
