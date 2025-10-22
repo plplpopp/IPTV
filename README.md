@@ -1,7 +1,7 @@
 # 📺 IPTV源更新
 
 ## 最近更新
-**更新时间**: 2025-10-22 11:30:24
+**更新时间**: 2025-10-22 11:50:09
 
 ## 下载链接
 - [IPTV文本格式](https://ghfast.top/raw.githubusercontent.com/plplpopp/IPTV/refs/heads/main/iptv.txt)
