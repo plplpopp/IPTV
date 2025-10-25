@@ -32,7 +32,7 @@ URLS = [
 ]
 
 # 功能开关
-ENABLE_FFMPEG = False             # 暂时关闭FFmpeg，先确保基础测试通过
+ENABLE_FFMPEG = True              # 开启FFmpeg测速
 ENABLE_SPEED_TEST = True          # 智能测速开关  
 ENABLE_RESPONSE_TEST = True       # 响应延时测试开关
 ENABLE_TEMPLATE_FILTER = True     # 模板过滤开关
@@ -45,15 +45,11 @@ MAX_SOURCES_PER_CHANNEL = 0       # 每个频道最大接口数 (0表示不限�
 FINAL_SOURCES_PER_CHANNEL = 5     # 最终保留接口数
 MAX_WORKERS = 6                   # 并发线程数
 
-# 测试配置 - 放宽条件
+# 测试配置
 TEST_TIMEOUT = 8                  # 测试超时时间(秒)
 SPEED_TEST_DURATION = 5           # 速度测试时长(秒)
 CONNECTION_TIMEOUT = 5            # 连接超时时间(秒)
-
-# 质量阈值 - 大幅放宽条件
-MIN_RESOLUTION = 0                # 暂时不检查分辨率
-MAX_RESPONSE_TIME = 8000          # 放宽响应时间(ms)
-MIN_SPEED_KBPS = 50               # 大幅降低最低速度要求(kbps)
+FFMPEG_DURATION = 6               # FFmpeg分析时长(秒)
 
 # 文件配置
 LOCAL_SOURCE_FILE = "local.txt"   # 本地源文件
@@ -61,6 +57,9 @@ TEMPLATE_FILE = "demo.txt"        # 模板频道文件
 BLACKLIST_FILE = "blacklist.txt"  # 黑名单文件
 OUTPUT_TXT = "iptv.txt"           # 输出文本文件
 OUTPUT_M3U = "iptv.m3u"           # 输出M3U文件
+
+# 路径配置
+FFMPEG_PATH = "ffmpeg"            # FFmpeg路径
 
 # ============================ 全局变量 ============================
 
@@ -253,7 +252,7 @@ def build_channel_mapping(template_channels, actual_channels):
             
             # 包含关系匹配
             if template_norm in actual_normalized or actual_normalized in template_norm:
-                score = len(template_norm) / max(len(actual_normalized), len(template_norm))
+                score = len(template_norm) / max(len(actual_normalized), len(ttemplate_norm))
                 if score > best_score:
                     best_match = template_orig
                     best_score = score
@@ -471,15 +470,15 @@ def fetch_all_online_sources():
     print(f"在线源获取完成: {successful_sources} 成功, {failed_sources} 失败\n")
     return online_streams
 
-# ============================ 简化测速函数 ============================
+# ============================ 测速函数（无质量过滤） ============================
 
-def test_connection_speed_simple(stream_url):
-    """简化版连接速度测试"""
+def test_connection_speed(stream_url):
+    """连接速度测试"""
     if not ENABLE_SPEED_TEST:
         return {"actual_speed_kbps": 0, "success": False}
     
     try:
-        # 使用requests进行简单的速度测试
+        # 使用requests进行速度测试
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             'Range': 'bytes=0-51200'  # 请求50KB数据
@@ -512,10 +511,10 @@ def test_connection_speed_simple(stream_url):
     
     return {"actual_speed_kbps": 0, "success": False}
 
-def test_stream_response_time_simple(stream_url):
-    """简化版响应时间测试"""
+def test_stream_response_time(stream_url):
+    """响应时间测试"""
     if not ENABLE_RESPONSE_TEST:
-        return MAX_RESPONSE_TIME
+        return 99999  # 返回一个很大的值表示未测试
     
     try:
         headers = {
@@ -528,39 +527,96 @@ def test_stream_response_time_simple(stream_url):
         response_time = (time.time() - start_time) * 1000
         
         if response.status_code in [200, 301, 302, 307]:
-            return min(response_time, MAX_RESPONSE_TIME)
+            return response_time
             
     except Exception:
         pass
     
-    return MAX_RESPONSE_TIME
+    return 99999  # 返回一个很大的值表示测试失败
 
-def is_stream_acceptable_simple(test_result):
-    """简化版流接受判断"""
+def analyze_stream_with_ffmpeg(stream_url):
+    """FFmpeg流分析 - 只用于测速，不检查任何质量"""
+    if not ENABLE_FFMPEG:
+        return {"ffmpeg_success": False, "protocol": get_protocol_type(stream_url)}
+    
+    # 检查ffmpeg是否可用
+    try:
+        subprocess.run([FFMPEG_PATH, '-version'], capture_output=True, timeout=3, check=True)
+    except:
+        return {"ffmpeg_success": False, "protocol": get_protocol_type(stream_url)}
+    
+    try:
+        # FFmpeg分析命令 - 用于测试流可用性
+        cmd = [
+            FFMPEG_PATH,
+            '-i', stream_url,
+            '-t', '4',  # 分析4秒
+            '-f', 'null',
+            '-',
+            '-hide_banner',
+            '-loglevel', 'error'
+        ]
+        
+        start_time = time.time()
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        analysis_time = time.time() - start_time
+        
+        # 如果FFmpeg成功运行且没有报错，认为流可用
+        ffmpeg_success = result.returncode == 0 and analysis_time > 2
+        
+        # 从输出中尝试获取一些基本信息（但不用于过滤）
+        codec = "unknown"
+        has_video = False
+        
+        for line in result.stderr.split('\n'):
+            if 'Video:' in line:
+                has_video = True
+                codec_match = re.search(r'Video:\s*([^,]+)', line)
+                if codec_match:
+                    codec = codec_match.group(1).strip()
+        
+        return {
+            "ffmpeg_success": ffmpeg_success,
+            "analysis_time": analysis_time,
+            "has_video": has_video,
+            "codec": codec,
+            "protocol": get_protocol_type(stream_url)
+        }
+        
+    except subprocess.TimeoutExpired:
+        return {"ffmpeg_success": False, "protocol": get_protocol_type(stream_url)}
+    except Exception:
+        return {"ffmpeg_success": False, "protocol": get_protocol_type(stream_url)}
+
+def is_stream_acceptable(test_result):
+    """判断流是否可接受 - 无质量过滤，只要测试成功就接受"""
     if not test_result:
         return False
     
-    # 只检查最基本的条件
-    speed_ok = test_result.get("actual_speed_kbps", 0) >= MIN_SPEED_KBPS
-    response_ok = test_result.get("response_time", MAX_RESPONSE_TIME) < MAX_RESPONSE_TIME
+    # 只要任意一个测试成功就接受该流
+    speed_success = test_result.get("speed_success", False)
+    ffmpeg_success = test_result.get("ffmpeg_success", False)
+    response_ok = test_result.get("response_time", 99999) < 99999  # 响应时间测试成功
     
-    # 只要速度和响应时间有一个达标就接受
-    return speed_ok or response_ok
+    # 接受条件：速度测试成功 或 FFmpeg测试成功 或 响应时间测试成功
+    return speed_success or ffmpeg_success or response_ok
 
-def test_single_stream_simple(stream_info):
-    """简化版单流测试"""
+def test_single_stream(stream_info):
+    """单流测试 - 无质量过滤"""
     try:
         program_name = stream_info["program_name"]
         stream_url = stream_info["stream_url"]
         
         # 并行执行测试
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            future_response = executor.submit(test_stream_response_time_simple, stream_url)
-            future_speed = executor.submit(test_connection_speed_simple, stream_url)
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            future_response = executor.submit(test_stream_response_time, stream_url)
+            future_speed = executor.submit(test_connection_speed, stream_url)
+            future_ffmpeg = executor.submit(analyze_stream_with_ffmpeg, stream_url)
             
             try:
                 response_time = future_response.result(timeout=TEST_TIMEOUT)
                 speed_result = future_speed.result(timeout=SPEED_TEST_DURATION + 2)
+                ffmpeg_result = future_ffmpeg.result(timeout=12)
             except:
                 return None
         
@@ -571,48 +627,74 @@ def test_single_stream_simple(stream_info):
             "response_time": response_time,
             "actual_speed_kbps": speed_result.get("actual_speed_kbps", 0),
             "speed_success": speed_result.get("success", False),
-            "protocol": get_protocol_type(stream_url)
+            "ffmpeg_success": ffmpeg_result.get("ffmpeg_success", False),
+            "has_video": ffmpeg_result.get("has_video", False),
+            "codec": ffmpeg_result.get("codec", "unknown"),
+            "protocol": ffmpeg_result.get("protocol", "UNKNOWN"),
+            "analysis_time": ffmpeg_result.get("analysis_time", 0)
         }
         
-        # 判断流是否可接受
-        if is_stream_acceptable_simple(result):
-            status = "✓" if result["speed_success"] else "⚠"
-            print(f"  {status} {program_name} "
-                  f"(响应:{response_time:.0f}ms 速度:{result['actual_speed_kbps']:.0f}kbps)")
+        # 判断流是否可接受 - 无质量过滤
+        if is_stream_acceptable(result):
+            # 根据测试结果显示不同状态
+            if result["ffmpeg_success"] and result["speed_success"]:
+                status = "🎯"  # 优秀
+            elif result["ffmpeg_success"]:
+                status = "✅"  # FFmpeg通过
+            elif result["speed_success"]:
+                status = "📊"  # 速度通过
+            else:
+                status = "⏱️"   # 仅响应时间通过
+            
+            # 显示详细信息
+            speed_info = f"速度:{result['actual_speed_kbps']:.0f}kbps" if result["speed_success"] else "速度:---"
+            ffmpeg_info = "FFmpeg:✓" if result["ffmpeg_success"] else "FFmpeg:✗"
+            response_info = f"响应:{response_time:.0f}ms" if response_time < 99999 else "响应:---"
+            
+            print(f"  {status} {program_name} ({speed_info} {response_info} {ffmpeg_info})")
             return result
         else:
-            print(f"  ✗ {program_name} (无响应或速度过低)")
+            print(f"  ✗ {program_name} (所有测试均失败)")
             return None
         
     except Exception as e:
         return None
 
-def test_all_streams_simple(streams):
-    """简化版流测试"""
+def test_all_streams(streams):
+    """流测试 - 无质量过滤"""
     if not streams:
         return []
     
-    print(f"开始简化测试 {len(streams)} 个流...")
-    print("测试标准: 响应时间 < 8秒 或 速度 > 50kbps")
+    print(f"开始测试 {len(streams)} 个流...")
+    print("测试标准: 无质量过滤，只要任一测试成功即接受\n")
     
     tested_streams = []
     failed_count = 0
     passed_count = 0
+    ffmpeg_success_count = 0
+    speed_success_count = 0
+    response_success_count = 0
     
     # 使用tqdm显示进度条
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         future_to_stream = {
-            executor.submit(test_single_stream_simple, stream): stream 
+            executor.submit(test_single_stream, stream): stream 
             for stream in streams
         }
         
         with tqdm(total=len(streams), desc="测试进度", unit="流") as pbar:
             for future in as_completed(future_to_stream):
                 try:
-                    result = future.result(timeout=15)
+                    result = future.result(timeout=20)
                     if result:
                         tested_streams.append(result)
                         passed_count += 1
+                        if result.get("ffmpeg_success"):
+                            ffmpeg_success_count += 1
+                        if result.get("speed_success"):
+                            speed_success_count += 1
+                        if result.get("response_time", 99999) < 99999:
+                            response_success_count += 1
                     else:
                         failed_count += 1
                 except Exception:
@@ -621,19 +703,24 @@ def test_all_streams_simple(streams):
                 finally:
                     pbar.update(1)
     
-    print(f"\n✓ 简化测试完成!")
+    print(f"\n✓ 测试完成!")
     print(f"  - 总测试: {len(streams)}")
     print(f"  - 测试通过: {passed_count}")
+    print(f"  - FFmpeg验证通过: {ffmpeg_success_count}")
+    print(f"  - 速度测试通过: {speed_success_count}")
+    print(f"  - 响应测试通过: {response_success_count}")
     print(f"  - 测试失败: {failed_count}")
     
     if passed_count > 0:
-        # 计算平均速度
+        # 计算统计数据
         avg_speed = sum(s.get("actual_speed_kbps", 0) for s in tested_streams) / passed_count
-        avg_response = sum(s.get("response_time", 0) for s in tested_streams) / passed_count
+        avg_response = sum(s.get("response_time", 0) for s in tested_streams if s.get("response_time", 99999) < 99999) / max(1, response_success_count)
+        
         print(f"  - 平均速度: {avg_speed:.0f}kbps")
-        print(f"  - 平均响应: {avg_response:.0f}ms")
+        if response_success_count > 0:
+            print(f"  - 平均响应: {avg_response:.0f}ms")
     
-    print(f"  - 成功率: {passed_count/len(streams)*100:.1f}%\n")
+    print(f"  - 总成功率: {passed_count/len(streams)*100:.1f}%\n")
     
     return tested_streams
 
@@ -678,8 +765,14 @@ def group_and_select_streams(streams):
     # 对每个频道的流排序并选择最佳
     selected_streams = []
     for channel_name, channel_streams in channels_dict.items():
-        # 按速度排序（从高到低）
-        sorted_streams = sorted(channel_streams, key=lambda x: x.get("actual_speed_kbps", 0), reverse=True)
+        # 按综合质量排序：优先FFmpeg验证通过的，然后按速度
+        def stream_score(stream):
+            score = stream.get("actual_speed_kbps", 0)
+            if stream.get("ffmpeg_success"):
+                score += 10000  # FFmpeg验证通过的优先
+            return score
+        
+        sorted_streams = sorted(channel_streams, key=stream_score, reverse=True)
         
         # 限制每个频道的接口数量
         if FINAL_SOURCES_PER_CHANNEL > 0:
@@ -720,27 +813,34 @@ def save_to_txt(streams):
             channels_dict[name] = []
         channels_dict[name].append({
             "url": stream["stream_url"],
-            "speed": stream.get("actual_speed_kbps", 0)
+            "speed": stream.get("actual_speed_kbps", 0),
+            "ffmpeg_verified": stream.get("ffmpeg_success", False)
         })
     
     try:
         with open(OUTPUT_TXT, 'w', encoding='utf-8') as f:
             total_channels = 0
             total_streams = 0
+            verified_streams = 0
             
             # 按模板顺序写入
             for channel_name in template_channels:
                 if channel_name in channels_dict:
+                    # 按质量排序
                     streams_list = sorted(channels_dict[channel_name], 
-                                        key=lambda x: x["speed"], reverse=True)
+                                        key=lambda x: (x["ffmpeg_verified"], x["speed"]), 
+                                        reverse=True)
                     
                     for stream_info in streams_list:
                         f.write(f"{channel_name},{stream_info['url']}\n")
                         total_streams += 1
+                        if stream_info["ffmpeg_verified"]:
+                            verified_streams += 1
                     
                     total_channels += 1
         
-        print(f"✓ TXT文件保存成功: {total_channels} 个频道, {total_streams} 个流\n")
+        print(f"✓ TXT文件保存成功: {total_channels} 个频道, {total_streams} 个流")
+        print(f"  - FFmpeg验证流: {verified_streams} 个\n")
         
     except Exception as e:
         print(f"✗ TXT文件保存失败: {e}\n")
@@ -762,36 +862,46 @@ def save_to_m3u(streams):
         channels_dict[name].append({
             "url": stream["stream_url"],
             "speed": stream.get("actual_speed_kbps", 0),
-            "response_time": stream.get("response_time", 0)
+            "response_time": stream.get("response_time", 0),
+            "ffmpeg_verified": stream.get("ffmpeg_success", False),
+            "codec": stream.get("codec", "unknown")
         })
     
     try:
         with open(OUTPUT_M3U, 'w', encoding='utf-8') as f:
             f.write("#EXTM3U\n")
-            f.write(f"# Generated by Simple IPTV Processor on {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"# Generated by IPTV Processor (No Quality Filter) on {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"# Total Channels: {len(channels_dict)}\n")
             f.write(f"# Total Streams: {len(streams)}\n\n")
             
             total_channels = 0
             total_streams = 0
+            verified_streams = 0
             
             # 按模板顺序写入
             for channel_name in template_channels:
                 if channel_name in channels_dict:
-                    # 按速度排序
+                    # 按质量排序
                     streams_list = sorted(channels_dict[channel_name], 
-                                        key=lambda x: x["speed"], reverse=True)
+                                        key=lambda x: (x["ffmpeg_verified"], x["speed"]), 
+                                        reverse=True)
                     
                     for stream_info in streams_list:
+                        # 标记FFmpeg验证状态
+                        verified_mark = "✓" if stream_info["ffmpeg_verified"] else "⚠"
+                        
                         f.write(f'#EXTINF:-1 tvg-id="{channel_name}" tvg-name="{channel_name}" '
                                f'group-title="Live",{channel_name} '
-                               f'(速度:{stream_info["speed"]:.0f}kbps)\n')
+                               f'[{verified_mark}] 速度:{stream_info["speed"]:.0f}kbps\n')
                         f.write(f'{stream_info["url"]}\n')
                         total_streams += 1
+                        if stream_info["ffmpeg_verified"]:
+                            verified_streams += 1
                     
                     total_channels += 1
             
-        print(f"✓ M3U文件保存成功: {total_channels} 个频道, {total_streams} 个流\n")
+        print(f"✓ M3U文件保存成功: {total_channels} 个频道, {total_streams} 个流")
+        print(f"  - FFmpeg验证流: {verified_streams} 个\n")
             
     except Exception as e:
         print(f"✗ M3U文件保存失败: {e}\n")
@@ -800,7 +910,7 @@ def save_to_m3u(streams):
 
 def main():
     """主函数"""
-    print("🎬 IPTV直播源简化处理工具")
+    print("🎬 IPTV直播源处理工具 - 无质量过滤版")
     print("=" * 60)
     print(f"开始时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60 + "\n")
@@ -845,21 +955,14 @@ def main():
             print("✗ 错误: 过滤后没有可用的流\n")
             return
         
-        print(f"✓ 开始简化测试 {len(all_streams)} 个流...\n")
+        print(f"✓ 开始测试 {len(all_streams)} 个流...\n")
         
-        # 简化测试所有流
-        tested_streams = test_all_streams_simple(all_streams)
+        # 测试所有流
+        tested_streams = test_all_streams(all_streams)
         
         if not tested_streams:
-            print("⚠ 警告: 测试后没有高质量的流，尝试放宽条件...")
-            # 如果全部失败，尝试只检查响应时间
-            global MIN_SPEED_KBPS
-            MIN_SPEED_KBPS = 10  # 进一步降低速度要求
-            tested_streams = test_all_streams_simple(all_streams)
-            
-            if not tested_streams:
-                print("✗ 错误: 即使放宽条件后也没有可用的流\n")
-                return
+            print("✗ 错误: 测试后没有可用的流\n")
+            return
         
         # 分组选择最佳流
         print("正在选择最佳流...")
@@ -878,7 +981,7 @@ def main():
         total_time = end_time - start_time
         
         print("=" * 60)
-        print("🎉 简化处理完成!")
+        print("🎉 无质量过滤版处理完成!")
         print(f"⏱ 总耗时: {total_time:.2f} 秒")
         print(f"📁 输出文件: {OUTPUT_TXT}, {OUTPUT_M3U}")
         print("=" * 60 + "\n")
