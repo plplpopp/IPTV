@@ -32,7 +32,7 @@ URLS = [
 ]
 
 # 功能开关
-ENABLE_FFMPEG = True              # FFmpeg测速开关
+ENABLE_FFMPEG = False             # 暂时关闭FFmpeg，先确保基础测试通过
 ENABLE_SPEED_TEST = True          # 智能测速开关  
 ENABLE_RESPONSE_TEST = True       # 响应延时测试开关
 ENABLE_TEMPLATE_FILTER = True     # 模板过滤开关
@@ -43,18 +43,17 @@ ENABLE_DUPLICATE_REMOVAL = True   # 去重开关
 # 数量配置
 MAX_SOURCES_PER_CHANNEL = 0       # 每个频道最大接口数 (0表示不限制)
 FINAL_SOURCES_PER_CHANNEL = 5     # 最终保留接口数
-MAX_WORKERS = 4                   # 减少并发线程数避免阻塞
+MAX_WORKERS = 6                   # 并发线程数
 
-# 测试配置 - 大幅减少超时时间
-TEST_TIMEOUT = 6                  # 测试超时时间(秒)
-SPEED_TEST_DURATION = 4           # 速度测试时长(秒)
-CONNECTION_TIMEOUT = 4            # 连接超时时间(秒)
-FFMPEG_DURATION = 6               # FFmpeg分析时长(秒)
+# 测试配置 - 放宽条件
+TEST_TIMEOUT = 8                  # 测试超时时间(秒)
+SPEED_TEST_DURATION = 5           # 速度测试时长(秒)
+CONNECTION_TIMEOUT = 5            # 连接超时时间(秒)
 
-# 质量阈值
-MIN_RESOLUTION = 320 * 240        # 最低分辨率
-MAX_RESPONSE_TIME = 2000          # 最大响应时间(ms)
-MIN_SPEED_KBPS = 300              # 最低速度要求(kbps)
+# 质量阈值 - 大幅放宽条件
+MIN_RESOLUTION = 0                # 暂时不检查分辨率
+MAX_RESPONSE_TIME = 8000          # 放宽响应时间(ms)
+MIN_SPEED_KBPS = 50               # 大幅降低最低速度要求(kbps)
 
 # 文件配置
 LOCAL_SOURCE_FILE = "local.txt"   # 本地源文件
@@ -62,9 +61,6 @@ TEMPLATE_FILE = "demo.txt"        # 模板频道文件
 BLACKLIST_FILE = "blacklist.txt"  # 黑名单文件
 OUTPUT_TXT = "iptv.txt"           # 输出文本文件
 OUTPUT_M3U = "iptv.m3u"           # 输出M3U文件
-
-# 路径配置
-FFMPEG_PATH = "ffmpeg"            # FFmpeg路径
 
 # ============================ 全局变量 ============================
 
@@ -358,7 +354,7 @@ def fetch_streams_from_url(url):
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        response = requests.get(url, timeout=10, headers=headers)
+        response = requests.get(url, timeout=15, headers=headers)
         response.encoding = 'utf-8'
         if response.status_code == 200:
             print(f"✓ 成功获取: {len(response.text)} 字符")
@@ -475,162 +471,96 @@ def fetch_all_online_sources():
     print(f"在线源获取完成: {successful_sources} 成功, {failed_sources} 失败\n")
     return online_streams
 
-# ============================ 防阻塞测速函数 ============================
+# ============================ 简化测速函数 ============================
 
-def test_connection_speed(stream_url):
-    """防阻塞版连接速度测试"""
+def test_connection_speed_simple(stream_url):
+    """简化版连接速度测试"""
     if not ENABLE_SPEED_TEST:
-        return {"actual_speed_kbps": 0}
+        return {"actual_speed_kbps": 0, "success": False}
     
     try:
-        # 使用curl进行速度测试，严格控制超时
-        cmd = [
-            'curl', '-o', '/dev/null',
-            '--max-time', str(SPEED_TEST_DURATION),
-            '--connect-timeout', str(CONNECTION_TIMEOUT),
-            '--write-out', '%{speed_download} %{time_total} %{http_code}',
-            '--silent',
-            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            stream_url
-        ]
+        # 使用requests进行简单的速度测试
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Range': 'bytes=0-51200'  # 请求50KB数据
+        }
         
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=SPEED_TEST_DURATION + 2)
+        start_time = time.time()
+        response = requests.get(stream_url, timeout=SPEED_TEST_DURATION, 
+                              headers=headers, stream=True)
         
-        if result.returncode == 0:
-            output_parts = result.stdout.strip().split()
-            if len(output_parts) >= 3:
-                speed_bps = float(output_parts[0])  # 字节/秒
-                http_code = int(output_parts[2])
-                
-                if http_code == 200:
-                    speed_kbps = (speed_bps * 8) / 1024  # 转换为kbps
-                    return {"actual_speed_kbps": speed_kbps}
+        total_bytes = 0
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                total_bytes += len(chunk)
+                if total_bytes >= 51200:  # 收到50KB数据就停止
+                    break
+        
+        download_time = time.time() - start_time
+        response.close()
+        
+        if download_time > 0 and total_bytes > 0:
+            speed_kbps = (total_bytes * 8) / download_time / 1024
+            return {
+                "actual_speed_kbps": speed_kbps,
+                "success": True,
+                "bytes_received": total_bytes
+            }
     
-    except (subprocess.TimeoutExpired, subprocess.CalledProcessError, ValueError):
+    except Exception as e:
         pass
     
-    return {"actual_speed_kbps": 0}
+    return {"actual_speed_kbps": 0, "success": False}
 
-def test_stream_response_time(stream_url):
-    """防阻塞版响应时间测试"""
+def test_stream_response_time_simple(stream_url):
+    """简化版响应时间测试"""
     if not ENABLE_RESPONSE_TEST:
         return MAX_RESPONSE_TIME
     
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Range': 'bytes=0-1024'  # 只请求1KB数据
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         
         start_time = time.time()
-        response = requests.get(stream_url, timeout=TEST_TIMEOUT, 
-                              allow_redirects=True, headers=headers, stream=True)
+        response = requests.head(stream_url, timeout=TEST_TIMEOUT, 
+                               allow_redirects=True, headers=headers)
+        response_time = (time.time() - start_time) * 1000
         
-        # 快速读取少量数据测试响应
-        for chunk in response.iter_content(chunk_size=512):
-            if chunk:
-                response_time = (time.time() - start_time) * 1000
-                response.close()
-                return min(response_time, MAX_RESPONSE_TIME)
-        
-        response.close()
+        if response.status_code in [200, 301, 302, 307]:
+            return min(response_time, MAX_RESPONSE_TIME)
             
     except Exception:
         pass
     
     return MAX_RESPONSE_TIME
 
-def analyze_stream_with_ffmpeg_fast(stream_url):
-    """快速FFmpeg流分析 - 防止阻塞"""
-    if not ENABLE_FFMPEG:
-        return {"resolution": 0, "codec": "unknown", "protocol": get_protocol_type(stream_url)}
-    
-    # 检查ffmpeg是否可用
-    try:
-        subprocess.run([FFMPEG_PATH, '-version'], capture_output=True, timeout=3, check=True)
-    except:
-        return {"resolution": 0, "codec": "unknown", "protocol": get_protocol_type(stream_url)}
-    
-    try:
-        # 快速FFmpeg分析命令 - 减少分析时间
-        cmd = [
-            FFMPEG_PATH,
-            '-i', stream_url,
-            '-t', '3',  # 只分析3秒
-            '-f', 'null',
-            '-',
-            '-hide_banner',
-            '-loglevel', 'error'  # 只显示错误信息，减少输出
-        ]
-        
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=8)
-        
-        # 从错误输出中解析分辨率
-        resolution = 0
-        codec = "unknown"
-        
-        for line in result.stderr.split('\n'):
-            # 解析分辨率
-            resolution_match = re.search(r'(\d{3,4})x(\d{3,4})', line)
-            if resolution_match:
-                width = int(resolution_match.group(1))
-                height = int(resolution_match.group(2))
-                resolution = width * height
-            
-            # 解析视频编码
-            if 'Video:' in line:
-                codec_match = re.search(r'Video:\s*([^,]+)', line)
-                if codec_match:
-                    codec = codec_match.group(1).strip()
-        
-        return {
-            "resolution": resolution,
-            "codec": codec,
-            "protocol": get_protocol_type(stream_url)
-        }
-        
-    except subprocess.TimeoutExpired:
-        return {"resolution": 0, "codec": "unknown", "protocol": get_protocol_type(stream_url)}
-    except Exception:
-        return {"resolution": 0, "codec": "unknown", "protocol": get_protocol_type(stream_url)}
-
-def is_stream_acceptable(test_result):
-    """判断流是否可接受"""
+def is_stream_acceptable_simple(test_result):
+    """简化版流接受判断"""
     if not test_result:
         return False
     
-    # 检查分辨率
-    if test_result.get("resolution", 0) < MIN_RESOLUTION:
-        return False
+    # 只检查最基本的条件
+    speed_ok = test_result.get("actual_speed_kbps", 0) >= MIN_SPEED_KBPS
+    response_ok = test_result.get("response_time", MAX_RESPONSE_TIME) < MAX_RESPONSE_TIME
     
-    # 检查响应时间
-    if test_result.get("response_time", MAX_RESPONSE_TIME) >= MAX_RESPONSE_TIME:
-        return False
-    
-    # 检查速度
-    if test_result.get("actual_speed_kbps", 0) < MIN_SPEED_KBPS:
-        return False
-    
-    return True
+    # 只要速度和响应时间有一个达标就接受
+    return speed_ok or response_ok
 
-def test_single_stream_fast(stream_info):
-    """快速单流测试 - 防止阻塞"""
+def test_single_stream_simple(stream_info):
+    """简化版单流测试"""
     try:
         program_name = stream_info["program_name"]
         stream_url = stream_info["stream_url"]
         
-        # 并行执行测试，但严格控制超时
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            # 提交测试任务
-            future_response = executor.submit(test_stream_response_time, stream_url)
-            future_speed = executor.submit(test_connection_speed, stream_url)
-            future_analysis = executor.submit(analyze_stream_with_ffmpeg_fast, stream_url)
+        # 并行执行测试
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_response = executor.submit(test_stream_response_time_simple, stream_url)
+            future_speed = executor.submit(test_connection_speed_simple, stream_url)
             
-            # 快速获取结果，设置较短超时
             try:
                 response_time = future_response.result(timeout=TEST_TIMEOUT)
-                speed_result = future_speed.result(timeout=SPEED_TEST_DURATION + 1)
-                analysis_result = future_analysis.result(timeout=8)
+                speed_result = future_speed.result(timeout=SPEED_TEST_DURATION + 2)
             except:
                 return None
         
@@ -639,55 +569,46 @@ def test_single_stream_fast(stream_info):
             "program_name": program_name,
             "stream_url": stream_url,
             "response_time": response_time,
-            "resolution": analysis_result["resolution"],
-            "codec": analysis_result["codec"],
-            "protocol": analysis_result["protocol"],
-            "actual_speed_kbps": speed_result.get("actual_speed_kbps", 0)
+            "actual_speed_kbps": speed_result.get("actual_speed_kbps", 0),
+            "speed_success": speed_result.get("success", False),
+            "protocol": get_protocol_type(stream_url)
         }
         
         # 判断流是否可接受
-        if is_stream_acceptable(result):
-            # 显示测试结果摘要
-            resolution_text = f"{analysis_result['resolution']}px"
-            if analysis_result["resolution"] >= 1920*1080:
-                resolution_text = "1080p"
-            elif analysis_result["resolution"] >= 1280*720:
-                resolution_text = "720p"
-            
-            print(f"  ✓ {program_name} "
-                  f"(响应:{response_time:.0f}ms 速度:{result['actual_speed_kbps']:.0f}kbps "
-                  f"分辨率:{resolution_text})")
+        if is_stream_acceptable_simple(result):
+            status = "✓" if result["speed_success"] else "⚠"
+            print(f"  {status} {program_name} "
+                  f"(响应:{response_time:.0f}ms 速度:{result['actual_speed_kbps']:.0f}kbps)")
             return result
         else:
+            print(f"  ✗ {program_name} (无响应或速度过低)")
             return None
         
-    except Exception:
+    except Exception as e:
         return None
 
-def test_all_streams_fast(streams):
-    """快速流测试 - 防止阻塞"""
+def test_all_streams_simple(streams):
+    """简化版流测试"""
     if not streams:
         return []
     
-    print(f"开始快速测试 {len(streams)} 个流...")
+    print(f"开始简化测试 {len(streams)} 个流...")
+    print("测试标准: 响应时间 < 8秒 或 速度 > 50kbps")
     
     tested_streams = []
     failed_count = 0
     passed_count = 0
     
-    # 使用tqdm显示进度条，但设置较短超时
+    # 使用tqdm显示进度条
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        # 提交所有任务
         future_to_stream = {
-            executor.submit(test_single_stream_fast, stream): stream 
+            executor.submit(test_single_stream_simple, stream): stream 
             for stream in streams
         }
         
-        # 使用tqdm创建进度条
         with tqdm(total=len(streams), desc="测试进度", unit="流") as pbar:
             for future in as_completed(future_to_stream):
                 try:
-                    # 设置较短的超时时间，防止单个流阻塞整个进程
                     result = future.result(timeout=15)
                     if result:
                         tested_streams.append(result)
@@ -696,15 +617,22 @@ def test_all_streams_fast(streams):
                         failed_count += 1
                 except Exception:
                     failed_count += 1
-                    # 取消该任务，防止阻塞
                     future.cancel()
                 finally:
                     pbar.update(1)
     
-    print(f"\n✓ 快速测试完成!")
+    print(f"\n✓ 简化测试完成!")
     print(f"  - 总测试: {len(streams)}")
     print(f"  - 测试通过: {passed_count}")
     print(f"  - 测试失败: {failed_count}")
+    
+    if passed_count > 0:
+        # 计算平均速度
+        avg_speed = sum(s.get("actual_speed_kbps", 0) for s in tested_streams) / passed_count
+        avg_response = sum(s.get("response_time", 0) for s in tested_streams) / passed_count
+        print(f"  - 平均速度: {avg_speed:.0f}kbps")
+        print(f"  - 平均响应: {avg_response:.0f}ms")
+    
     print(f"  - 成功率: {passed_count/len(streams)*100:.1f}%\n")
     
     return tested_streams
@@ -834,14 +762,13 @@ def save_to_m3u(streams):
         channels_dict[name].append({
             "url": stream["stream_url"],
             "speed": stream.get("actual_speed_kbps", 0),
-            "response_time": stream.get("response_time", 0),
-            "resolution": stream.get("resolution", 0)
+            "response_time": stream.get("response_time", 0)
         })
     
     try:
         with open(OUTPUT_M3U, 'w', encoding='utf-8') as f:
             f.write("#EXTM3U\n")
-            f.write(f"# Generated by Fast IPTV Processor on {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"# Generated by Simple IPTV Processor on {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"# Total Channels: {len(channels_dict)}\n")
             f.write(f"# Total Streams: {len(streams)}\n\n")
             
@@ -856,20 +783,9 @@ def save_to_m3u(streams):
                                         key=lambda x: x["speed"], reverse=True)
                     
                     for stream_info in streams_list:
-                        # 分辨率文本化
-                        resolution = stream_info["resolution"]
-                        if resolution >= 1920*1080:
-                            res_text = "1080p"
-                        elif resolution >= 1280*720:
-                            res_text = "720p"
-                        elif resolution >= 1024*576:
-                            res_text = "576p"
-                        else:
-                            res_text = "SD"
-                        
                         f.write(f'#EXTINF:-1 tvg-id="{channel_name}" tvg-name="{channel_name}" '
                                f'group-title="Live",{channel_name} '
-                               f'(速度:{stream_info["speed"]:.0f}kbps 分辨率:{res_text})\n')
+                               f'(速度:{stream_info["speed"]:.0f}kbps)\n')
                         f.write(f'{stream_info["url"]}\n')
                         total_streams += 1
                     
@@ -884,7 +800,7 @@ def save_to_m3u(streams):
 
 def main():
     """主函数"""
-    print("🎬 IPTV直播源快速处理工具 - 防阻塞版")
+    print("🎬 IPTV直播源简化处理工具")
     print("=" * 60)
     print(f"开始时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60 + "\n")
@@ -929,14 +845,21 @@ def main():
             print("✗ 错误: 过滤后没有可用的流\n")
             return
         
-        print(f"✓ 开始快速测试 {len(all_streams)} 个流...\n")
+        print(f"✓ 开始简化测试 {len(all_streams)} 个流...\n")
         
-        # 快速测试所有流
-        tested_streams = test_all_streams_fast(all_streams)
+        # 简化测试所有流
+        tested_streams = test_all_streams_simple(all_streams)
         
         if not tested_streams:
-            print("✗ 错误: 测试后没有可用的流\n")
-            return
+            print("⚠ 警告: 测试后没有高质量的流，尝试放宽条件...")
+            # 如果全部失败，尝试只检查响应时间
+            global MIN_SPEED_KBPS
+            MIN_SPEED_KBPS = 10  # 进一步降低速度要求
+            tested_streams = test_all_streams_simple(all_streams)
+            
+            if not tested_streams:
+                print("✗ 错误: 即使放宽条件后也没有可用的流\n")
+                return
         
         # 分组选择最佳流
         print("正在选择最佳流...")
@@ -955,7 +878,7 @@ def main():
         total_time = end_time - start_time
         
         print("=" * 60)
-        print("🎉 快速处理完成!")
+        print("🎉 简化处理完成!")
         print(f"⏱ 总耗时: {total_time:.2f} 秒")
         print(f"📁 输出文件: {OUTPUT_TXT}, {OUTPUT_M3U}")
         print("=" * 60 + "\n")
