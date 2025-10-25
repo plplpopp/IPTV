@@ -813,7 +813,7 @@ class IPTVCrawler:
             with open(self.output_txt, 'w', encoding='utf-8') as f:
                 f.write("# 生成时间: {}\n".format(pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')))
                 f.write("# 总频道数: {}\n".format(len(channels_data)))
-                f.write("# 总流数: {}\n".format(len(df))))
+                f.write("# 总流数: {}\n".format(len(df)))
                 if self.config["enable_ffmpeg_test"]:
                     f.write("# FFmpeg测速: 速度权重{} 响应权重{}\n".format(
                         self.config["speed_weight"], self.config["response_weight"]))
