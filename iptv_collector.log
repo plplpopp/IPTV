@@ -1,0 +1,42 @@
+2025-10-26 15:34:57,784 - INFO - 🚀 Starting IPTV collection process...
+2025-10-26 15:34:57,785 - INFO - 📡 Total servers to process: 2
+2025-10-26 15:34:57,785 - INFO - 
+============================================================
+2025-10-26 15:34:57,785 - INFO - 🚀 Starting IPTV collection from 2 servers
+2025-10-26 15:34:57,785 - INFO - ============================================================
+2025-10-26 15:34:57,785 - INFO - Trying: http://36.135.118.195:85/iptv/live/1000.json?key=txiptv
+2025-10-26 15:34:57,786 - INFO - Trying: http://112.30.144.207:8080/iptv/live/1000.json?key=txiptv
+2025-10-26 15:35:05,797 - INFO - Trying: http://112.30.144.207:8080/iptv/live/1000.json
+2025-10-26 15:35:13,351 - INFO - ✅ Found 77 channels from http://36.135.118.195:85 using /iptv/live/1000.json?key=txiptv
+2025-10-26 15:35:13,352 - INFO - ✅ [1/2] http://36.135.118.195:85: 77 channels
+2025-10-26 15:35:13,806 - INFO - Trying: http://112.30.144.207:8080/live/1000.json
+2025-10-26 15:35:21,815 - INFO - Trying: http://112.30.144.207:8080/tv/1000.json
+2025-10-26 15:35:29,826 - INFO - Trying: http://112.30.144.207:8080/iptv/live.json
+2025-10-26 15:35:37,836 - INFO - Trying: http://112.30.144.207:8080/api/live
+2025-10-26 15:35:45,845 - INFO - Trying: http://112.30.144.207:8080/live.json
+2025-10-26 15:35:53,855 - WARNING - ❌ No channels found from http://112.30.144.207:8080 after trying all paths
+2025-10-26 15:35:53,856 - INFO - ❌ [2/2] http://112.30.144.207:8080: No channels found
+2025-10-26 15:35:53,856 - INFO - 📊 Total: 77 channels from 2 servers
+2025-10-26 15:35:53,856 - INFO - 
+🔄 Merging and deduplicating 77 channels...
+2025-10-26 15:35:53,856 - INFO - 💾 Saved 77 results to iptv.txt
+2025-10-26 15:35:53,857 - INFO - 💾 Saved 77 results to iptv.m3u
+2025-10-26 15:35:53,857 - INFO - 📊 Channel Statistics:
+2025-10-26 15:35:53,857 - INFO -    📺 CCTV Channels: 19
+2025-10-26 15:35:53,857 - INFO -    🏠 Local Channels: 6
+2025-10-26 15:35:53,857 - INFO -    🔄 Other Channels: 52
+2025-10-26 15:35:53,857 - INFO -    ✅ Good Quality: 77
+2025-10-26 15:35:53,857 - INFO -    ⚠️  Normal Quality: 0
+2025-10-26 15:35:53,857 - INFO -    🌐 Unique Sources: 1
+2025-10-26 15:35:53,857 - INFO - ✅ Merged 77 channels into 77 unique channels
+2025-10-26 15:35:53,857 - INFO - 
+============================================================
+2025-10-26 15:35:53,857 - INFO - 📊 COLLECTION SUMMARY
+2025-10-26 15:35:53,857 - INFO - ============================================================
+2025-10-26 15:35:53,858 - INFO - ⏱️  Processing time: 56.07 seconds
+2025-10-26 15:35:53,858 - INFO - 📺 Total channels collected: 77
+2025-10-26 15:35:53,858 - INFO - 🎯 Unique channels: 77
+2025-10-26 15:35:53,858 - INFO - 📡 Servers processed: 2
+2025-10-26 15:35:53,858 - INFO - 📈 Success rate: 3850.0%
+2025-10-26 15:35:53,858 - INFO - 💾 Output files: iptv.txt, iptv.m3u
+2025-10-26 15:35:53,858 - INFO - ============================================================
