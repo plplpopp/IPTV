@@ -19,7 +19,15 @@ logging.basicConfig(
 
 # 主服务器列表
 MAIN_SERVERS = [
-    "http://36.135.118.195:85",
+    "http://60.214.107.42:8080",
+    "http://113.57.127.43:8080", 
+    "http://58.222.24.11:8080",
+    "http://117.169.120.140:8080",
+    "http://112.30.144.207:8080",
+    "http://60.214.107.42:8080",
+    "http://113.57.127.43:8080",
+    "http://58.222.24.11:8080",
+    "http://117.169.120.140:8080",
     "http://112.30.144.207:8080"
 ]
 
@@ -253,14 +261,22 @@ class IPTVCollector:
             
             if format == 'txt':
                 with open(filename, "w", encoding="utf-8") as file:
+                    file.write("# IPTV Channel List\n")
+                    file.write(f"# Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    file.write(f"# Total Channels: {len(results)}\n")
+                    file.write("# Format: ChannelName,URL\n")
+                    file.write("# \n")
                     for result in results:
                         file.write(f"{result['name']},{result['url']}\n")
             
             elif format == 'm3u':
-                with open(filename.replace('.txt', '.m3u'), "w", encoding="utf-8") as file:
+                with open(filename, "w", encoding="utf-8") as file:
                     file.write("#EXTM3U\n")
+                    file.write(f"# Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    file.write(f"# Total Channels: {len(results)}\n")
+                    file.write("# \n")
                     for result in results:
-                        file.write(f"#EXTINF:-1,{result['name']}\n")
+                        file.write(f"#EXTINF:-1 tvg-name=\"{result['name']}\",{result['name']}\n")
                         file.write(f"{result['url']}\n")
             
             logging.info(f"💾 Saved {len(results)} results to {filename}")
@@ -336,8 +352,8 @@ def main():
         final_results.sort(key=lambda x: (x['name'], x['response_time']))
         
         # 保存最终文件
-        collector.save_results(final_results, "IPTV.txt")
-        collector.save_results(final_results, "IPTV.m3u")
+        collector.save_results(final_results, "iptv.txt", 'txt')
+        collector.save_results(final_results, "iptv.m3u", 'm3u')
         
         # 生成统计信息
         generate_stats(final_results)
@@ -346,10 +362,10 @@ def main():
     else:
         logging.error("❌ No valid channels collected!")
         # 创建空的IPTV文件
-        with open("IPTV.txt", "w", encoding="utf-8") as f:
-            f.write("")
-        with open("IPTV.m3u", "w", encoding="utf-8") as f:
-            f.write("#EXTM3U\n")
+        with open("iptv.txt", "w", encoding="utf-8") as f:
+            f.write("# No channels collected\n")
+        with open("iptv.m3u", "w", encoding="utf-8") as f:
+            f.write("#EXTM3U\n# No channels collected\n")
     
     # 输出总结
     end_time = time.time()
@@ -362,7 +378,9 @@ def main():
     logging.info(f"📺 Total channels collected: {len(all_results)}")
     logging.info(f"🎯 Unique channels: {len(final_results) if all_results else 0}")
     logging.info(f"📡 Servers processed: {len(MAIN_SERVERS)}")
-    logging.info(f"📈 Success rate: {len([r for r in all_results]) / len(MAIN_SERVERS) * 100:.1f}%")
+    if all_results:
+        logging.info(f"📈 Success rate: {len([r for r in all_results]) / len(MAIN_SERVERS) * 100:.1f}%")
+    logging.info(f"💾 Output files: iptv.txt, iptv.m3u")
     logging.info(f"{'='*60}")
 
 if __name__ == "__main__":
