@@ -1,6 +1,7 @@
 import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 import requests
 import json
 import re
@@ -75,10 +76,22 @@ def setup_driver():
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--disable-gpu')
     chrome_options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome(options=chrome_options)
+    chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+    chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
+    chrome_options.add_experimental_option('useAutomationExtension', False)
+    
+    # 使用系统安装的ChromeDriver
+    service = Service('/usr/local/bin/chromedriver')
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    
+    return driver
 
 def clean_channel_name(name):
     """清理频道名称"""
+    if not name:
+        return ""
+        
     for old, new in CHANNEL_NAME_MAPPING.items():
         name = name.replace(old, new)
     return name.strip()
@@ -86,13 +99,16 @@ def clean_channel_name(name):
 def extract_urls_from_page(driver, url, wait_time=10):
     """从页面提取URL"""
     try:
+        print(f"Extracting URLs from: {url}")
         driver.get(url)
         time.sleep(wait_time)
         page_content = driver.page_source
         
         pattern = r"http://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+"
         urls_all = re.findall(pattern, page_content)
-        return list(set(urls_all))
+        unique_urls = list(set(urls_all))
+        print(f"Found {len(unique_urls)} unique server URLs")
+        return unique_urls
     except Exception as e:
         print(f"Error extracting URLs from {url}: {str(e)}")
         return []
@@ -102,10 +118,13 @@ def process_single_server(url):
     results = []
     try:
         json_url = f"{url}/iptv/live/1000.json?key=txiptv"
-        response = requests.get(json_url, timeout=5)
+        print(f"Fetching JSON from: {json_url}")
+        
+        response = requests.get(json_url, timeout=10)
         response.raise_for_status()
         json_data = response.json()
 
+        channel_count = 0
         for item in json_data.get('data', []):
             if isinstance(item, dict):
                 name = item.get('name')
@@ -115,6 +134,10 @@ def process_single_server(url):
                     cleaned_name = clean_channel_name(name)
                     full_url = f"{url}{urlx}"
                     results.append(f"{cleaned_name},{full_url}")
+                    channel_count += 1
+        
+        print(f"Found {channel_count} channels from {url}")
+        return results
                     
     except requests.exceptions.RequestException as e:
         print(f"Request failed for {url}: {str(e)}")
@@ -127,7 +150,9 @@ def process_single_server(url):
 
 def process_region(region_name, url, max_workers=5):
     """处理单个地区"""
+    print(f"\n{'='*50}")
     print(f"Processing {region_name}...")
+    print(f"{'='*50}")
     
     driver = setup_driver()
     try:
@@ -135,25 +160,37 @@ def process_region(region_name, url, max_workers=5):
         server_urls = extract_urls_from_page(driver, url)
         print(f"Found {len(server_urls)} servers in {region_name}")
         
+        if not server_urls:
+            print(f"No servers found for {region_name}")
+            return []
+        
         # 使用多线程处理服务器
         all_results = []
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_url = {
                 executor.submit(process_single_server, server_url): server_url 
-                for server_url in server_urls
+                for server_url in server_urls[:20]  # 限制处理前20个服务器避免超时
             }
             
+            completed_count = 0
             for future in as_completed(future_to_url):
                 server_url = future_to_url[future]
+                completed_count += 1
                 try:
                     results = future.result()
                     all_results.extend(results)
-                    print(f"Processed {server_url}: {len(results)} channels")
+                    print(f"[{completed_count}/{len(future_to_url)}] Processed {server_url}: {len(results)} channels")
                 except Exception as e:
-                    print(f"Error processing {server_url}: {str(e)}")
+                    print(f"[{completed_count}/{len(future_to_url)}] Error processing {server_url}: {str(e)}")
         
-        return all_results
+        # 去重
+        unique_results = list(set(all_results))
+        print(f"Region {region_name}: {len(unique_results)} unique channels collected")
+        return unique_results
         
+    except Exception as e:
+        print(f"Error processing region {region_name}: {str(e)}")
+        return []
     finally:
         driver.quit()
 
@@ -163,29 +200,48 @@ def save_results(results, filename):
         print(f"No results to save for {filename}")
         return
     
+    # 按频道名称排序
+    sorted_results = sorted(results, key=lambda x: x.split(',')[0])
+    
     with open(filename, "w", encoding="utf-8") as file:
-        for result in results:
+        for result in sorted_results:
             file.write(result + "\n")
-    print(f"Saved {len(results)} results to {filename}")
+    print(f"Saved {len(sorted_results)} results to {filename}")
 
 def merge_files(file_paths, output_file="IPTV.txt"):
     """合并多个文件"""
     valid_contents = []
+    total_channels = 0
     
     for file_path in file_paths:
-        if os.path.exists(file_path):
+        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
             with open(file_path, 'r', encoding="utf-8") as file:
                 content = file.read().strip()
                 if content:
                     valid_contents.append(content)
+                    channel_count = len(content.strip().split('\n'))
+                    total_channels += channel_count
+                    print(f"Added {channel_count} channels from {file_path}")
     
-    with open(output_file, "w", encoding="utf-8") as output:
-        output.write('\n'.join(valid_contents))
-    
-    print(f"Merged {len(valid_contents)} files into {output_file}")
+    if valid_contents:
+        # 合并并去重
+        all_lines = []
+        for content in valid_contents:
+            all_lines.extend(content.split('\n'))
+        
+        unique_lines = sorted(list(set(all_lines)))
+        
+        with open(output_file, "w", encoding="utf-8") as output:
+            output.write('\n'.join(unique_lines))
+        
+        print(f"Merged {len(valid_contents)} files into {output_file}")
+        print(f"Total unique channels: {len(unique_lines)}")
+    else:
+        print("No valid content to merge")
 
 def main():
     """主函数"""
+    print("🚀 Starting IPTV collection process...")
     start_time = time.time()
     all_files = []
     
@@ -196,23 +252,40 @@ def main():
             filename = f"{region_name}.txt"
             save_results(results, filename)
             all_files.append(filename)
+            time.sleep(2)  # 地区间延迟
         except Exception as e:
             print(f"Error processing region {region_name}: {str(e)}")
             continue
     
     # 合并文件
+    print(f"\n{'='*50}")
+    print("Merging all regional files...")
+    print(f"{'='*50}")
     merge_files(all_files)
     
     # 统计信息
     total_channels = 0
+    regional_stats = []
     for file in all_files:
         if os.path.exists(file):
             with open(file, 'r', encoding="utf-8") as f:
-                total_channels += len(f.readlines())
+                lines = f.readlines()
+                channel_count = len(lines)
+                total_channels += channel_count
+                regional_stats.append(f"{file}: {channel_count} channels")
     
     end_time = time.time()
-    print(f"\nProcessing completed in {end_time - start_time:.2f} seconds")
-    print(f"Total channels collected: {total_channels}")
+    processing_time = end_time - start_time
+    
+    print(f"\n{'='*50}")
+    print("📊 COLLECTION SUMMARY")
+    print(f"{'='*50}")
+    for stat in regional_stats:
+        print(f"  {stat}")
+    print(f"{'='*50}")
+    print(f"⏱️  Processing completed in {processing_time:.2f} seconds")
+    print(f"📺 Total channels collected: {total_channels}")
+    print(f"{'='*50}")
 
 if __name__ == "__main__":
     main()
