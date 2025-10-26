@@ -2,84 +2,92 @@ name: Update IPTV
 
 on:
   schedule:
-    - cron: '05,12,17 * * * *'  # 更清晰的cron表达式
-  workflow_dispatch:
-  push:  # 添加push触发，便于测试
+    # 每天UTC时间2:00运行（北京时间10:00）
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # 允许手动触发
+  push:
+    branches: [ main ]
     paths:
-      - 'iptv.py'
-      - 'requirements.txt'
-
-permissions:
-  contents: write
-
-env:
-  TZ: Asia/Shanghai
+      - '**.py'
+      - '.github/workflows/**.yml'
 
 jobs:
-  update:
+  collect-iptv:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Setup environment
-      run: echo "DATE=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
-        cache: 'pip'  # 添加pip缓存
+        python-version: '3.9'
+        cache: 'pip'
 
-    - name: Install dependencies
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget unzip
+
+    - name: Install Chrome
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+
+    - name: Install ChromeDriver
+      run: |
+        CHROME_VERSION=$(google-chrome-stable --version | grep -oP '\d+\.\d+\.\d+\.\d+' | cut -d'.' -f1-3)
+        CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
+        wget -q -O chromedriver.zip "https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip"
+        unzip -q chromedriver.zip
+        sudo mv chromedriver /usr/local/bin/
+        sudo chmod +x /usr/local/bin/chromedriver
+        chromedriver --version
+
+    - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        sudo apt-get update && sudo apt-get install -y ffmpeg
+        pip install selenium requests
 
-    - name: Generate IPTV sources
-      run: python iptv.py
-
-    - name: Update documentation
+    - name: Run IPTV collector
       run: |
-        cat << EOF > README.md
-        # 📺 IPTV源更新
-        
-        ## 最近更新
-        **更新时间**: $DATE
-        
-        ## 下载链接
-        - [IPTV文本格式](https://ghfast.top/raw.githubusercontent.com/plplpopp/IPTV/refs/heads/main/iptv.txt)
-        - [IPTV M3U格式](https://ghfast.top/raw.githubusercontent.com/plplpopp/IPTV/refs/heads/main/iptv.m3u)
-        
-        ## 使用说明
-        将上述链接添加到您的IPTV播放器中使用。
-        
-        ## 自动更新
-        此仓库每天自动更新多次，确保源的可用性。
-        
-        ⭐ 如果对您有帮助，请给个Star！
-        EOF
+        python iptv.py
+      env:
+        PYTHONUNBUFFERED: 1
 
-    - name: Configure Git
+    - name: Check for changes
+      id: check_changes
       run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git diff --exit-code || echo "changes=true" >> $GITHUB_OUTPUT
 
-    - name: Commit and push changes
+    - name: Commit and push if changes
+      if: steps.check_changes.outputs.changes == 'true'
       run: |
-        git add iptv.txt iptv.m3u README.md
-        git diff --staged --quiet || git commit -m "🔄 自动更新于 $DATE"
-        git push origin main
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add *.txt
+        git commit -m "Auto-update IPTV data $(date +'%Y-%m-%d %H:%M:%S')"
+        git push
 
-    - name: Upload artifacts
+    - name: Upload IPTV files as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: iptv-sources
+        name: iptv-data
         path: |
-          iptv.txt
-          iptv.m3u
+          *.txt
         retention-days: 7
+
+    - name: Create summary
+      run: |
+        echo "## IPTV Collection Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Collected Files:" >> $GITHUB_STEP_SUMMARY
+        for file in *.txt; do
+          if [ -f "$file" ]; then
+            line_count=$(wc -l < "$file" || echo "0")
+            echo "- **$file**: $line_count channels" >> $GITHUB_STEP_SUMMARY
+          fi
+        done
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Generated on: $(date)" >> $GITHUB_STEP_SUMMARY
