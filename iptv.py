@@ -2,6 +2,8 @@ import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.core.os_manager import ChromeType
 import requests
 import json
 import re
@@ -69,7 +71,7 @@ CHANNEL_NAME_MAPPING = {
 }
 
 def setup_driver():
-    """设置Chrome驱动"""
+    """设置Chrome驱动 - 使用webdriver-manager自动管理驱动版本"""
     chrome_options = Options()
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
@@ -80,12 +82,22 @@ def setup_driver():
     chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
     chrome_options.add_experimental_option('useAutomationExtension', False)
     
-    # 使用系统安装的ChromeDriver
-    service = Service('/usr/local/bin/chromedriver')
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-    
-    return driver
+    try:
+        # 使用webdriver-manager自动下载和管理ChromeDriver
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        return driver
+    except Exception as e:
+        print(f"Error setting up driver with webdriver-manager: {e}")
+        # 备用方案：尝试使用系统ChromeDriver
+        try:
+            service = Service('/usr/bin/chromedriver')
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            return driver
+        except Exception as e2:
+            print(f"Error with system chromedriver: {e2}")
+            raise
 
 def clean_channel_name(name):
     """清理频道名称"""
@@ -120,7 +132,12 @@ def process_single_server(url):
         json_url = f"{url}/iptv/live/1000.json?key=txiptv"
         print(f"Fetching JSON from: {json_url}")
         
-        response = requests.get(json_url, timeout=10)
+        # 添加User-Agent头
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(json_url, timeout=10, headers=headers)
         response.raise_for_status()
         json_data = response.json()
 
@@ -148,7 +165,7 @@ def process_single_server(url):
     
     return results
 
-def process_region(region_name, url, max_workers=5):
+def process_region(region_name, url, max_workers=3):
     """处理单个地区"""
     print(f"\n{'='*50}")
     print(f"Processing {region_name}...")
@@ -169,7 +186,7 @@ def process_region(region_name, url, max_workers=5):
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_url = {
                 executor.submit(process_single_server, server_url): server_url 
-                for server_url in server_urls[:20]  # 限制处理前20个服务器避免超时
+                for server_url in server_urls[:10]  # 限制处理前10个服务器避免超时
             }
             
             completed_count = 0
@@ -192,7 +209,8 @@ def process_region(region_name, url, max_workers=5):
         print(f"Error processing region {region_name}: {str(e)}")
         return []
     finally:
-        driver.quit()
+        if driver:
+            driver.quit()
 
 def save_results(results, filename):
     """保存结果到文件"""
