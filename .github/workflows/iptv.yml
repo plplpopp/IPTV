@@ -32,9 +32,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Setup Chrome and ChromeDriver with webdriver-manager
+    - name: Setup Chrome
       run: |
-        # 安装Chrome
         sudo apt-get update
         sudo apt-get install -y wget
         
@@ -43,33 +42,33 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y google-chrome-stable
         
-        # 验证安装
         echo "Chrome version:"
         google-chrome-stable --version
 
-    - name: Run IPTV collector with webdriver-manager
+    - name: Run IPTV collector
       run: |
         python iptv.py
       env:
         PYTHONUNBUFFERED: 1
 
-    - name: Check for changes
-      id: check_changes
+    - name: Check if IPTV.txt was created
+      id: check_file
       run: |
-        git status
-        if git diff-index --quiet HEAD --; then
-          echo "changes=false" >> $GITHUB_OUTPUT
+        if [ -f "IPTV.txt" ] && [ -s "IPTV.txt" ]; then
+          echo "file_exists=true" >> $GITHUB_OUTPUT
+          echo "Channels found: $(wc -l < IPTV.txt)"
         else
-          echo "changes=true" >> $GITHUB_OUTPUT
+          echo "file_exists=false" >> $GITHUB_OUTPUT
+          echo "No IPTV data collected"
         fi
 
     - name: Commit and push if changes
-      if: steps.check_changes.outputs.changes == 'true'
+      if: steps.check_file.outputs.file_exists == 'true'
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add *.txt
-        git commit -m "🤖 Auto-update IPTV data $(date +'%Y-%m-%d %H:%M:%S')"
+        git commit -m "🤖 Auto-update IPTV data $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
         git push
 
     - name: Upload IPTV files as artifact
@@ -86,16 +85,28 @@ jobs:
       run: |
         echo "## 📺 IPTV Collection Results" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📊 Collected Files:" >> $GITHUB_STEP_SUMMARY
-        total_channels=0
-        for file in *.txt; do
-          if [ -f "$file" ]; then
-            line_count=$(wc -l < "$file" 2>/dev/null || echo "0")
-            echo "- **$file**: $line_count channels" >> $GITHUB_STEP_SUMMARY
-            total_channels=$((total_channels + line_count))
-          fi
-        done
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📈 Total Channels: $total_channels" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f "IPTV.txt" ] && [ -s "IPTV.txt" ]; then
+          total_channels=$(wc -l < IPTV.txt)
+          echo "### ✅ Collection Successful" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Channels Collected:** $total_channels" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Regional Files:" >> $GITHUB_STEP_SUMMARY
+          for file in *.txt; do
+            if [ -f "$file" ] && [ "$file" != "IPTV.txt" ]; then
+              line_count=$(wc -l < "$file" 2>/dev/null || echo "0")
+              echo "- **$file**: $line_count channels" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+        else
+          echo "### ❌ Collection Failed" >> $GITHUB_STEP_SUMMARY
+          echo "No IPTV data was collected. This could be due to:" >> $GITHUB_STEP_SUMMARY
+          echo "- FOFA website changes" >> $GITHUB_STEP_SUMMARY
+          echo "- Network restrictions" >> $GITHUB_STEP_SUMMARY
+          echo "- IP blocking" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please check the workflow logs for details." >> $GITHUB_STEP_SUMMARY
+        fi
+        
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "⏰ Generated on: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
