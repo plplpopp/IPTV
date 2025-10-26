@@ -27,46 +27,27 @@ jobs:
         python-version: '3.9'
         cache: 'pip'
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y wget unzip gnupg
-
-    - name: Install Chrome
-      run: |
-        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-        echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-        sudo apt-get update
-        sudo apt-get install -y google-chrome-stable
-
-    - name: Install ChromeDriver
-      run: |
-        # 获取Chrome版本
-        CHROME_VERSION=$(google-chrome-stable --version | awk '{print $3}' | cut -d'.' -f1-3)
-        echo "Chrome version: $CHROME_VERSION"
-        
-        # 获取对应的ChromeDriver版本
-        CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
-        echo "ChromeDriver version: $CHROMEDRIVER_VERSION"
-        
-        # 下载并安装ChromeDriver
-        wget -q -O chromedriver.zip "https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip"
-        unzip -q chromedriver.zip
-        sudo mv chromedriver /usr/local/bin/
-        sudo chmod +x /usr/local/bin/chromedriver
-        
-        # 验证安装
-        echo "Chrome version:"
-        google-chrome-stable --version
-        echo "ChromeDriver version:"
-        chromedriver --version
-
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run IPTV collector
+    - name: Setup Chrome and ChromeDriver with webdriver-manager
+      run: |
+        # 安装Chrome
+        sudo apt-get update
+        sudo apt-get install -y wget
+        
+        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        
+        # 验证安装
+        echo "Chrome version:"
+        google-chrome-stable --version
+
+    - name: Run IPTV collector with webdriver-manager
       run: |
         python iptv.py
       env:
