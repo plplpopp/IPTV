@@ -3,17 +3,11 @@ name: Update IPTV
 
 on:
   schedule:
-    # 每天UTC时间2点运行（北京时间10点）
     - cron: '0 2 * * *'
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
     inputs:
       force_refresh:
         description: '强制刷新所有频道'
-        required: false
-        default: false
-        type: boolean
-      skip_commit:
-        description: '跳过自动提交'
         required: false
         default: false
         type: boolean
@@ -26,10 +20,16 @@ jobs:
     name: Collect and Update IPTV Channels
     runs-on: ubuntu-latest
     
+    # 关键：添加写入权限
+    permissions:
+      contents: write
+      actions: read
+      
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
+        # 使用默认的GITHUB_TOKEN，不需要额外配置
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
 
@@ -43,23 +43,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install requests
 
-    - name: Display Python info
-      run: |
-        python --version
-        pip --version
-
     - name: Run IPTV collector
       run: |
         python iptv.py
         echo "🎯 IPTV collection completed"
 
-    - name: List generated files
-      run: |
-        ls -la *.txt *.m3u *.log 2>/dev/null || echo "No files generated"
-
     - name: Check for changes
       id: changes
-      if: ${{ !inputs.skip_commit }}
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
@@ -70,11 +60,10 @@ jobs:
         else
           echo "changes=true" >> $GITHUB_OUTPUT
           echo "🔄 Changes detected, preparing to commit"
-          git status
         fi
 
     - name: Commit and push changes
-      if: steps.changes.outputs.changes == 'true' && !inputs.skip_commit
+      if: steps.changes.outputs.changes == 'true'
       run: |
         git commit -m "🤖 Auto-update IPTV channels - $(date +'%Y-%m-%d %H:%M:%S')" -m "Workflow run: $GITHUB_RUN_ID"
         git push
@@ -85,76 +74,7 @@ jobs:
       with:
         name: iptv-channels-${{ github.run_id }}
         path: |
-          IPTV.txt
-          IPTV.m3u
+          iptv.txt
+          iptv.m3u
           iptv_collector.log
         retention-days: 7
-        if-no-files-found: warn
-
-  quality-report:
-    name: Generate Quality Report
-    runs-on: ubuntu-latest
-    needs: collect-iptv
-    if: always()
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Download artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: iptv-channels-${{ github.run_id }}
-        path: ./artifacts
-
-    - name: Generate quality report
-      run: |
-        echo "# 📊 IPTV Collection Quality Report" >> $GITHUB_STEP_SUMMARY
-        echo "**Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Completed at:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        if [ -f "./artifacts/IPTV.txt" ]; then
-          channel_count=$(grep -c "," ./artifacts/IPTV.txt 2>/dev/null || echo "0")
-          cctv_count=$(grep -c "CCTV" ./artifacts/IPTV.txt 2>/dev/null || echo "0")
-          local_count=$(grep -c -E "北京|上海|广东|湖南|浙江|江苏" ./artifacts/IPTV.txt 2>/dev/null || echo "0")
-          
-          echo "## 📈 Collection Statistics" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total Channels:** $channel_count" >> $GITHUB_STEP_SUMMARY
-          echo "- **CCTV Channels:** $cctv_count" >> $GITHUB_STEP_SUMMARY
-          echo "- **Local Channels:** $local_count" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ -f "./artifacts/iptv_collector.log" ]; then
-            echo "## 📝 Recent Log Entries" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -15 ./artifacts/iptv_collector.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No log entries found" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          fi
-        else
-          echo "## ❌ Collection Failed" >> $GITHUB_STEP_SUMMARY
-          echo "No IPTV files were generated in this run." >> $GITHUB_STEP_SUMMARY
-        fi
-
-    - name: Upload quality report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: quality-report-${{ github.run_id }}
-        path: |
-          artifacts/
-        retention-days: 3
-
-  notify:
-    name: Notify Status
-    runs-on: ubuntu-latest
-    needs: [collect-iptv, quality-report]
-    if: always()
-    
-    steps:
-    - name: Notify workflow completion
-      run: |
-        echo "🚀 IPTV update workflow completed!"
-        echo "📊 View the quality report in the summary above"
-        echo "📁 Artifacts are available for download"
