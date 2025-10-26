@@ -2,8 +2,10 @@ import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.core.os_manager import ChromeType
 import requests
 import json
 import re
@@ -32,46 +34,22 @@ REGION_URLS = {
     "hunan": "https://fofa.info/result?qbase64=ImlwdHYvbGl2ZS96aF9jbi5qcyIgJiYgY291bnRyeT0iQ04iICYmIHJlZ2lvbj0i5rmW5Y2XIg%3D%3D"
 }
 
-# 频道名称映射表
-CHANNEL_NAME_MAPPING = {
-    "中央": "CCTV",
-    "高清": "",
-    "HD": "",
-    "标清": "",
-    "频道": "",
-    "-": "",
-    " ": "",
-    "PLUS": "+",
-    "(": "",
-    ")": "",
-    "CCTV1综合": "CCTV1",
-    "CCTV2财经": "CCTV2",
-    "CCTV3综艺": "CCTV3",
-    "CCTV4国际": "CCTV4",
-    "CCTV4中文国际": "CCTV4",
-    "CCTV5体育": "CCTV5",
-    "CCTV6电影": "CCTV6",
-    "CCTV7军事": "CCTV7",
-    "CCTV7军农": "CCTV7",
-    "CCTV7国防军事": "CCTV7",
-    "CCTV8电视剧": "CCTV8",
-    "CCTV9记录": "CCTV9",
-    "CCTV9纪录": "CCTV9",
-    "CCTV10科教": "CCTV10",
-    "CCTV11戏曲": "CCTV11",
-    "CCTV12社会与法": "CCTV12",
-    "CCTV13新闻": "CCTV13",
-    "CCTV新闻": "CCTV13",
-    "CCTV14少儿": "CCTV14",
-    "CCTV15音乐": "CCTV15",
-    "CCTV16奥林匹克": "CCTV16",
-    "CCTV17农业农村": "CCTV17",
-    "CCTV5+体育赛视": "CCTV5+",
-    "CCTV5+体育赛事": "CCTV5+"
-}
+# 备用服务器列表（如果FOFA无法访问）
+BACKUP_SERVERS = [
+    "http://60.214.107.42:8080",
+    "http://113.57.127.43:8080", 
+    "http://58.222.24.11:8080",
+    "http://117.169.120.140:8080",
+    "http://112.30.144.207:8080",
+    "http://60.214.107.42:8080",
+    "http://113.57.127.43:8080",
+    "http://58.222.24.11:8080",
+    "http://117.169.120.140:8080",
+    "http://112.30.144.207:8080"
+]
 
 def setup_driver():
-    """设置Chrome驱动 - 使用webdriver-manager自动管理驱动版本"""
+    """设置Chrome驱动"""
     chrome_options = Options()
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--no-sandbox')
@@ -82,6 +60,9 @@ def setup_driver():
     chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
     chrome_options.add_experimental_option('useAutomationExtension', False)
     
+    # 添加更多选项避免检测
+    chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+    
     try:
         # 使用webdriver-manager自动下载和管理ChromeDriver
         service = Service(ChromeDriverManager().install())
@@ -89,124 +70,206 @@ def setup_driver():
         driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         return driver
     except Exception as e:
-        print(f"Error setting up driver with webdriver-manager: {e}")
-        # 备用方案：尝试使用系统ChromeDriver
-        try:
-            service = Service('/usr/bin/chromedriver')
-            driver = webdriver.Chrome(service=service, options=chrome_options)
-            return driver
-        except Exception as e2:
-            print(f"Error with system chromedriver: {e2}")
-            raise
+        print(f"Error setting up driver: {e}")
+        raise
 
 def clean_channel_name(name):
     """清理频道名称"""
     if not name:
         return ""
+    
+    # 频道名称映射表
+    mappings = {
+        "中央": "CCTV",
+        "高清": "",
+        "HD": "",
+        "标清": "",
+        "频道": "",
+        "-": "",
+        " ": "",
+        "PLUS": "+",
+        "(": "",
+        ")": "",
+        "CCTV1综合": "CCTV1",
+        "CCTV2财经": "CCTV2",
+        "CCTV3综艺": "CCTV3",
+        "CCTV4国际": "CCTV4",
+        "CCTV4中文国际": "CCTV4",
+        "CCTV5体育": "CCTV5",
+        "CCTV6电影": "CCTV6",
+        "CCTV7军事": "CCTV7",
+        "CCTV7军农": "CCTV7",
+        "CCTV7国防军事": "CCTV7",
+        "CCTV8电视剧": "CCTV8",
+        "CCTV9记录": "CCTV9",
+        "CCTV9纪录": "CCTV9",
+        "CCTV10科教": "CCTV10",
+        "CCTV11戏曲": "CCTV11",
+        "CCTV12社会与法": "CCTV12",
+        "CCTV13新闻": "CCTV13",
+        "CCTV新闻": "CCTV13",
+        "CCTV14少儿": "CCTV14",
+        "CCTV15音乐": "CCTV15",
+        "CCTV16奥林匹克": "CCTV16",
+        "CCTV17农业农村": "CCTV17",
+        "CCTV5+体育赛视": "CCTV5+",
+        "CCTV5+体育赛事": "CCTV5+"
+    }
         
-    for old, new in CHANNEL_NAME_MAPPING.items():
+    for old, new in mappings.items():
         name = name.replace(old, new)
     return name.strip()
 
-def extract_urls_from_page(driver, url, wait_time=10):
+def extract_urls_from_page(driver, url):
     """从页面提取URL"""
     try:
-        print(f"Extracting URLs from: {url}")
+        print(f"🌐 Accessing FOFA: {url}")
         driver.get(url)
-        time.sleep(wait_time)
-        page_content = driver.page_source
         
-        pattern = r"http://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+"
-        urls_all = re.findall(pattern, page_content)
-        unique_urls = list(set(urls_all))
-        print(f"Found {len(unique_urls)} unique server URLs")
+        # 等待页面加载
+        time.sleep(15)  # 增加等待时间
+        
+        # 尝试多种选择器来找到IP地址
+        selectors = [
+            "//a[contains(@href, 'http://')]",
+            "//span[contains(text(), 'http://')]",
+            "//div[contains(text(), 'http://')]",
+            "//td[contains(text(), 'http://')]",
+            "//code[contains(text(), 'http://')]"
+        ]
+        
+        page_content = driver.page_source
+        print(f"📄 Page content length: {len(page_content)}")
+        
+        # 使用多种模式匹配IP地址
+        patterns = [
+            r"http://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+",
+            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+",
+            r"ip.*\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}",
+        ]
+        
+        all_urls = []
+        for pattern in patterns:
+            matches = re.findall(pattern, page_content, re.IGNORECASE)
+            for match in matches:
+                if match.startswith('http://'):
+                    all_urls.append(match)
+                elif ':' in match and match.count('.') == 3:
+                    all_urls.append(f"http://{match}")
+        
+        unique_urls = list(set(all_urls))
+        print(f"🔍 Found {len(unique_urls)} server URLs using regex")
+        
+        # 如果没找到，使用备用服务器
+        if not unique_urls:
+            print("⚠️ No servers found in FOFA, using backup servers")
+            return BACKUP_SERVERS
+        
         return unique_urls
+        
     except Exception as e:
-        print(f"Error extracting URLs from {url}: {str(e)}")
-        return []
+        print(f"❌ Error extracting URLs from {url}: {str(e)}")
+        print("🔄 Using backup servers instead")
+        return BACKUP_SERVERS
 
 def process_single_server(url):
     """处理单个服务器"""
     results = []
     try:
-        json_url = f"{url}/iptv/live/1000.json?key=txiptv"
-        print(f"Fetching JSON from: {json_url}")
+        # 尝试多种可能的JSON路径
+        json_paths = [
+            "/iptv/live/1000.json?key=txiptv",
+            "/iptv/live/1000.json",
+            "/live/1000.json",
+            "/tv/1000.json",
+            "/iptv/live.json"
+        ]
         
-        # 添加User-Agent头
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        
-        response = requests.get(json_url, timeout=10, headers=headers)
-        response.raise_for_status()
-        json_data = response.json()
-
-        channel_count = 0
-        for item in json_data.get('data', []):
-            if isinstance(item, dict):
-                name = item.get('name')
-                urlx = item.get('url')
+        for json_path in json_paths:
+            try:
+                json_url = f"{url}{json_path}"
+                print(f"📡 Trying: {json_url}")
                 
-                if name and urlx:
-                    cleaned_name = clean_channel_name(name)
-                    full_url = f"{url}{urlx}"
-                    results.append(f"{cleaned_name},{full_url}")
-                    channel_count += 1
-        
-        print(f"Found {channel_count} channels from {url}")
-        return results
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'application/json, text/plain, */*',
+                    'Referer': url
+                }
+                
+                response = requests.get(json_url, timeout=8, headers=headers)
+                if response.status_code == 200:
+                    json_data = response.json()
                     
-    except requests.exceptions.RequestException as e:
-        print(f"Request failed for {url}: {str(e)}")
-    except json.JSONDecodeError as e:
-        print(f"JSON decode error for {url}: {str(e)}")
+                    channel_count = 0
+                    for item in json_data.get('data', []):
+                        if isinstance(item, dict):
+                            name = item.get('name')
+                            urlx = item.get('url')
+                            
+                            if name and urlx:
+                                cleaned_name = clean_channel_name(name)
+                                # 确保URL是完整的
+                                if urlx.startswith('/'):
+                                    full_url = f"{url}{urlx}"
+                                else:
+                                    full_url = f"{url}/{urlx}"
+                                results.append(f"{cleaned_name},{full_url}")
+                                channel_count += 1
+                    
+                    print(f"✅ Found {channel_count} channels from {url} using {json_path}")
+                    break  # 找到有效路径就停止尝试
+                    
+            except Exception as e:
+                continue  # 尝试下一个路径
+                
+        if not results:
+            print(f"❌ No channels found from {url}")
+                    
     except Exception as e:
-        print(f"Unexpected error for {url}: {str(e)}")
+        print(f"❌ Error processing server {url}: {str(e)}")
     
     return results
 
-def process_region(region_name, url, max_workers=3):
+def process_region(region_name, url):
     """处理单个地区"""
-    print(f"\n{'='*50}")
-    print(f"Processing {region_name}...")
-    print(f"{'='*50}")
+    print(f"\n{'='*60}")
+    print(f"🏁 Processing {region_name.upper()}")
+    print(f"{'='*60}")
     
     driver = setup_driver()
     try:
         # 提取服务器URL
         server_urls = extract_urls_from_page(driver, url)
-        print(f"Found {len(server_urls)} servers in {region_name}")
+        print(f"📡 Found {len(server_urls)} servers for {region_name}")
         
         if not server_urls:
-            print(f"No servers found for {region_name}")
+            print(f"⚠️ No servers available for {region_name}")
             return []
         
-        # 使用多线程处理服务器
+        # 处理服务器
         all_results = []
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_url = {
-                executor.submit(process_single_server, server_url): server_url 
-                for server_url in server_urls[:10]  # 限制处理前10个服务器避免超时
-            }
-            
-            completed_count = 0
-            for future in as_completed(future_to_url):
-                server_url = future_to_url[future]
-                completed_count += 1
-                try:
-                    results = future.result()
+        success_count = 0
+        
+        for i, server_url in enumerate(server_urls[:8]):  # 限制处理数量
+            try:
+                print(f"🔄 [{i+1}/{len(server_urls[:8])}] Processing {server_url}")
+                results = process_single_server(server_url)
+                if results:
                     all_results.extend(results)
-                    print(f"[{completed_count}/{len(future_to_url)}] Processed {server_url}: {len(results)} channels")
-                except Exception as e:
-                    print(f"[{completed_count}/{len(future_to_url)}] Error processing {server_url}: {str(e)}")
+                    success_count += 1
+                    print(f"✅ Successfully got {len(results)} channels from {server_url}")
+                time.sleep(1)  # 请求间隔
+            except Exception as e:
+                print(f"❌ Failed to process {server_url}: {e}")
+                continue
         
         # 去重
         unique_results = list(set(all_results))
-        print(f"Region {region_name}: {len(unique_results)} unique channels collected")
+        print(f"📊 {region_name}: {len(unique_results)} unique channels from {success_count} servers")
         return unique_results
         
     except Exception as e:
-        print(f"Error processing region {region_name}: {str(e)}")
+        print(f"❌ Error processing region {region_name}: {str(e)}")
         return []
     finally:
         if driver:
@@ -215,8 +278,8 @@ def process_region(region_name, url, max_workers=3):
 def save_results(results, filename):
     """保存结果到文件"""
     if not results:
-        print(f"No results to save for {filename}")
-        return
+        print(f"⚠️ No results to save for {filename}")
+        return False
     
     # 按频道名称排序
     sorted_results = sorted(results, key=lambda x: x.split(',')[0])
@@ -224,86 +287,77 @@ def save_results(results, filename):
     with open(filename, "w", encoding="utf-8") as file:
         for result in sorted_results:
             file.write(result + "\n")
-    print(f"Saved {len(sorted_results)} results to {filename}")
-
-def merge_files(file_paths, output_file="IPTV.txt"):
-    """合并多个文件"""
-    valid_contents = []
-    total_channels = 0
-    
-    for file_path in file_paths:
-        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
-            with open(file_path, 'r', encoding="utf-8") as file:
-                content = file.read().strip()
-                if content:
-                    valid_contents.append(content)
-                    channel_count = len(content.strip().split('\n'))
-                    total_channels += channel_count
-                    print(f"Added {channel_count} channels from {file_path}")
-    
-    if valid_contents:
-        # 合并并去重
-        all_lines = []
-        for content in valid_contents:
-            all_lines.extend(content.split('\n'))
-        
-        unique_lines = sorted(list(set(all_lines)))
-        
-        with open(output_file, "w", encoding="utf-8") as output:
-            output.write('\n'.join(unique_lines))
-        
-        print(f"Merged {len(valid_contents)} files into {output_file}")
-        print(f"Total unique channels: {len(unique_lines)}")
-    else:
-        print("No valid content to merge")
+    print(f"💾 Saved {len(sorted_results)} results to {filename}")
+    return True
 
 def main():
     """主函数"""
     print("🚀 Starting IPTV collection process...")
     start_time = time.time()
+    
     all_files = []
+    successful_regions = 0
     
     # 处理所有地区
     for region_name, url in REGION_URLS.items():
         try:
             results = process_region(region_name, url)
             filename = f"{region_name}.txt"
-            save_results(results, filename)
-            all_files.append(filename)
-            time.sleep(2)  # 地区间延迟
+            if save_results(results, filename):
+                all_files.append(filename)
+                successful_regions += 1
+            time.sleep(3)  # 地区间延迟
         except Exception as e:
-            print(f"Error processing region {region_name}: {str(e)}")
+            print(f"❌ Failed to process {region_name}: {e}")
             continue
     
     # 合并文件
-    print(f"\n{'='*50}")
-    print("Merging all regional files...")
-    print(f"{'='*50}")
-    merge_files(all_files)
+    print(f"\n{'='*60}")
+    print("🔄 Merging regional files...")
+    print(f"{'='*60}")
+    
+    if all_files:
+        # 合并并去重
+        all_channels = set()
+        for file in all_files:
+            if os.path.exists(file):
+                with open(file, 'r', encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            all_channels.add(line)
+        
+        # 保存合并文件
+        sorted_channels = sorted(list(all_channels))
+        with open("IPTV.txt", "w", encoding="utf-8") as f:
+            f.write('\n'.join(sorted_channels))
+        
+        print(f"✅ Merged {len(all_files)} files into IPTV.txt")
+        print(f"📺 Total unique channels: {len(sorted_channels)}")
+    else:
+        print("❌ No valid files to merge")
+        # 创建空的IPTV.txt文件
+        with open("IPTV.txt", "w", encoding="utf-8") as f:
+            f.write("")
     
     # 统计信息
-    total_channels = 0
-    regional_stats = []
-    for file in all_files:
-        if os.path.exists(file):
-            with open(file, 'r', encoding="utf-8") as f:
-                lines = f.readlines()
-                channel_count = len(lines)
-                total_channels += channel_count
-                regional_stats.append(f"{file}: {channel_count} channels")
-    
     end_time = time.time()
     processing_time = end_time - start_time
     
-    print(f"\n{'='*50}")
+    print(f"\n{'='*60}")
     print("📊 COLLECTION SUMMARY")
-    print(f"{'='*50}")
-    for stat in regional_stats:
-        print(f"  {stat}")
-    print(f"{'='*50}")
-    print(f"⏱️  Processing completed in {processing_time:.2f} seconds")
-    print(f"📺 Total channels collected: {total_channels}")
-    print(f"{'='*50}")
+    print(f"{'='*60}")
+    print(f"✅ Successful regions: {successful_regions}/{len(REGION_URLS)}")
+    print(f"⏱️  Processing time: {processing_time:.2f} seconds")
+    
+    if os.path.exists("IPTV.txt"):
+        with open("IPTV.txt", "r", encoding="utf-8") as f:
+            total_channels = len(f.readlines())
+        print(f"📺 Total channels collected: {total_channels}")
+    else:
+        print("📺 Total channels collected: 0")
+    
+    print(f"{'='*60}")
 
 if __name__ == "__main__":
     main()
