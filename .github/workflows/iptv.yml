@@ -18,6 +18,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -28,27 +30,41 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y wget unzip
+        sudo apt-get install -y wget unzip gnupg
 
     - name: Install Chrome
       run: |
+        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
         sudo apt-get update
         sudo apt-get install -y google-chrome-stable
 
     - name: Install ChromeDriver
       run: |
-        CHROME_VERSION=$(google-chrome-stable --version | grep -oP '\d+\.\d+\.\d+\.\d+' | cut -d'.' -f1-3)
+        # 获取Chrome版本
+        CHROME_VERSION=$(google-chrome-stable --version | awk '{print $3}' | cut -d'.' -f1-3)
+        echo "Chrome version: $CHROME_VERSION"
+        
+        # 获取对应的ChromeDriver版本
         CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
+        echo "ChromeDriver version: $CHROMEDRIVER_VERSION"
+        
+        # 下载并安装ChromeDriver
         wget -q -O chromedriver.zip "https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip"
         unzip -q chromedriver.zip
         sudo mv chromedriver /usr/local/bin/
         sudo chmod +x /usr/local/bin/chromedriver
+        
+        # 验证安装
+        echo "Chrome version:"
+        google-chrome-stable --version
+        echo "ChromeDriver version:"
         chromedriver --version
 
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install selenium requests
+        pip install -r requirements.txt
 
     - name: Run IPTV collector
       run: |
@@ -59,35 +75,46 @@ jobs:
     - name: Check for changes
       id: check_changes
       run: |
-        git diff --exit-code || echo "changes=true" >> $GITHUB_OUTPUT
+        git status
+        if git diff-index --quiet HEAD --; then
+          echo "changes=false" >> $GITHUB_OUTPUT
+        else
+          echo "changes=true" >> $GITHUB_OUTPUT
+        fi
 
     - name: Commit and push if changes
       if: steps.check_changes.outputs.changes == 'true'
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
         git add *.txt
-        git commit -m "Auto-update IPTV data $(date +'%Y-%m-%d %H:%M:%S')"
+        git commit -m "🤖 Auto-update IPTV data $(date +'%Y-%m-%d %H:%M:%S')"
         git push
 
     - name: Upload IPTV files as artifact
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: iptv-data
         path: |
           *.txt
-        retention-days: 7
+        retention-days: 30
 
     - name: Create summary
+      if: always()
       run: |
-        echo "## IPTV Collection Results" >> $GITHUB_STEP_SUMMARY
+        echo "## 📺 IPTV Collection Results" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Collected Files:" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Collected Files:" >> $GITHUB_STEP_SUMMARY
+        total_channels=0
         for file in *.txt; do
           if [ -f "$file" ]; then
-            line_count=$(wc -l < "$file" || echo "0")
+            line_count=$(wc -l < "$file" 2>/dev/null || echo "0")
             echo "- **$file**: $line_count channels" >> $GITHUB_STEP_SUMMARY
+            total_channels=$((total_channels + line_count))
           fi
         done
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "Generated on: $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "### 📈 Total Channels: $total_channels" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "⏰ Generated on: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
