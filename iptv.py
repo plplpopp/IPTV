@@ -1,3 +1,4 @@
+import sys
 import time
 import socket
 import requests
@@ -85,12 +86,12 @@ class IPTVScanner:
         all_ranges = telecom_ranges + unicom_ranges + mobile_ranges
         
         # 随机选择一些IP段进行扫描
-        selected_ranges = random.sample(all_ranges, min(15, len(all_ranges)))
+        selected_ranges = random.sample(all_ranges, min(10, len(all_ranges)))
         
         for ip_range in selected_ranges:
             network = ipaddress.ip_network(ip_range, strict=False)
             # 从每个网段中随机选择一些IP
-            ip_count = min(30, network.num_addresses)
+            ip_count = min(20, network.num_addresses)
             for _ in range(ip_count):
                 ip = str(network[random.randint(0, network.num_addresses - 1)])
                 ip_ranges.append(ip)
@@ -136,11 +137,9 @@ class IPTVScanner:
 
     def scan_single_ip(self, ip):
         """扫描单个IP的所有常见端口"""
-        results = []
-        
         for port in self.common_ports:
             if self.test_port(ip, port):
-                logging.debug(f"✅ Port {port} open on {ip}")
+                logging.info(f"✅ Port {port} open on {ip}")
                 is_iptv, url, channel_count = self.test_iptv_server(ip, port)
                 if is_iptv:
                     with self.lock:
@@ -151,11 +150,10 @@ class IPTVScanner:
                             'channel_count': channel_count,
                             'server_url': f"http://{ip}:{port}"
                         })
-                    results.append(f"🎯 Found IPTV: {ip}:{port} - {channel_count} channels")
                     logging.info(f"🎯 Found IPTV server: {ip}:{port} with {channel_count} channels")
                     break  # 找到一个有效服务就停止扫描该IP的其他端口
                 
-        return results
+        return []
 
     def quick_scan_common_servers(self):
         """快速扫描已知的常见服务器"""
@@ -167,7 +165,6 @@ class IPTVScanner:
         ]
         
         logging.info("🔍 Quick scanning common IPTV servers...")
-        results = []
         
         with ThreadPoolExecutor(max_workers=10) as executor:
             future_to_ip = {executor.submit(self.scan_single_ip, ip): ip for ip in common_servers}
@@ -175,14 +172,13 @@ class IPTVScanner:
             for future in as_completed(future_to_ip):
                 ip = future_to_ip[future]
                 try:
-                    ip_results = future.result()
-                    results.extend(ip_results)
+                    future.result()
                 except Exception as e:
                     logging.error(f"❌ Error scanning {ip}: {e}")
                     
-        return results
+        return len(self.found_servers)
 
-    def deep_scan_network(self, max_ips=500):
+    def deep_scan_network(self, max_ips=100):
         """深度扫描网络"""
         logging.info("🌐 Starting deep network scan...")
         ip_list = self.generate_ip_ranges()
@@ -192,14 +188,14 @@ class IPTVScanner:
         
         logging.info(f"📡 Scanning {len(ip_list)} IP addresses...")
         
-        with ThreadPoolExecutor(max_workers=20) as executor:
+        with ThreadPoolExecutor(max_workers=10) as executor:
             future_to_ip = {executor.submit(self.scan_single_ip, ip): ip for ip in ip_list}
             
             for i, future in enumerate(as_completed(future_to_ip)):
                 ip = future_to_ip[future]
                 try:
                     future.result()
-                    if (i + 1) % 50 == 0:
+                    if (i + 1) % 20 == 0:
                         logging.info(f"📊 Progress: {i+1}/{len(ip_list)} - Found: {len(self.found_servers)} servers")
                 except Exception as e:
                     logging.debug(f"Error scanning {ip}: {e}")
@@ -427,7 +423,7 @@ class IPTVCollector:
             all_results = []
             
             # 使用线程池并行处理所有服务器
-            with ThreadPoolExecutor(max_workers=10) as executor:
+            with ThreadPoolExecutor(max_workers=5) as executor:
                 future_to_server = {
                     executor.submit(self.process_single_server, server): server 
                     for server in servers
@@ -600,9 +596,9 @@ def run_scanner():
     logging.info("🔍 Phase 1: Quick scan of known servers...")
     quick_results = scanner.quick_scan_common_servers()
     
-    # 2. 深度网络扫描
-    logging.info("🌐 Phase 2: Deep network scan...")
-    deep_scan_count = scanner.deep_scan_network(max_ips=300)
+    # 2. 深度网络扫描（在GitHub Actions中减少扫描数量）
+    logging.info("🌐 Phase 2: Light network scan...")
+    deep_scan_count = scanner.deep_scan_network(max_ips=50)
     
     # 保存结果
     scanner.save_found_servers()
@@ -619,11 +615,11 @@ def run_scanner():
     
     if scanner.found_servers:
         logging.info("\n📋 Discovered Servers:")
-        for server in scanner.found_servers[:10]:
+        for server in scanner.found_servers[:5]:
             logging.info(f"   📺 {server['ip']}:{server['port']} - {server['channel_count']} channels")
         
-        if len(scanner.found_servers) > 10:
-            logging.info(f"   ... and {len(scanner.found_servers) - 10} more servers")
+        if len(scanner.found_servers) > 5:
+            logging.info(f"   ... and {len(scanner.found_servers) - 5} more servers")
     
     logging.info("=" * 50)
     
@@ -702,6 +698,23 @@ def run_collector(servers=None):
 
 def main():
     """主函数"""
+    # 检查是否在非交互环境中运行（如GitHub Actions）
+    if not sys.stdin.isatty():
+        logging.info("🤖 Running in non-interactive mode (GitHub Actions)")
+        logging.info("🚀 Starting full IPTV collection process...")
+        
+        # 运行扫描器
+        servers = run_scanner()
+        
+        # 运行收集器
+        if servers:
+            run_collector(servers)
+        else:
+            logging.warning("⚠️ No servers found during scan, using default servers")
+            run_collector()
+        return
+    
+    # 原有的交互式菜单代码（用于本地运行）
     print("\n" + "="*60)
     print("🎯 IPTV System - Complete Solution")
     print("="*60)
@@ -711,32 +724,33 @@ def main():
     print("4. 📁 Collect from discovered servers")
     print("="*60)
     
-    choice = input("Select option (1-4): ").strip()
-    
-    if choice == "1":
-        # 只扫描
-        run_scanner()
+    try:
+        choice = input("Select option (1-4): ").strip()
         
-    elif choice == "2":
-        # 只收集（使用默认服务器）
-        run_collector()
-        
-    elif choice == "3":
-        # 扫描并收集
+        if choice == "1":
+            run_scanner()
+        elif choice == "2":
+            run_collector()
+        elif choice == "3":
+            servers = run_scanner()
+            if servers:
+                run_collector(servers)
+            else:
+                run_collector()
+        elif choice == "4":
+            run_collector()
+        else:
+            logging.error("❌ Invalid choice!")
+    except EOFError:
+        # 处理非交互环境中的EOF错误
+        logging.info("🚀 Auto-selecting full process in non-interactive environment")
         servers = run_scanner()
         if servers:
-            input("\n🎯 Press Enter to start channel collection...")
             run_collector(servers)
         else:
-            logging.warning("⚠️ No servers found, using default servers")
             run_collector()
-            
-    elif choice == "4":
-        # 从发现的服务器收集
-        run_collector()
-        
-    else:
-        logging.error("❌ Invalid choice!")
+    except KeyboardInterrupt:
+        logging.info("👋 Operation cancelled by user")
 
 if __name__ == "__main__":
     main()
