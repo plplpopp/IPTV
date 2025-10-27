@@ -5,21 +5,19 @@ on:
     - cron: '0 18 * * *'
   workflow_dispatch:
 
-# 关键：声明写入权限
 permissions:
   contents: write
 
 jobs:
   update-iptv:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 9  # 9分钟超时
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}  # 这个会自动存在
-        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -30,24 +28,25 @@ jobs:
       run: |
         pip install requests
         
-    - name: Run IPTV collector
+    - name: Run optimized IPTV scanner
       run: |
         python iptv.py
+      timeout-minutes: 8  # 扫描最多8分钟
         
     - name: Check for changes
-      id: git-diff
+      id: check-changes
       run: |
         git config --local user.name "github-actions[bot]"
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git add -A
         if git diff --cached --quiet; then
-          echo "has_changes=false" >> $GITHUB_OUTPUT
+          echo "changes=false" >> $GITHUB_OUTPUT
         else
-          echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "changes=true" >> $GITHUB_OUTPUT
         fi
         
     - name: Commit and push changes
-      if: steps.git-diff.outputs.has_changes == 'true'
+      if: steps.check-changes.outputs.changes == 'true'
       run: |
         git commit -m "🤖 Auto-update IPTV channels"
         git push
@@ -57,7 +56,7 @@ jobs:
       with:
         name: iptv-files
         path: |
-          iptv.txt
-          iptv.m3u
+          optimized_servers.txt
           discovered_servers.txt
+          iptv_system.log
         retention-days: 7
