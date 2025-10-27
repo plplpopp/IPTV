@@ -1,0 +1,86 @@
+2025-10-27 01:43:46,029 - INFO - 🤖 Running in non-interactive mode (GitHub Actions)
+2025-10-27 01:43:46,029 - INFO - 🚀 Starting full IPTV collection process...
+2025-10-27 01:43:46,029 - INFO - 🚀 Starting IPTV Server Scanner
+2025-10-27 01:43:46,029 - INFO - ==================================================
+2025-10-27 01:43:46,029 - INFO - 🔍 Phase 1: Quick scan of known servers...
+2025-10-27 01:43:46,029 - INFO - 🔍 Quick scanning common IPTV servers...
+2025-10-27 01:43:46,284 - INFO - ✅ Port 80 open on 58.222.24.11
+2025-10-27 01:44:10,351 - INFO - 🌐 Phase 2: Light network scan...
+2025-10-27 01:44:10,351 - INFO - 🌐 Starting deep network scan...
+2025-10-27 01:44:10,352 - INFO - 📡 Scanning 50 IP addresses...
+2025-10-27 01:44:30,619 - INFO - ✅ Port 80 open on 113.201.47.25
+2025-10-27 01:44:34,199 - INFO - ✅ Port 8080 open on 113.201.47.25
+2025-10-27 01:44:50,401 - INFO - 📊 Progress: 20/50 - Found: 0 servers
+2025-10-27 01:45:30,449 - INFO - 📊 Progress: 40/50 - Found: 0 servers
+2025-10-27 01:45:50,472 - WARNING - ⚠️ No servers to save
+2025-10-27 01:45:50,472 - INFO - ==================================================
+2025-10-27 01:45:50,472 - INFO - 📊 SCAN SUMMARY
+2025-10-27 01:45:50,472 - INFO - ==================================================
+2025-10-27 01:45:50,473 - INFO - ⏱️  Processing time: 124.44 seconds
+2025-10-27 01:45:50,473 - INFO - 🎯 Total servers found: 0
+2025-10-27 01:45:50,473 - INFO - ==================================================
+2025-10-27 01:45:50,473 - WARNING - ⚠️ No servers found during scan, using default servers
+2025-10-27 01:45:50,473 - INFO - 📡 Using default servers for collection
+2025-10-27 01:45:50,473 - INFO - 🚀 Starting IPTV collection process...
+2025-10-27 01:45:50,473 - INFO - 📡 Total servers to process: 5
+2025-10-27 01:45:50,473 - INFO - 
+============================================================
+2025-10-27 01:45:50,473 - INFO - 🚀 Starting IPTV collection from 5 servers
+2025-10-27 01:45:50,473 - INFO - ============================================================
+2025-10-27 01:45:50,474 - INFO - Trying: http://60.214.107.42:8080/iptv/live/1000.json?key=txiptv
+2025-10-27 01:45:50,475 - INFO - Trying: http://113.57.127.43:8080/iptv/live/1000.json?key=txiptv
+2025-10-27 01:45:50,476 - INFO - Trying: http://58.222.24.11:8080/iptv/live/1000.json?key=txiptv
+2025-10-27 01:45:50,478 - INFO - Trying: http://117.169.120.140:8080/iptv/live/1000.json?key=txiptv
+2025-10-27 01:45:50,478 - INFO - Trying: http://112.30.144.207:8080/iptv/live/1000.json?key=txiptv
+2025-10-27 01:45:50,723 - INFO - Trying: http://58.222.24.11:8080/iptv/live/1000.json
+2025-10-27 01:45:50,974 - INFO - Trying: http://58.222.24.11:8080/live/1000.json
+2025-10-27 01:45:51,224 - INFO - Trying: http://58.222.24.11:8080/tv/1000.json
+2025-10-27 01:45:51,475 - INFO - Trying: http://58.222.24.11:8080/iptv/live.json
+2025-10-27 01:45:51,708 - INFO - Trying: http://58.222.24.11:8080/api/live
+2025-10-27 01:45:51,939 - INFO - Trying: http://58.222.24.11:8080/live.json
+2025-10-27 01:45:52,163 - WARNING - ❌ No channels found from http://58.222.24.11:8080 after trying all paths
+2025-10-27 01:45:52,163 - INFO - ❌ [1/5] http://58.222.24.11:8080: No channels found
+2025-10-27 01:45:58,486 - INFO - Trying: http://112.30.144.207:8080/iptv/live/1000.json
+2025-10-27 01:45:58,486 - INFO - Trying: http://113.57.127.43:8080/iptv/live/1000.json
+2025-10-27 01:45:58,486 - INFO - Trying: http://60.214.107.42:8080/iptv/live/1000.json
+2025-10-27 01:45:58,488 - INFO - Trying: http://117.169.120.140:8080/iptv/live/1000.json
+2025-10-27 01:46:06,497 - INFO - Trying: http://112.30.144.207:8080/live/1000.json
+2025-10-27 01:46:06,498 - INFO - Trying: http://117.169.120.140:8080/live/1000.json
+2025-10-27 01:46:06,500 - INFO - Trying: http://60.214.107.42:8080/live/1000.json
+2025-10-27 01:46:06,500 - INFO - Trying: http://113.57.127.43:8080/live/1000.json
+2025-10-27 01:46:14,509 - INFO - Trying: http://112.30.144.207:8080/tv/1000.json
+2025-10-27 01:46:14,509 - INFO - Trying: http://117.169.120.140:8080/tv/1000.json
+2025-10-27 01:46:14,509 - INFO - Trying: http://113.57.127.43:8080/tv/1000.json
+2025-10-27 01:46:14,513 - INFO - Trying: http://60.214.107.42:8080/tv/1000.json
+2025-10-27 01:46:22,520 - INFO - Trying: http://112.30.144.207:8080/iptv/live.json
+2025-10-27 01:46:22,521 - INFO - Trying: http://117.169.120.140:8080/iptv/live.json
+2025-10-27 01:46:22,523 - INFO - Trying: http://60.214.107.42:8080/iptv/live.json
+2025-10-27 01:46:22,524 - INFO - Trying: http://113.57.127.43:8080/iptv/live.json
+2025-10-27 01:46:30,532 - INFO - Trying: http://112.30.144.207:8080/api/live
+2025-10-27 01:46:30,532 - INFO - Trying: http://117.169.120.140:8080/api/live
+2025-10-27 01:46:30,533 - INFO - Trying: http://60.214.107.42:8080/api/live
+2025-10-27 01:46:30,536 - INFO - Trying: http://113.57.127.43:8080/api/live
+2025-10-27 01:46:38,538 - INFO - Trying: http://117.169.120.140:8080/live.json
+2025-10-27 01:46:38,539 - INFO - Trying: http://113.57.127.43:8080/live.json
+2025-10-27 01:46:38,544 - INFO - Trying: http://112.30.144.207:8080/live.json
+2025-10-27 01:46:38,545 - INFO - Trying: http://60.214.107.42:8080/live.json
+2025-10-27 01:46:46,549 - WARNING - ❌ No channels found from http://117.169.120.140:8080 after trying all paths
+2025-10-27 01:46:46,549 - WARNING - ❌ No channels found from http://113.57.127.43:8080 after trying all paths
+2025-10-27 01:46:46,549 - WARNING - ❌ No channels found from http://112.30.144.207:8080 after trying all paths
+2025-10-27 01:46:46,550 - INFO - ❌ [2/5] http://117.169.120.140:8080: No channels found
+2025-10-27 01:46:46,550 - INFO - ❌ [3/5] http://113.57.127.43:8080: No channels found
+2025-10-27 01:46:46,550 - INFO - ❌ [4/5] http://112.30.144.207:8080: No channels found
+2025-10-27 01:46:46,554 - WARNING - ❌ No channels found from http://60.214.107.42:8080 after trying all paths
+2025-10-27 01:46:46,555 - INFO - ❌ [5/5] http://60.214.107.42:8080: No channels found
+2025-10-27 01:46:46,555 - INFO - 📊 Total: 0 channels from 5 servers
+2025-10-27 01:46:46,555 - ERROR - ❌ No valid channels collected!
+2025-10-27 01:46:46,555 - INFO - 
+============================================================
+2025-10-27 01:46:46,555 - INFO - 📊 COLLECTION SUMMARY
+2025-10-27 01:46:46,555 - INFO - ============================================================
+2025-10-27 01:46:46,556 - INFO - ⏱️  Processing time: 56.08 seconds
+2025-10-27 01:46:46,556 - INFO - 📺 Total channels collected: 0
+2025-10-27 01:46:46,556 - INFO - 🎯 Unique channels: 0
+2025-10-27 01:46:46,556 - INFO - 📡 Servers processed: 5
+2025-10-27 01:46:46,556 - INFO - 💾 Output files: iptv.txt, iptv.m3u
+2025-10-27 01:46:46,556 - INFO - ============================================================
