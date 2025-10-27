@@ -22,7 +22,7 @@ logging.basicConfig(
     ]
 )
 
-class MassIPTVScanner:
+class OptimizedIPTVScanner:
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({
@@ -30,7 +30,7 @@ class MassIPTVScanner:
             'Accept': 'application/json, text/plain, */*',
             'Connection': 'keep-alive'
         })
-        self.timeout = 2
+        self.timeout = 1
         self.found_servers = []
         self.lock = threading.Lock()
         self.scan_stats = {
@@ -40,137 +40,114 @@ class MassIPTVScanner:
             'start_time': time.time()
         }
         
-        # 生成所有端口 0-9999
-        self.all_ports = list(range(10000))
+        # 优化端口列表 - 只扫描最有可能的端口
+        self.optimized_ports = [
+            80, 8080, 8000, 8001, 8002, 8081, 8082, 8090, 8888, 9000,
+            81, 82, 83, 84, 85, 86, 88, 8008, 8010, 8088,
+            7000, 7080, 8009, 8011, 8089, 8091, 8099, 8880, 9001
+        ]
         
-        # 常用端口优先
-        self.priority_ports = [80, 8080, 8000, 8001, 8002, 8081, 8082, 8090, 8888, 9000, 
-                              7080, 8088, 8008, 8010, 8089, 8091, 8099, 8880, 9001, 82, 81, 84, 85]
-        
-        # 扩展JSON路径
-        self.json_paths = [
+        # 最有效的JSON路径
+        self.effective_paths = [
             "/iptv/live/1000.json?key=txiptv",
             "/iptv/live/1000.json",
             "/live/1000.json",
-            "/tv/1000.json",
-            "/iptv/live.json",
-            "/api/live",
-            "/live.json",
-            "/iptv/api/channels",
-            "/api/channels",
-            "/channels.json",
-            "/tv/live.json",
-            "/stream/live.json",
-            "/hlslive.json",
-            "/m3u/live.json",
-            "/live/playlist.json",
-            "/api/playlist",
-            "/playlist.json"
+            "/tv/1000.json"
         ]
 
-    def generate_all_ips_for_prefix(self, ip_prefix):
-        """生成指定IP前缀的所有可能IP（后两段0-255）"""
+    def get_high_value_prefixes(self):
+        """获取高价值的IP前缀（基于已知有效服务器）"""
+        high_value_prefixes = [
+            # 已知有效的IPTV服务器段
+            "60.214", "113.57", "58.222", "117.169", "112.30",
+            "183.134", "124.112", "123.132", "122.192",
+            
+            # 高概率的电信段
+            "58.16", "58.17", "58.18", "58.19", "58.20",
+            "60.0", "60.1", "60.2", "60.3", "60.4",
+            "61.128", "61.129", "61.130", "61.131",
+            "113.0", "113.1", "113.2", "113.3", "113.4",
+            "114.80", "114.81", "114.82", "114.83",
+            "115.48", "115.49", "115.50", "115.51",
+            
+            # 高概率的联通段
+            "60.8", "60.9", "60.10", "60.11", "60.12",
+            "61.160", "61.161", "61.162", "61.163",
+            "111.0", "111.1", "111.2", "111.3", "111.4",
+            "112.0", "112.1", "112.2", "112.3", "112.4",
+            
+            # 高概率的移动段
+            "120.192", "120.193", "120.194", "120.195",
+            "121.0", "121.1", "121.2", "121.3", "121.4"
+        ]
+        
+        return list(set(high_value_prefixes))
+
+    def generate_target_ips(self, ip_prefix, target_count=500):
+        """生成目标IP（智能选择，不是随机）"""
         ip_list = []
         base_parts = ip_prefix.split('.')
         
         if len(base_parts) != 2:
-            logging.error(f"❌ Invalid IP prefix: {ip_prefix}")
             return ip_list
         
-        # 生成所有可能的IP
-        for third_octet in range(256):
-            for fourth_octet in range(256):
-                ip = f"{base_parts[0]}.{base_parts[1]}.{third_octet}.{fourth_octet}"
-                ip_list.append(ip)
-        
-        logging.info(f"🎯 Generated {len(ip_list)} IPs for prefix {ip_prefix}")
-        return ip_list
-
-    def get_all_ip_prefixes(self):
-        """获取所有要扫描的IP前缀"""
-        all_prefixes = []
-        
-        # 中国IP段范围
-        china_ip_ranges = [
-            # 1.0.0.0 - 126.255.255.255 (除127.0.0.0/8)
-            # 但实际主要使用以下段
-            
-            # A类地址段
-            "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.", "11.", "12.", "13.", "14.", 
-            
-            # 主要电信段
-            "58.16", "58.17", "58.18", "58.19", "58.20", "58.21", "58.22", "58.23", "58.24", "58.25",
-            "60.0", "60.1", "60.2", "60.3", "60.4", "60.5", "60.6", "60.7", "60.8", "60.9",
-            "61.128", "61.129", "61.130", "61.131", "61.132", "61.133", "61.134", "61.135",
-            "113.0", "113.1", "113.2", "113.3", "113.4", "113.5", "113.6", "113.7", "113.8", "113.9",
-            "114.80", "114.81", "114.82", "114.83", "114.84", "114.85", "114.86", "114.87",
-            "115.48", "115.49", "115.50", "115.51", "115.52", "115.53", "115.54", "115.55",
-            "116.1", "116.2", "116.3", "116.4", "116.5", "116.6", "116.7", "116.8", "116.9",
-            "117.8", "117.9", "117.10", "117.11", "117.12", "117.13", "117.14", "117.15",
-            "118.74", "118.75", "118.76", "118.77", "118.78", "118.79", "118.80", "118.81",
-            "119.0", "119.1", "119.2", "119.3", "119.4", "119.5", "119.6", "119.7", "119.8",
-            
-            # 联通段
-            "60.16", "60.17", "60.18", "60.19", "60.20", "60.21", "60.22", "60.23", "60.24", "60.25",
-            "61.160", "61.161", "61.162", "61.163", "61.164", "61.165", "61.166", "61.167",
-            "111.0", "111.1", "111.2", "111.3", "111.4", "111.5", "111.6", "111.7", "111.8",
-            "112.0", "112.1", "112.2", "112.3", "112.4", "112.5", "112.6", "112.7", "112.8",
-            "114.224", "114.225", "114.226", "114.227", "114.228", "114.229", "114.230", "114.231",
-            
-            # 移动段
-            "120.192", "120.193", "120.194", "120.195", "120.196", "120.197", "120.198", "120.199",
-            "121.0", "121.1", "121.2", "121.3", "121.4", "121.5", "121.6", "121.7", "121.8",
-            "122.0", "122.1", "122.2", "122.3", "122.4", "122.5", "122.6", "122.7", "122.8",
-            
-            # 其他常见段
-            "123.132", "124.112", "125.64", "126.128"
+        # 策略1: 扫描已知的有效IP范围
+        known_ranges = [
+            (1, 50),    # 常用服务器范围
+            (100, 150), # 次要服务器范围  
+            (200, 220), # 可能服务器范围
         ]
         
-        # 去重
-        all_prefixes = list(set(all_prefixes + china_ip_ranges))
+        for range_start, range_end in known_ranges:
+            for third in range(range_start, range_end + 1):
+                for fourth in range(1, 255):
+                    ip = f"{base_parts[0]}.{base_parts[1]}.{third}.{fourth}"
+                    ip_list.append(ip)
+                    if len(ip_list) >= target_count:
+                        return ip_list
         
-        logging.info(f"🎯 Total {len(all_prefixes)} IP prefixes to scan")
-        return all_prefixes
+        # 如果还不够，补充随机IP
+        while len(ip_list) < target_count:
+            third = random.randint(1, 254)
+            fourth = random.randint(1, 254)
+            ip = f"{base_parts[0]}.{base_parts[1]}.{third}.{fourth}"
+            if ip not in ip_list:
+                ip_list.append(ip)
+        
+        return ip_list
 
     def ultra_fast_port_check(self, ip, port):
         """超快速端口检查"""
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(0.8)  # 非常短的超时
+            sock.settimeout(0.5)  # 非常短的超时
             result = sock.connect_ex((ip, port))
             sock.close()
             return result == 0
         except:
             return False
 
-    def quick_iptv_check(self, ip, port):
-        """快速IPTV服务检查"""
-        base_url = f"http://{ip}:{port}"
-        
-        # 只测试最可能成功的几个路径
-        test_paths = [
-            "/iptv/live/1000.json?key=txiptv",
-            "/iptv/live/1000.json",
-            "/live/1000.json"
+    def quick_iptv_validation(self, ip, port):
+        """快速IPTV验证"""
+        test_urls = [
+            f"http://{ip}:{port}/iptv/live/1000.json?key=txiptv",
+            f"http://{ip}:{port}/iptv/live/1000.json",
+            f"http://{ip}:{port}/live/1000.json",
+            f"http://{ip}:{port}/tv/1000.json"
         ]
         
-        for json_path in test_paths:
+        for url in test_urls:
             try:
-                url = urljoin(base_url, json_path)
-                response = self.session.get(url, timeout=1.5)
-                
+                response = self.session.get(url, timeout=1)
                 if response.status_code == 200:
                     try:
                         data = response.json()
-                        # 基本验证是否是IPTV数据
+                        # 快速验证数据结构
                         if isinstance(data, dict) and 'data' in data:
-                            if isinstance(data['data'], list) and len(data['data']) > 0:
+                            if isinstance(data['data'], list) and len(data['data']) > 10:  # 至少有10个频道
                                 return True, url, len(data['data'])
-                        elif isinstance(data, list) and len(data) > 0:
-                            # 检查第一个元素是否有频道信息
-                            if len(data) > 0 and isinstance(data[0], dict):
-                                if any(key in data[0] for key in ['name', 'title', 'url']):
-                                    return True, url, len(data)
+                        elif isinstance(data, list) and len(data) > 10:
+                            return True, url, len(data)
                     except:
                         continue
             except:
@@ -178,242 +155,186 @@ class MassIPTVScanner:
                 
         return False, None, 0
 
-    def scan_single_ip_all_ports(self, ip):
-        """扫描单个IP的所有端口(0-9999)"""
-        found_ports = []
+    def scan_ip_port_combination(self, ip_port_tuple):
+        """扫描单个IP端口组合"""
+        ip, port = ip_port_tuple
         
-        # 先扫描优先级端口
-        for port in self.priority_ports:
-            if self.ultra_fast_port_check(ip, port):
-                is_iptv, url, channel_count = self.quick_iptv_check(ip, port)
-                if is_iptv:
-                    with self.lock:
-                        self.found_servers.append({
-                            'ip': ip,
-                            'port': port,
-                            'url': url,
-                            'channel_count': channel_count,
-                            'server_url': f"http://{ip}:{port}",
-                            'scan_time': time.strftime('%Y-%m-%d %H:%M:%S')
-                        })
-                        self.scan_stats['servers_found'] += 1
-                    found_ports.append(port)
-                    logging.info(f"🎯 FOUND: {ip}:{port} - {channel_count} channels")
-        
-        # 如果找到了服务器，就不继续扫描其他端口了
-        if found_ports:
-            return found_ports
-        
-        # 如果没有找到，随机扫描一些其他端口
-        other_ports = [p for p in self.all_ports if p not in self.priority_ports]
-        sample_ports = random.sample(other_ports, min(50, len(other_ports)))  # 随机采样50个端口
-        
-        for port in sample_ports:
-            if self.ultra_fast_port_check(ip, port):
-                is_iptv, url, channel_count = self.quick_iptv_check(ip, port)
-                if is_iptv:
-                    with self.lock:
-                        self.found_servers.append({
-                            'ip': ip,
-                            'port': port,
-                            'url': url,
-                            'channel_count': channel_count,
-                            'server_url': f"http://{ip}:{port}",
-                            'scan_time': time.strftime('%Y-%m-%d %H:%M:%S')
-                        })
-                        self.scan_stats['servers_found'] += 1
-                    found_ports.append(port)
-                    logging.info(f"🎯 FOUND: {ip}:{port} - {channel_count} channels")
-                    break  # 找到一个就停止
+        if self.ultra_fast_port_check(ip, port):
+            is_iptv, url, channel_count = self.quick_iptv_validation(ip, port)
+            if is_iptv:
+                with self.lock:
+                    self.found_servers.append({
+                        'ip': ip,
+                        'port': port,
+                        'url': url,
+                        'channel_count': channel_count,
+                        'server_url': f"http://{ip}:{port}",
+                        'scan_time': time.strftime('%Y-%m-%d %H:%M:%S')
+                    })
+                    self.scan_stats['servers_found'] += 1
+                logging.info(f"🎯 FOUND: {ip}:{port} - {channel_count} channels")
+                return True
         
         with self.lock:
-            self.scan_stats['ips_scanned'] += 1
-            self.scan_stats['ports_tested'] += len(self.priority_ports) + len(sample_ports)
+            self.scan_stats['ports_tested'] += 1
         
-        return found_ports
+        return False
 
-    def scan_ip_prefix_massively(self, ip_prefix, sample_rate=0.1):
-        """大规模扫描IP前缀"""
-        logging.info(f"🔍 MASS SCAN: {ip_prefix}.*.* (0-9999 ports)")
-        all_ips = self.generate_all_ips_for_prefix(ip_prefix)
+    def scan_prefix_optimized(self, ip_prefix):
+        """优化扫描单个IP前缀"""
+        logging.info(f"🔍 Scanning: {ip_prefix}.*.*")
         
-        # 采样一部分IP进行扫描（避免数量太大）
-        if sample_rate < 1.0:
-            sample_size = int(len(all_ips) * sample_rate)
-            scan_ips = random.sample(all_ips, sample_size)
-            logging.info(f"📊 Sampling {sample_size} IPs from {len(all_ips)} (rate: {sample_rate})")
-        else:
-            scan_ips = all_ips
-            logging.info(f"📊 Scanning ALL {len(all_ips)} IPs")
+        # 生成目标IP
+        target_ips = self.generate_target_ips(ip_prefix, 300)  # 扫描300个IP
+        logging.info(f"📊 Targeting {len(target_ips)} IPs with {len(self.optimized_ports)} ports")
         
+        # 创建所有IP端口组合
+        ip_port_combinations = []
+        for ip in target_ips:
+            for port in self.optimized_ports:
+                ip_port_combinations.append((ip, port))
+        
+        total_combinations = len(ip_port_combinations)
         found_count = 0
         
-        # 分批处理
-        batch_size = 200
-        for i in range(0, len(scan_ips), batch_size):
-            batch_ips = scan_ips[i:i + batch_size]
-            batch_found = 0
+        # 分批扫描
+        batch_size = 1000
+        for i in range(0, total_combinations, batch_size):
+            batch = ip_port_combinations[i:i + batch_size]
             
-            with ThreadPoolExecutor(max_workers=20) as executor:
-                future_to_ip = {executor.submit(self.scan_single_ip_all_ports, ip): ip for ip in batch_ips}
+            with ThreadPoolExecutor(max_workers=25) as executor:  # 增加工作线程
+                future_to_combo = {executor.submit(self.scan_ip_port_combination, combo): combo for combo in batch}
                 
-                for future in as_completed(future_to_ip):
-                    ip = future_to_ip[future]
+                batch_found = 0
+                for future in as_completed(future_to_combo):
                     try:
-                        ports = future.result()
-                        if ports:
+                        if future.result():
                             batch_found += 1
-                    except Exception as e:
+                    except:
                         pass
             
             found_count += batch_found
             
             # 进度显示
-            progress = min(i + batch_size, len(scan_ips))
+            progress = min(i + batch_size, total_combinations)
             elapsed = time.time() - self.scan_stats['start_time']
-            rate = self.scan_stats['ips_scanned'] / elapsed if elapsed > 0 else 0
             
-            logging.info(f"📊 {ip_prefix}: {progress}/{len(scan_ips)} - "
+            with self.lock:
+                ips_done = len(set([combo[0] for combo in ip_port_combinations[:progress]]))
+                self.scan_stats['ips_scanned'] = ips_done
+            
+            logging.info(f"📊 {ip_prefix}: {progress}/{total_combinations} - "
+                        f"IPs: {ips_done}/{len(target_ips)} - "
                         f"Found: {found_count} - "
-                        f"Rate: {rate:.1f} IP/s - "
                         f"Total: {self.scan_stats['servers_found']} servers")
             
-            # 每批之间短暂延迟
-            time.sleep(0.5)
+            # 如果这个前缀找到了服务器，继续扫描
+            if found_count > 0:
+                logging.info(f"✅ Good results from {ip_prefix}, continuing...")
+            else:
+                # 如果扫描了一半还没找到，考虑跳过
+                if progress >= total_combinations // 2 and found_count == 0:
+                    logging.info(f"⏩ No servers in {ip_prefix}, moving to next...")
+                    break
         
         return found_count
 
-    def run_complete_scan(self, max_prefixes=5, sample_rate=0.05):
-        """运行完整扫描"""
-        all_prefixes = self.get_all_ip_prefixes()
-        scan_prefixes = all_prefixes[:max_prefixes]
+    def run_fast_scan(self, max_prefixes=5):
+        """运行快速扫描"""
+        prefixes = self.get_high_value_prefixes()[:max_prefixes]
+        
+        logging.info("🚀 STARTING OPTIMIZED IPTV SCAN")
+        logging.info("=" * 60)
+        logging.info(f"📡 Scanning {len(prefixes)} high-value prefixes")
+        logging.info(f"🎯 Ports: {len(self.optimized_ports)} optimized ports")
+        logging.info(f"⚡ Timeout: 0.5s port check, 1s HTTP request")
+        logging.info("=" * 60)
         
         total_found = 0
         
-        logging.info("🚀 STARTING MASSIVE IPTV SCAN")
-        logging.info("=" * 70)
-        logging.info(f"📡 Scanning {max_prefixes} IP prefixes")
-        logging.info(f"🎯 Port range: 0-9999")
-        logging.info(f"📊 IP sample rate: {sample_rate}")
-        logging.info("=" * 70)
-        
-        for i, prefix in enumerate(scan_prefixes):
-            logging.info(f"\n🔍 [{i+1}/{len(scan_prefixes)}] Scanning prefix: {prefix}")
+        for i, prefix in enumerate(prefixes):
+            start_prefix_time = time.time()
             
-            prefix_found = self.scan_ip_prefix_massively(prefix, sample_rate)
+            prefix_found = self.scan_prefix_optimized(prefix)
             total_found += prefix_found
             
-            logging.info(f"✅ Prefix {prefix} completed: {prefix_found} servers found")
+            prefix_time = time.time() - start_prefix_time
+            logging.info(f"✅ {prefix}: {prefix_found} servers in {prefix_time:.1f}s")
             
-            # 实时保存结果
+            # 实时保存
             self.save_progress()
             
-            # 如果找到很多服务器，可以继续下一个
-            if prefix_found > 0:
-                logging.info(f"🎯 Good results from {prefix}, continuing...")
-            else:
-                logging.info(f"⏩ No servers in {prefix}, moving to next...")
-            
-            # 前缀间延迟
-            time.sleep(1)
+            # 检查总时间，避免超时
+            total_time = time.time() - self.scan_stats['start_time']
+            if total_time > 480:  # 8分钟
+                logging.info("⏰ Time limit reached, stopping scan")
+                break
         
         return total_found
 
-    def save_progress(self, filename="all_servers_complete.txt"):
-        """实时保存扫描进度"""
+    def save_progress(self, filename="optimized_servers.txt"):
+        """保存进度"""
         if not self.found_servers:
             return
         
         try:
-            # 按端口排序
-            sorted_servers = sorted(self.found_servers, key=lambda x: (x['ip'], x['port']))
+            sorted_servers = sorted(self.found_servers, key=lambda x: x['channel_count'], reverse=True)
             
             with open(filename, "w", encoding="utf-8") as f:
-                f.write("# COMPLETE IPTV SERVER LIST\n")
+                f.write("# OPTIMIZED IPTV SERVER LIST\n")
                 f.write(f"# Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write(f"# Total Servers: {len(self.found_servers)}\n")
-                f.write(f"# IPs Scanned: {self.scan_stats['ips_scanned']}\n")
-                f.write(f"# Ports Tested: {self.scan_stats['ports_tested']}\n")
-                f.write("# Format: IP:Port,ServerURL,ChannelCount,ScanTime\n")
+                f.write(f"# Scan Time: {time.time() - self.scan_stats['start_time']:.1f}s\n")
+                f.write("# Format: ServerURL,ChannelCount\n")
                 f.write("# \n")
                 
                 for server in sorted_servers:
-                    f.write(f"{server['ip']}:{server['port']},{server['server_url']},{server['channel_count']},{server['scan_time']}\n")
+                    f.write(f"{server['server_url']},{server['channel_count']}\n")
             
-            # 同时保存简化的服务器列表
+            # 同时保存用于收集的列表
             with open("discovered_servers.txt", "w", encoding="utf-8") as f:
-                f.write("# IPTV Servers for Collection\n")
                 for server in sorted_servers:
                     f.write(f"{server['server_url']}\n")
                     
             logging.info(f"💾 Progress saved: {len(self.found_servers)} servers")
             
         except Exception as e:
-            logging.error(f"❌ Error saving progress: {e}")
+            logging.error(f"❌ Error saving: {e}")
 
-    def show_final_stats(self):
-        """显示最终统计"""
+    def show_stats(self):
+        """显示统计"""
         elapsed = time.time() - self.scan_stats['start_time']
         
-        logging.info("\n" + "=" * 70)
-        logging.info("📊 MASS SCAN COMPLETED")
-        logging.info("=" * 70)
-        logging.info(f"⏱️  Total time: {elapsed:.2f} seconds")
-        logging.info(f"🔍 IPs scanned: {self.scan_stats['ips_scanned']}")
-        logging.info(f"🎯 Ports tested: {self.scan_stats['ports_tested']}")
-        logging.info(f"🚀 Servers found: {self.scan_stats['servers_found']}")
-        
-        if self.scan_stats['ips_scanned'] > 0:
-            success_rate = (self.scan_stats['servers_found'] / self.scan_stats['ips_scanned']) * 100
-            logging.info(f"📈 Success rate: {success_rate:.4f}%")
+        logging.info("\n" + "=" * 60)
+        logging.info("📊 SCAN COMPLETED")
+        logging.info("=" * 60)
+        logging.info(f"⏱️  Time: {elapsed:.1f}s")
+        logging.info(f"🔍 IPs: {self.scan_stats['ips_scanned']}")
+        logging.info(f"🎯 Ports: {self.scan_stats['ports_tested']}")
+        logging.info(f"🚀 Servers: {self.scan_stats['servers_found']}")
         
         if self.found_servers:
-            # 按频道数量排序显示最佳服务器
-            best_servers = sorted(self.found_servers, key=lambda x: x['channel_count'], reverse=True)[:15]
-            logging.info("\n🏆 Top 15 Servers (by channel count):")
+            best_servers = sorted(self.found_servers, key=lambda x: x['channel_count'], reverse=True)[:10]
+            logging.info("\n🏆 Top Servers:")
             for i, server in enumerate(best_servers, 1):
-                logging.info(f"   {i:2d}. {server['ip']}:{server['port']} - {server['channel_count']} channels")
-            
-            # 端口统计
-            port_stats = {}
-            for server in self.found_servers:
-                port = server['port']
-                port_stats[port] = port_stats.get(port, 0) + 1
-            
-            common_ports = sorted(port_stats.items(), key=lambda x: x[1], reverse=True)[:10]
-            logging.info("\n🔢 Most common ports:")
-            for port, count in common_ports:
-                logging.info(f"   Port {port}: {count} servers")
+                logging.info(f"   {i}. {server['ip']}:{server['port']} - {server['channel_count']} channels")
         
-        logging.info("=" * 70)
+        logging.info("=" * 60)
 
-def run_mass_scan():
-    """运行大规模扫描"""
-    scanner = MassIPTVScanner()
+def run_optimized_scan():
+    """运行优化扫描"""
+    scanner = OptimizedIPTVScanner()
     
     try:
-        # 运行完整扫描
-        total_found = scanner.run_complete_scan(
-            max_prefixes=3,      # 扫描3个IP前缀
-            sample_rate=0.02     # 2%的IP采样率
-        )
-        
-        # 显示最终统计
-        scanner.show_final_stats()
-        
-        # 最终保存
-        scanner.save_progress()
-        
-        return len(scanner.found_servers)
-        
-    except KeyboardInterrupt:
-        logging.info("\n⏹️ Scan interrupted by user")
-        scanner.show_final_stats()
+        # 在8分钟内完成扫描
+        total_found = scanner.run_fast_scan(max_prefixes=3)
+        scanner.show_stats()
         scanner.save_progress()
         return len(scanner.found_servers)
+        
     except Exception as e:
-        logging.error(f"❌ Scan failed: {e}")
-        scanner.show_final_stats()
+        logging.error(f"❌ Scan error: {e}")
+        scanner.show_stats()
         scanner.save_progress()
         return len(scanner.found_servers)
 
@@ -421,25 +342,23 @@ def run_mass_scan():
 def main():
     """主函数"""
     if not sys.stdin.isatty():
-        logging.info("🤖 Starting MASSIVE IPTV Scanner")
-        server_count = run_mass_scan()
-        logging.info(f"🎯 Scan completed with {server_count} servers found")
-    else:
-        print("\n🎯 MASSIVE IPTV SCANNER")
-        print("🔍 Scans ALL IPs and ALL ports (0-9999)")
-        print("=" * 50)
-        print("This will scan:")
-        print("  • Multiple IP prefixes")
-        print("  • All ports 0-9999") 
-        print("  • Save ALL valid servers")
-        print("=" * 50)
+        logging.info("🤖 Starting OPTIMIZED IPTV Scanner")
+        server_count = run_optimized_scan()
         
-        confirm = input("Start massive scan? (y/n): ").strip().lower()
-        if confirm == 'y':
-            server_count = run_mass_scan()
-            print(f"\n✅ Scan completed! Found {server_count} servers.")
+        if server_count > 0:
+            logging.info(f"✅ Scan success: {server_count} servers found")
         else:
-            print("Scan cancelled.")
+            logging.info("❌ No servers found, using defaults")
+            # 创建默认服务器文件
+            with open("discovered_servers.txt", "w", encoding="utf-8") as f:
+                f.write("http://60.214.107.42:8080\n")
+                f.write("http://113.57.127.43:8080\n")
+                f.write("http://58.222.24.11:8080\n")
+    else:
+        print("\n🎯 OPTIMIZED IPTV SCANNER")
+        print("⚡ Fast scanning with optimized strategy")
+        server_count = run_optimized_scan()
+        print(f"\n✅ Found {server_count} servers")
 
 if __name__ == "__main__":
     main()
