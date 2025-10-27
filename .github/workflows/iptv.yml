@@ -1,80 +1,49 @@
-# .github/workflows/iptv.yml
 name: Update IPTV
 
 on:
   schedule:
-    - cron: '0 2 * * *'
-  workflow_dispatch:
-    inputs:
-      force_refresh:
-        description: '强制刷新所有频道'
-        required: false
-        default: false
-        type: boolean
-
-env:
-  PYTHON_VERSION: '3.9'
+    # 每天UTC时间18:00运行（北京时间第二天02:00）
+    - cron: '0 18 * * *'
+  workflow_dispatch:  # 允许手动触发
+  push:
+    branches: [ main, master ]
 
 jobs:
-  collect-iptv:
-    name: Collect and Update IPTV Channels
+  update-iptv:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
-    # 关键：添加写入权限
-    permissions:
-      contents: write
-      actions: read
-      
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        # 使用默认的GITHUB_TOKEN，不需要额外配置
-        token: ${{ secrets.GITHUB_TOKEN }}
-        fetch-depth: 0
-
+      
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-
+        python-version: '3.9'
+        
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install requests
-
+        
     - name: Run IPTV collector
       run: |
         python iptv.py
-        echo "🎯 IPTV collection completed"
-
+        
     - name: Check for changes
-      id: changes
+      id: check-changes
       run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
         git add -A
         if git diff --staged --quiet; then
           echo "changes=false" >> $GITHUB_OUTPUT
-          echo "📝 No changes detected"
         else
           echo "changes=true" >> $GITHUB_OUTPUT
-          echo "🔄 Changes detected, preparing to commit"
         fi
-
+        
     - name: Commit and push changes
-      if: steps.changes.outputs.changes == 'true'
+      if: steps.check-changes.outputs.changes == 'true'
       run: |
-        git commit -m "🤖 Auto-update IPTV channels - $(date +'%Y-%m-%d %H:%M:%S')" -m "Workflow run: $GITHUB_RUN_ID"
+        git commit -m "🤖 Auto-update IPTV channels - $(date +'%Y-%m-%d %H:%M')"
         git push
-        echo "✅ Changes committed successfully"
-
-    - name: Upload IPTV files as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: iptv-channels-${{ github.run_id }}
-        path: |
-          iptv.txt
-          iptv.m3u
-          iptv_collector.log
-        retention-days: 7
