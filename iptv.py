@@ -32,10 +32,18 @@ from tqdm import tqdm
 # ====================== 配置区域 ======================
 # 直播源URL列表
 URLS = [
-    "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
-    "https://raw.githubusercontent.com/wwb521/live/main/tv.m3u", 
-    "https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/ipv4/result.m3u",
-    "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/cn.m3u"
+     "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
+     "https://raw.githubusercontent.com/wwb521/live/main/tv.m3u", 
+     "https://ghfast.top/raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
+     "https://gh-proxy.com/https://raw.githubusercontent.com/wwb521/live/main/tv.m3u",
+     "https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/ipv4/result.m3u",  
+     "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/cn.m3u",
+     "https://raw.githubusercontent.com/suxuang/myIPTV/main/ipv4.m3u",
+     "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt",
+     "https://gh-proxy.com/https://raw.githubusercontent.com/develop202/migu_video/refs/heads/main/interface.txt",
+     "http://47.120.41.246:8899/zb.txt",
+     "https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/ipv4/result.m3u",
+     "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/cn.m3u"
 ]
 
 # 本地直播源文件
@@ -54,8 +62,8 @@ LOG_FILE = "iptv.log"
 
 # 性能参数
 MAX_SOURCES = 8          # 每个频道保留的最大源数量
-SPEED_TEST_TIMEOUT = 5   # 测速超时时间(秒)
-MAX_WORKERS = 6          # 最大工作线程数
+SPEED_TEST_TIMEOUT = 10   # 测速超时时间(秒)
+MAX_WORKERS = 20          # 最大工作线程数
 MAX_RETRIES = 3          # 最大重试次数
 RETRY_DELAY = 2          # 重试延迟(秒)
 
