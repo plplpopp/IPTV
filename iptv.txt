@@ -1,2 +1,174 @@
-央视频道,#genre#
-卫视频道,#genre#
+
+#genre#央视
+CCTV-1,http://113.200.114.168:20000/hls/1/index.m3u8 #响应时间:3959ms
+CCTV-1,http://111.221.137.155:44330/tsfile/live/0001_1.m3u8?key=txiptv #响应时间:5540ms
+CCTV-1,https://migu.188766.xyz/?migutoken=39ba31ee701c24ae6f8915b97a51d093&id=CCTV1&type=yy #响应时间:6203ms
+CCTV-2,http://sh.lnott.top:880/dx02.m3u8 #响应时间:5468ms
+CCTV-2,http://1.31.14.70:54321/hls/4/index.m3u8 #响应时间:6233ms
+CCTV-2,https://migu.188766.xyz/?migutoken=edf0b2420506fbc9054d6eecb38e6378&id=CCTV2&type=yy #响应时间:7836ms
+CCTV-3,
+CCTV-4,http://111.221.137.155:44330/tsfile/live/0004_1.m3u8?key=txiptv #响应时间:4922ms
+CCTV-4,http://153.0.171.163:9901/tsfile/live/0004_1.m3u8?key=txiptv&playlive=1&authid=0 #响应时间:5113ms
+CCTV-5,https://migu.188766.xyz/?migutoken=f26aa5d366be06a5037a4b1d98c600ef&id=CCTV5&type=yy #响应时间:5380ms
+CCTV-5,http://171.15.18.199:8180/TV00000000000000000005@HHZT #响应时间:5978ms
+CCTV-5+,https://piccpndali.v.myalicdn.com/audio/cctv5plus_2.m3u8 #响应时间:2272ms
+CCTV-5+,http://125.44.165.144:8888/hls/3/index.m3u8 #响应时间:6784ms
+CCTV-5+,http://218.17.33.178:53290/tsfile/live/1005_1.m3u8?key=txiptv #响应时间:6845ms
+CCTV-6,http://1.31.14.70:54321/hls/8/index.m3u8 #响应时间:6095ms
+CCTV-6,http://218.17.33.178:53290/tsfile/live/1006_1.m3u8?key=txiptv #响应时间:6265ms
+CCTV-6,http://221.11.56.114:8888/hls/6/index.m3u8 #响应时间:6924ms
+CCTV-6,http://171.15.18.199:8180/TV00000000000000000006@HHZT #响应时间:7622ms
+CCTV-7,http://123.14.89.120:8888/hls/7/index.m3u8 #响应时间:3699ms
+CCTV-7,http://218.17.33.178:53290/tsfile/live/1007_1.m3u8?key=txiptv #响应时间:4821ms
+CCTV-7,https://migu.188766.xyz/?migutoken=a391e4498eb7a24b7790f0f0ede1994d&id=CCTV7&type=yy #响应时间:5927ms
+CCTV-7,https://migu.188766.xyz/?migutoken=37ff151ff0326a8778bf333ebaf5f814&id=CCTV7&type=yy #响应时间:7039ms
+CCTV-8,http://171.15.18.199:8180/TV00000000000000000008@HHZT #响应时间:4978ms
+CCTV-9,http://221.11.56.114:8888/hls/9/index.m3u8 #响应时间:5320ms
+CCTV-9,https://migu.188766.xyz/?migutoken=f8dd20ce9457d5444c62093e2beeaca8&id=CCTV9&type=yy #响应时间:5459ms
+CCTV-9,https://migu.188766.xyz/?migutoken=d543590b34a39ec620616590338000cf&id=CCTV9&type=yy #响应时间:5506ms
+CCTV-10,
+CCTV-11,http://183.188.111.173:9003/hls/12/index.m3u8 #响应时间:3836ms
+CCTV-11,http://171.13.165.17:8888/hls/11/index.m3u8 #响应时间:4831ms
+CCTV-11,http://106.46.169.202:9000/hls/11/index.m3u8 #响应时间:5074ms
+CCTV-11,http://113.200.114.168:20000/hls/11/index.m3u8 #响应时间:5716ms
+CCTV-11,http://1.31.14.70:54321/hls/16/index.m3u8 #响应时间:6768ms
+CCTV-12,http://218.17.33.178:53290/tsfile/live/1012_1.m3u8?key=txiptv #响应时间:6504ms
+CCTV-13,http://218.17.33.178:53290/tsfile/live/1013_1.m3u8?key=txiptv #响应时间:5559ms
+CCTV-13,http://180.136.233.111:10099/udp/239.81.0.206:4056 #响应时间:5785ms
+CCTV-13,http://111.43.126.240:9003/hls/26/index.m3u8 #响应时间:6279ms
+CCTV-13,http://61.184.46.85:9901/tsfile/live/0013_1.m3u8?key=txiptv&playlive=1&authid=0 #响应时间:6781ms
+CCTV-14,http://221.11.56.114:8888/hls/14/index.m3u8 #响应时间:5722ms
+CCTV-14,http://171.15.18.199:8180/TV00000000000000000014@HHZT #响应时间:6785ms
+CCTV-15,http://113.200.114.168:20000/hls/15/index.m3u8 #响应时间:4255ms
+CCTV-15,http://218.17.33.178:53290/tsfile/live/1015_1.m3u8?key=txiptv #响应时间:4405ms
+CCTV-15,http://27.41.245.32:801/hls/15/index.m3u8 #响应时间:4677ms
+CCTV-15,https://migu.188766.xyz/?migutoken=8daf0f8e558b033972be79a6cf64c69a&id=CCTV15&type=yy #响应时间:4820ms
+CCTV-15,https://jzb.wwkejishe.top/?id=593 #响应时间:6903ms
+CCTV-16,http://lt.hxtre.com:35455/gaoma/cctv16.m3u8 #响应时间:2098ms
+CCTV-16,http://gmxw.7766.org:808/hls/169/index.m3u8 #响应时间:6093ms
+CCTV-17,http://123.14.89.120:8888/hls/17/index.m3u8 #响应时间:4465ms
+
+#genre#卫视
+安徽国际,
+安徽影视,
+亳州农村,
+第一财经,http://ls.qingting.fm/live/276.m3u8 #响应时间:2973ms
+第一财经,http://satellitepull.cnr.cn/live/wx32dycjgb/playlist.m3u8 #响应时间:7149ms
+梨园,https://dxtx.hntv.tv/live/lypd.m3u8?txSecret=10c771842a0be59e8b575d765173ec96&txTime=7B923E0A&wsSecret=4b9a5e60919f77730793436c05e53e9c&wsTime=1761631212
+广东卫视,http://112.27.235.94:8000/hls/30/index.m3u8 #响应时间:3993ms
+广东卫视,https://stream1.freetv.fun/538633831f168ba4da160ae5df71ceca2c87d9b8ff283a2f21d7dfe9ae39b9bd.ctv #响应时间:5061ms
+浙江卫视,http://ali-vl.cztv.com/channels/lantian/channel001/360p.m3u8 #响应时间:2611ms
+浙江卫视,http://58.57.40.22:9901/tsfile/live/1029_1.m3u8 #响应时间:3419ms
+浙江卫视,http://l.cztvcloud.com/channels/lantian/SXpinghu3/720p.m3u8 #响应时间:3515ms
+浙江卫视,http://ali-vl.cztv.com/channels/lantian/channel001/360p.m3u8 #响应时间:4588ms
+浙江卫视,https://ali-m-l.cztv.com/channels/lantian/channel001/1080p.m3u8 #响应时间:6020ms
+浙江卫视,http://ygbh.site/php/bfgd.php?id=094 #响应时间:6042ms
+浙江卫视,http://111.43.126.240:9003/hls/40/index.m3u8 #响应时间:6427ms
+湖南卫视,http://36.135.118.195:85/tsfile/live/0128_1.m3u8?key=txiptv&playlive=0&authid=0 #响应时间:4168ms
+湖南卫视,https://stream1.freetv.fun/7078982583a62d6c9e7ec75ad1fd1e3599bad72af0e3f4d7c3fdb52c39a526d0.ctv #响应时间:6488ms
+北京卫视,http://183.215.134.239:19901/tsfile/live/0122_1.m3u8?key=txiptv&playlive=1&authid=0 #响应时间:1316ms
+湖北卫视,http://124.116.183.146:9901/tsfile/live/0132_1.m3u8 #响应时间:4654ms
+湖北卫视,https://stream1.freetv.fun/52824be159db832b9fb6689e948206db5eaf331ffe3cb73c9be5baa27b3c1f68.ctv #响应时间:7102ms
+黑龙江卫视,http://60.16.0.216:5757/hls/35/index.m3u8 #响应时间:3360ms
+黑龙江卫视,https://stream1.freetv.fun/093c7c9b349cb0d3e970fde70093f2cc51b70100bf0b4295bdce6ef9bf70054e.m3u8 #响应时间:6485ms
+黑龙江卫视,http://221.2.148.205:8154/tsfile/live/0143_1.m3u8 #响应时间:7414ms
+黑龙江卫视,http://223.167.230.34:4022/rtp/239.45.3.232:5140 #响应时间:7951ms
+安徽卫视,http://113.106.171.234:8899/rtp/239.20.0.193:2184 #响应时间:4104ms
+安徽卫视,http://183.220.107.138:4022/rtp/239.11.0.117:5140 #响应时间:6466ms
+重庆卫视,https://stream1.freetv.fun/b2df745551d6eaa7a1f8c4b7f2d262d87ea8e0a7585661dbd2073d4f2b5e3c3b.m3u8 #响应时间:6273ms
+东方卫视,http://111.221.137.155:44330/tsfile/live/0107_1.m3u8?key=txiptv #响应时间:1266ms
+东方卫视,http://113.88.211.3:9898/hls/34/index.m3u8 #响应时间:2964ms
+东方卫视,https://stream1.freetv.fun/2a4fbacb673ebe02b009032ecc5e01fcff40d8cdede47c82f17eecf7aec3b669.ctv #响应时间:3986ms
+东方卫视,http://221.11.56.114:8888/hls/18/index.m3u8 #响应时间:5587ms
+东方卫视,https://jzb.wwkejishe.top/?id=597 #响应时间:6000ms
+东方卫视,http://113.106.171.234:8899/rtp/239.20.0.173:2144 #响应时间:7161ms
+东南卫视,http://221.11.56.114:8888/hls/32/index.m3u8 #响应时间:3485ms
+东南卫视,http://27.41.245.32:801/hls/32/index.m3u8 #响应时间:4629ms
+东南卫视,http://61.184.46.85:9901/tsfile/live/1019_1.m3u8?key=txiptv&playlive=1&authid=0 #响应时间:5709ms
+东南卫视,http://183.188.111.173:9003/hls/23/index.m3u8 #响应时间:5791ms
+东南卫视,http://113.106.171.234:8899/rtp/239.20.0.58:3168 #响应时间:6265ms
+甘肃卫视,https://stream1.freetv.fun/32c4da15507fe7b0110d5585d73c092c7354622b5c50edf956e5e0f2504749cf.m3u8 #响应时间:4423ms
+甘肃卫视,http://183.220.107.138:4022/rtp/239.11.0.55:5140 #响应时间:4467ms
+甘肃卫视,http://144.255.32.94:8288/udp/239.21.2.22:5002 #响应时间:7604ms
+甘肃卫视,http://117.174.25.254:8188/rtp/239.0.0.192:5140 #响应时间:7697ms
+甘肃卫视,http://60.174.40.117:85/tsfile/live/0141_1.m3u8?key=txiptv #响应时间:7822ms
+凤凰卫视,http://122.152.202.33/s/81a8a44f/index.m3u8?id=15 #响应时间:1505ms
+凤凰卫视,http://smart.cityq.xyz:8278/phoenixtv_hd/playlist.m3u8?tid=MF6F2163882521638825&ct=19249&tsum=2375037c2689c4190d14c8a52bc35c83 #响应时间:1528ms
+凤凰卫视,http://122.152.202.33/s/81a8a44f/index.m3u8?id=15 #响应时间:6097ms
+广西卫视,https://stream1.freetv.fun/d7b6a3939cda4d39694c346a5a9a0a2cd3b9f9a050c60ada9816d37eba564184.m3u8 #响应时间:3983ms
+广西卫视,http://112.8.201.35:5001/hls/43/index.m3u8 #响应时间:4628ms
+广西卫视,http://223.241.247.214:9901/tsfile/live/0113_1.m3u8?key=txiptv&playlive=1&authid=0 #响应时间:6478ms
+广西卫视,http://58.48.104.134:4022/rtp/239.69.1.191:10788 #响应时间:6599ms
+广西卫视,http://36.32.174.67:60080/newlive/live/hls/38/live.m3u8 #响应时间:6692ms
+贵州卫视,https://stream1.freetv.fun/8805dcd95b2aa6f3d523c5d9f0e486aa485226f8b1497c2ecf9b843a60e0a41e.ctv #响应时间:3736ms
+贵州卫视,http://59.173.120.39:4022/rtp/239.69.1.150:10536 #响应时间:5949ms
+贵州卫视,http://113.106.171.234:8899/rtp/239.20.0.212:2222 #响应时间:7150ms
+海南卫视,http://223.167.230.34:4022/rtp/239.45.1.81:5140 #响应时间:2796ms
+海南卫视,http://144.255.32.94:8288/udp/239.21.2.14:5002 #响应时间:3783ms
+河北卫视,https://stream1.freetv.fun/9bb079bb929d885afab6538aa4fd9df185f2cf39b65272822d304c0cbedc6ef3.ctv #响应时间:3924ms
+河北卫视,http://59.173.120.39:4022/rtp/239.254.96.113:9616 #响应时间:6061ms
+河北卫视,http://222.218.122.56:8188/udp/239.81.0.94:4056 #响应时间:7758ms
+河北卫视,http://117.174.25.254:8188/rtp/239.0.0.55:5140 #响应时间:7795ms
+河南卫视,http://153.0.171.163:9901/tsfile/live/0139_1.m3u8?key=txiptv&playlive=1&authid=0 #响应时间:3225ms
+河南卫视,http://36.135.118.195:85/tsfile/live/0139_1.m3u8?key=txiptv&playlive=0&authid=0 #响应时间:6740ms
+河南卫视,https://stream1.freetv.fun/3ba20cd120a608446b9b1fab73bdcb6ef31c97600e98c175c809f675e15f72c5.m3u8 #响应时间:7256ms
+河南卫视,http://58.48.104.134:4022/rtp/239.69.1.168:10644 #响应时间:7525ms
+吉林卫视,http://113.200.114.168:20000/hls/31/index.m3u8 #响应时间:3750ms
+吉林卫视,http://cssbyd.imwork.net:8082/hls/41/index.m3u8 #响应时间:4169ms
+吉林卫视,http://112.132.10.54:9901/tsfile/live/0116_2.m3u8?key=txiptv&playlive=1&authid=0 #响应时间:5695ms
+江苏卫视,http://58.57.40.22:9901/tsfile/live/1031_1.m3u8 #响应时间:4684ms
+江苏卫视,https://stream1.freetv.fun/7eeb24db75a813d994e18ea960efe66f52873af8c3e79e3c0fc4ef9c0fe56d87.ctv #响应时间:6614ms
+江苏卫视,http://ygbh.site/php/bfgd.php?id=085 #响应时间:7257ms
+江西卫视,http://gslbmgsplive.miguvideo.com/migu/kailu/jxwshd/51/20190820/index.m3u8?msisdn=20251028100051729409f966ce4bf298603e76f9265526&mdspid=&spid=600633&netType=0&sid=5910021492&pid=2028597139&timestamp=20251028100051&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=783847495&ParentNodeID=-99&assertID=5910021492&client_ip=106.13.250.83&SecurityKey=20251028100051&promotionId=&mvid=5900004351&mcid=500020&playurlVersion=WX-A1-8.9.2-RELEASE&userid=&jmhm=&videocodec=h264&bean=mgspad&tid=android&conFee=0&puData=8b523439a56b2a63e8e93a0835657f5a&ddCalcu=a85bef527235306453398a05a63b92ea86e3 #响应时间:3636ms
+江西卫视,http://1.31.14.70:54321/hls/42/index.m3u8 #响应时间:4008ms
+江西卫视,http://113.200.114.168:20000/hls/30/index.m3u8 #响应时间:7066ms
+辽宁卫视,http://123.14.89.120:8888/hls/35/index.m3u8 #响应时间:4814ms
+辽宁卫视,http://111.221.137.155:44330/tsfile/live/0121_1.m3u8?key=txiptv #响应时间:5979ms
+内蒙古卫视,https://stream1.freetv.fun/fa7d559e981210df2b14c98d9f38e73c31c55d797409772cad85e7edf347a123.m3u8 #响应时间:4432ms
+内蒙古卫视,https://migu.188766.xyz/?migutoken=9c660f430fa8075cb782e5c48f1f2a07&id=%E5%86%85%E8%92%99%E5%8F%A4%E5%8D%AB%E8%A7%86&pp=1 #响应时间:4601ms
+宁夏卫视,http://183.220.107.138:4022/rtp/239.11.0.57:5140 #响应时间:4046ms
+宁夏卫视,http://106.46.169.202:9000/hls/35/index.m3u8 #响应时间:4559ms
+青海卫视,http://112.109.206.113:9999/rtp/239.255.40.15:8208 #响应时间:4070ms
+青海卫视,https://stream1.freetv.fun/e6e4ae828d9d498e2de9a0053fb26dd98b581e4def3a9e7b95de83bbeaba6355.m3u8 #响应时间:4190ms
+青海卫视,http://144.255.32.94:8288/udp/239.21.2.51:5002 #响应时间:4433ms
+青海卫视,http://stream.qhbtv.com/qhws/playlist.m3u8 #响应时间:7268ms
+山东卫视,
+山西卫视,https://stream1.freetv.fun/85dbca6cc8baa7eac22fafd5d5a6d1c20017747e57fdb5df7c7dbdbbc4543b0e.ctv #响应时间:2171ms
+山西卫视,http://117.174.25.254:8188/rtp/239.0.0.192:5140 #响应时间:4075ms
+山西卫视,http://106.46.169.202:9000/hls/39/index.m3u8 #响应时间:4850ms
+山西卫视,http://221.11.56.114:8888/hls/39/index.m3u8 #响应时间:5492ms
+山西卫视,http://112.27.235.94:8000/hls/45/index.m3u8 #响应时间:6872ms
+山西卫视,http://113.200.114.168:20000/hls/32/index.m3u8 #响应时间:7952ms
+陕西卫视,https://stream1.freetv.fun/56a35bc567daf002287a8e52511c080f2e0e1d426a695d93386cb4f01c577af4.m3u8 #响应时间:4282ms
+陕西卫视,http://117.174.25.254:8188/rtp/239.0.0.53:5140 #响应时间:4331ms
+陕西卫视,http://113.106.171.234:8899/rtp/239.20.0.151:2100 #响应时间:4365ms
+四川卫视,http://183.220.107.138:4022/rtp/239.11.0.78:5140 #响应时间:4044ms
+四川卫视,http://sh.lnott.top:880/dx45.m3u8 #响应时间:4354ms
+四川卫视,http://113.200.114.168:20000/hls/25/index.m3u8 #响应时间:4555ms
+四川卫视,http://27.41.245.32:801/hls/54/index.m3u8 #响应时间:5763ms
+深圳卫视,http://38.64.72.148:80/hls/modn/list/4007/playlist.m3u8 #响应时间:4263ms
+深圳卫视,https://stream1.freetv.fun/e4b47bda20d4cfd5e08564ca37c2f2dabdce48b186c07a21ef1ce86f27861027.m3u8 #响应时间:4880ms
+深圳卫视,http://gaoyitv.6600.org:9901/tsfile/live/faacts/0126_1.m3u8?key=txiptv&playlive=0&authid=0 #响应时间:6482ms
+三沙卫视,
+天津卫视,http://111.221.137.155:44330/tsfile/live/0132_2.m3u8?key=txiptv #响应时间:5403ms
+西藏卫视,https://stream1.freetv.fun/e580c189c012c47539786d49ca3f7980e8027b57f8b0aa35c8fdecea1aa502ac.ctv #响应时间:4340ms
+西藏卫视,http://1.31.14.70:54321/hls/52/index.m3u8 #响应时间:6607ms
+新疆卫视,https://stream1.freetv.fun/b74002189f10e32ea0b1d9ac52446a6cad3530afe3b748a5c86f47f81e482ac4.m3u8 #响应时间:4093ms
+新疆卫视,http://183.220.107.138:4022/rtp/239.11.0.58:5140 #响应时间:4159ms
+新疆卫视,http://27.41.245.32:801/hls/57/index.m3u8 #响应时间:4236ms
+新疆卫视,http://112.109.206.113:9999/rtp/239.255.40.11:8208 #响应时间:4946ms
+新疆卫视,http://113.200.114.168:20000/hls/42/index.m3u8 #响应时间:6646ms
+云南卫视,http://36.135.118.195:85/tsfile/live/0119_1.m3u8?key=txiptv&playlive=0&authid=0 #响应时间:4164ms
+云南卫视,https://stream1.freetv.fun/ba098811beaf419a33a44603c6a7ebcf7063de6588e67c435ace521044a6b4fe.m3u8 #响应时间:4249ms
+云南卫视,http://1b6467f415.iok.la:9931/tsfile/live/1081_1.m3u8 #响应时间:6590ms
+云南卫视,http://183.220.107.138:4022/rtp/239.11.0.52:5140 #响应时间:6763ms
+CHC影迷电影,http://59.173.120.39:4022/rtp/239.69.1.241:11088 #响应时间:4890ms
+CHC家庭影院,
+CHC动作电影,http://61.184.46.85:9901/tsfile/live/1024_1.m3u8?key=txiptv&playlive=1&authid=0 #响应时间:4092ms
+CHC动作电影,http://live.nctv.top/huya.php?id=11602077 #响应时间:6488ms
+古天乐电影,
+周星驰电影,
+刘德华电影,
+李连杰电影,
+林正英电影,
+成龙电影,
