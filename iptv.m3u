@@ -1,469 +1,393 @@
 #EXTM3U
-#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 #响应:964ms
-http://38.75.136.137:98/gslb/dsdqpub/cctv1hd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 #响应:971ms
-http://38.75.136.137:98/gslb/dsdqpub/cctv1hd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 #响应:1968ms
+#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 #响应:1583ms
 http://23.237.228.134/live5/CCTV1.m3u8
-#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 #响应:8952ms
-http://111.221.137.234:44330/tsfile/live/0001_1.m3u8?key=txiptv&playlive=0&authid=0
-#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 #响应:9010ms
+#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 #响应:7243ms
+http://38.75.136.137:98/gslb/dsdqpub/cctv1hd.m3u8?auth=testpub
+#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 #响应:7486ms
+http://38.75.136.137:98/gslb/dsdqpub/cctv1hd.m3u8?auth=testpub
+#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 #响应:9539ms
 http://play.kankanlive.com/live/1698234869325962.m3u8
-#EXTINF:-1 tvg-name="CCTV-1" group-title="央视频道",CCTV-1 #响应:9366ms
-http://111.221.137.234:44330/tsfile/live/0001_1.m3u8?key=txiptv&playlive=0&authid=0
-#EXTINF:-1 tvg-name="CCTV-2" group-title="央视频道",CCTV-2 #响应:1837ms
+#EXTINF:-1 tvg-name="CCTV-2" group-title="央视频道",CCTV-2 #响应:2873ms
 http://23.237.228.134/live5/CCTV2.m3u8
-#EXTINF:-1 tvg-name="CCTV-2" group-title="央视频道",CCTV-2 #响应:9280ms
+#EXTINF:-1 tvg-name="CCTV-2" group-title="央视频道",CCTV-2 #响应:4413ms
+http://pull-hls-f1.douyincdn.com/media/stream-695106910011261612/playlist.m3u8?arch_hrchy=w1&exp_hrchy=w1&keeptime=00093a80&major_anchor_level=common&t_id=037-20260201084152FCA02A28E82C926FE0D6-TkujMo&wsSecret=85bb061c39ad9227e9c420993c2e56b8&wsTime=697ea150
+#EXTINF:-1 tvg-name="CCTV-2" group-title="央视频道",CCTV-2 #响应:4534ms
+http://pull-hls-f1.douyincdn.com/media/stream-695106910011261612/playlist.m3u8?arch_hrchy=w1&exp_hrchy=w1&keeptime=00093a80&major_anchor_level=common&t_id=037-20260201084152FCA02A28E82C926FE0D6-TkujMo&wsSecret=85bb061c39ad9227e9c420993c2e56b8&wsTime=697ea150
+#EXTINF:-1 tvg-name="CCTV-2" group-title="央视频道",CCTV-2 #响应:9650ms
 http://pull-flv-f1.douyincdn.com/media/stream-695106910011261612.flv?arch_hrchy=w1&exp_hrchy=w1&keeptime=00093a80&major_anchor_level=common&t_id=037-20260201084152FCA02A28E82C926FE0D6-TkujMo&unique_id=stream-695106910011261612_684_flv&wsSecret=52d181562d8e2a5dee20184a94272ef3&wsTime=697ea150
-#EXTINF:-1 tvg-name="CCTV-2" group-title="央视频道",CCTV-2 #响应:9334ms
+#EXTINF:-1 tvg-name="CCTV-2" group-title="央视频道",CCTV-2 #响应:9675ms
 http://pull-flv-f1.douyincdn.com/media/stream-695106910011261612.flv?arch_hrchy=w1&exp_hrchy=w1&keeptime=00093a80&major_anchor_level=common&t_id=037-20260201084152FCA02A28E82C926FE0D6-TkujMo&unique_id=stream-695106910011261612_684_flv&wsSecret=52d181562d8e2a5dee20184a94272ef3&wsTime=697ea150
-#EXTINF:-1 tvg-name="CCTV-3" group-title="央视频道",CCTV-3 #响应:2197ms
+#EXTINF:-1 tvg-name="CCTV-3" group-title="央视频道",CCTV-3 #响应:2025ms
 http://23.237.228.134/live5/CCTV3.m3u8
-#EXTINF:-1 tvg-name="CCTV-3" group-title="央视频道",CCTV-3 #响应:8207ms
-http://1.24.39.180:9003/hls/3/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-3" group-title="央视频道",CCTV-3 #响应:8802ms
-http://1.24.39.180:9003/hls/3/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-4" group-title="央视频道",CCTV-4 #响应:3698ms
+#EXTINF:-1 tvg-name="CCTV-4" group-title="央视频道",CCTV-4 #响应:2675ms
 https://dash2.antik.sk/live/test_cctv_tizen/playlist.m3u8
-#EXTINF:-1 tvg-name="CCTV-4" group-title="央视频道",CCTV-4 #响应:3714ms
+#EXTINF:-1 tvg-name="CCTV-4" group-title="央视频道",CCTV-4 #响应:2685ms
 https://dash2.antik.sk/live/test_cctv_tizen/playlist.m3u8
-#EXTINF:-1 tvg-name="CCTV-4" group-title="央视频道",CCTV-4 #响应:3784ms
+#EXTINF:-1 tvg-name="CCTV-4" group-title="央视频道",CCTV-4 #响应:2697ms
 https://dash2.antik.sk/live/test_cctv_tizen/playlist.m3u8
-#EXTINF:-1 tvg-name="CCTV-4" group-title="央视频道",CCTV-4 #响应:8145ms
-http://1.24.39.180:9003/hls/4/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-4" group-title="央视频道",CCTV-4 #响应:8648ms
-http://1.24.39.180:9003/hls/4/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-5" group-title="央视频道",CCTV-5 #响应:1547ms
-http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CCTV-5" group-title="央视频道",CCTV-5 #响应:1738ms
-http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CCTV-5" group-title="央视频道",CCTV-5 #响应:2608ms
+#EXTINF:-1 tvg-name="CCTV-5" group-title="央视频道",CCTV-5 #响应:2591ms
 http://38.75.136.137:98/gslb/dsdqbv/cctv5p.m3u8?auth=test20251009
-#EXTINF:-1 tvg-name="CCTV-5" group-title="央视频道",CCTV-5 #响应:2638ms
+#EXTINF:-1 tvg-name="CCTV-5" group-title="央视频道",CCTV-5 #响应:2708ms
 http://38.75.136.137:98/gslb/dsdqbv/cctv5p.m3u8?auth=test20251009
-#EXTINF:-1 tvg-name="CCTV-5+" group-title="央视频道",CCTV-5+ #响应:7509ms
+#EXTINF:-1 tvg-name="CCTV-5" group-title="央视频道",CCTV-5 #响应:5953ms
+http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub
+#EXTINF:-1 tvg-name="CCTV-5" group-title="央视频道",CCTV-5 #响应:6328ms
+http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub
+#EXTINF:-1 tvg-name="CCTV-5+" group-title="央视频道",CCTV-5+ #响应:7891ms
 https://t.freetv.fun/live/cctv5-plus.php
-#EXTINF:-1 tvg-name="CCTV-5+" group-title="央视频道",CCTV-5+ #响应:7702ms
-https://t.freetv.fun/live/cctv5-plus.php
-#EXTINF:-1 tvg-name="CCTV-6" group-title="央视频道",CCTV-6 #响应:877ms
+#EXTINF:-1 tvg-name="CCTV-6" group-title="央视频道",CCTV-6 #响应:3721ms
 http://38.75.136.137:98/gslb/dsdqpub/cctv6hd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CCTV-6" group-title="央视频道",CCTV-6 #响应:889ms
+#EXTINF:-1 tvg-name="CCTV-6" group-title="央视频道",CCTV-6 #响应:7868ms
 http://38.75.136.137:98/gslb/dsdqpub/cctv6hd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CCTV-6" group-title="央视频道",CCTV-6 #响应:8677ms
-http://1.24.39.180:9003/hls/6/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-6" group-title="央视频道",CCTV-6 #响应:9039ms
-http://1.24.39.180:9003/hls/6/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 #响应:1409ms
-http://38.75.136.137:98/gslb/dsdqpub/cctv7hd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 #响应:1774ms
-http://38.75.136.137:98/gslb/dsdqpub/cctv7hd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 #响应:2552ms
+#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 #响应:1958ms
 http://23.237.228.134/live5/CCTV7.m3u8
-#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 #响应:3209ms
+#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 #响应:3906ms
 http://38.75.136.137:98/gslb/dsdqbv/cctv7hd.m3u8?auth=test20251009
-#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 #响应:3335ms
+#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 #响应:4072ms
+http://38.75.136.137:98/gslb/dsdqpub/cctv7hd.m3u8?auth=testpub
+#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 #响应:4090ms
+http://38.75.136.137:98/gslb/dsdqpub/cctv7hd.m3u8?auth=testpub
+#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 #响应:4842ms
 http://38.75.136.137:98/gslb/dsdqbv/cctv7hd.m3u8?auth=test20251009
-#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 #响应:9215ms
+#EXTINF:-1 tvg-name="CCTV-7" group-title="央视频道",CCTV-7 #响应:8580ms
 https://ldocctvwbcdtxy.liveplay.myqcloud.com/ldocctvwbcd/cdrmldcctv7_1_td.m3u8
-#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:2069ms
+#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:3200ms
 http://38.75.136.137:98/gslb/dsdqbv/cctv8hd.m3u8?auth=test20251009
-#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:2134ms
+#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:5348ms
 http://38.75.136.137:98/gslb/dsdqbv/cctv8hd.m3u8?auth=test20251009
-#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:7030ms
-http://112.132.10.54:9901/tsfile/live/0008_1.m3u8?key=txiptv&playlive=1&authid=0
-#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:7377ms
-http://112.132.10.54:9901/tsfile/live/0008_1.m3u8?key=txiptv&playlive=1&authid=0
-#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:8014ms
-https://ldocctvwbcdtxy.liveplay.myqcloud.com/ldocctvwbcd/cdrmldcctv8_1_hd.m3u8
-#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:8129ms
-https://ldocctvwbcdtxy.liveplay.myqcloud.com/ldocctvwbcd/cdrmldcctv8_1_hd.m3u8
-#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:8438ms
-http://1.24.39.180:9003/hls/8/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:8560ms
+#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:8135ms
 https://ldocctvwbcdbd.a.bdydns.com/ldocctvwbcd/cdrmldcctv8_1/index.m3u8?BR=hd
-#EXTINF:-1 tvg-name="CCTV-9" group-title="央视频道",CCTV-9 #响应:8064ms
-http://1.24.39.180:9003/hls/9/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-9" group-title="央视频道",CCTV-9 #响应:9646ms
-http://1.24.39.180:9003/hls/9/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 #响应:1974ms
+#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:8716ms
+https://ldocctvwbcdbd.a.bdydns.com/ldocctvwbcd/cdrmldcctv8_1/index.m3u8?BR=hd
+#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:9565ms
+https://ldocctvwbcdtxy.liveplay.myqcloud.com/ldocctvwbcd/cdrmldcctv8_1_hd.m3u8
+#EXTINF:-1 tvg-name="CCTV-8" group-title="央视频道",CCTV-8 #响应:9931ms
+https://ldocctvwbcdtxy.liveplay.myqcloud.com/ldocctvwbcd/cdrmldcctv8_1_hd.m3u8
+#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 #响应:2987ms
 http://69.30.246.194/live/cctv11.m3u8
-#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 #响应:2166ms
+#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 #响应:2995ms
 http://69.30.246.194/live/cctv11.m3u8
-#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 #响应:2182ms
+#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 #响应:3020ms
 http://69.30.246.194/live/cctv11.m3u8
-#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 #响应:8744ms
-http://1.24.39.180:9003/hls/11/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-12" group-title="央视频道",CCTV-12 #响应:1086ms
+#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 #响应:3670ms
+http://cd-live-stream.news.cctvplus.com/live/smil:CHANNEL1.smil/chunklist_w744036192_b1000000.m3u8
+#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 #响应:3687ms
+http://cd-live-stream.news.cctvplus.com/live/smil:CHANNEL1.smil/chunklist_w744036192_b1000000.m3u8
+#EXTINF:-1 tvg-name="CCTV-11" group-title="央视频道",CCTV-11 #响应:5076ms
+http://cd-live-stream.news.cctvplus.com/live/smil:CHANNEL1.smil/chunklist_w744036192_b1000000.m3u8
+#EXTINF:-1 tvg-name="CCTV-12" group-title="央视频道",CCTV-12 #响应:1062ms
 http://69.30.246.194/live/cctv12.m3u8
-#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:2925ms
+#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:2190ms
 https://epg.pw/stream/5d3d047c64e44d0a24dc33e5700e579457201d2960036b43819bd930a0bb76a7.m3u8
-#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:2992ms
+#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:2260ms
 https://epg.pw/stream/5d3d047c64e44d0a24dc33e5700e579457201d2960036b43819bd930a0bb76a7.m3u8
-#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:5965ms
+#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:3237ms
+http://pull-hs-f5.flive.douyincdn.com/media/stream-695199811564733100/index.m3u8?arch_hrchy=w1&exp_hrchy=w1&expire=1770511198&major_anchor_level=common&sign=a5f0064ed33415876c1d12fab10ca68e&t_id=037-202602010839576904EF192E278886357A-RENaqt&volcSecret=a5f0064ed33415876c1d12fab10ca68e&volcTime=1770511198
+#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:4738ms
+http://pull-hls-f1.douyincdn.com/media/stream-695236781635011244/playlist.m3u8?arch_hrchy=w1&exp_hrchy=w1&keeptime=00093a80&major_anchor_level=common&t_id=037-20260201084040762AD6EF7F62F847F9C7-jI2I18&wsSecret=85681436b041bea9851727386a1a8d2c&wsTime=697ea108
+#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:4817ms
+http://pull-hls-f1.douyincdn.com/media/stream-695236781635011244/playlist.m3u8?arch_hrchy=w1&exp_hrchy=w1&keeptime=00093a80&major_anchor_level=common&t_id=037-20260201084040762AD6EF7F62F847F9C7-jI2I18&wsSecret=85681436b041bea9851727386a1a8d2c&wsTime=697ea108
+#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:6866ms
 http://ali-m-l.cztv.com/channels/lantian/channel21/1080p.m3u8
-#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:7699ms
+#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:7771ms
 http://pull-hs-f5.flive.douyincdn.com/media/stream-695199811564733100/index.m3u8?arch_hrchy=w1&exp_hrchy=w1&expire=1770511198&major_anchor_level=common&sign=a5f0064ed33415876c1d12fab10ca68e&t_id=037-202602010839576904EF192E278886357A-RENaqt&volcSecret=a5f0064ed33415876c1d12fab10ca68e&volcTime=1770511198
-#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:7793ms
-http://pull-hls-f1.douyincdn.com/media/stream-695236781635011244/playlist.m3u8?arch_hrchy=w1&exp_hrchy=w1&keeptime=00093a80&major_anchor_level=common&t_id=037-20260201084040762AD6EF7F62F847F9C7-jI2I18&wsSecret=85681436b041bea9851727386a1a8d2c&wsTime=697ea108
-#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:7986ms
-http://pull-hls-f1.douyincdn.com/media/stream-695236781635011244/playlist.m3u8?arch_hrchy=w1&exp_hrchy=w1&keeptime=00093a80&major_anchor_level=common&t_id=037-20260201084040762AD6EF7F62F847F9C7-jI2I18&wsSecret=85681436b041bea9851727386a1a8d2c&wsTime=697ea108
-#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:8346ms
-http://pull-hs-f5.flive.douyincdn.com/media/stream-695199811564733100/index.m3u8?arch_hrchy=w1&exp_hrchy=w1&expire=1770511198&major_anchor_level=common&sign=a5f0064ed33415876c1d12fab10ca68e&t_id=037-202602010839576904EF192E278886357A-RENaqt&volcSecret=a5f0064ed33415876c1d12fab10ca68e&volcTime=1770511198
-#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:9325ms
-https://event.pull.hebtv.com/jishi/cp1.m3u8
-#EXTINF:-1 tvg-name="CCTV-14" group-title="央视频道",CCTV-14 #响应:1894ms
+#EXTINF:-1 tvg-name="CCTV-13" group-title="央视频道",CCTV-13 #响应:9112ms
+https://t.freetv.fun/live/cctv13-21.m3u8
+#EXTINF:-1 tvg-name="CCTV-14" group-title="央视频道",CCTV-14 #响应:1616ms
 http://38.75.136.137:98/gslb/dsdqpub/cctv14hd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CCTV-14" group-title="央视频道",CCTV-14 #响应:2167ms
-http://38.75.136.137:98/gslb/dsdqpub/cctv14hd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CCTV-14" group-title="央视频道",CCTV-14 #响应:3195ms
+#EXTINF:-1 tvg-name="CCTV-14" group-title="央视频道",CCTV-14 #响应:2404ms
 http://69.30.246.194/live/cctv14.m3u8
-#EXTINF:-1 tvg-name="CCTV-14" group-title="央视频道",CCTV-14 #响应:3370ms
+#EXTINF:-1 tvg-name="CCTV-14" group-title="央视频道",CCTV-14 #响应:2457ms
 http://69.30.246.194/live/cctv14.m3u8
-#EXTINF:-1 tvg-name="CCTV-14" group-title="央视频道",CCTV-14 #响应:3411ms
+#EXTINF:-1 tvg-name="CCTV-14" group-title="央视频道",CCTV-14 #响应:2548ms
 http://69.30.246.194/live/cctv14.m3u8
-#EXTINF:-1 tvg-name="CCTV-14" group-title="央视频道",CCTV-14 #响应:8465ms
-http://1.24.39.180:9003/hls/14/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:3123ms
+#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:3132ms
 http://69.30.246.194/live/cctv15.m3u8
-#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:3297ms
+#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:3460ms
 http://69.30.246.194/live/cctv15.m3u8
-#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:3695ms
+#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:4087ms
 http://69.30.246.194/live/cctv15.m3u8
-#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:4378ms
+#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:4114ms
 http://38.75.136.137:98/gslb/dsdqbv/cctv15hd.m3u8?auth=test20251009
-#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:4473ms
+#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:4291ms
 http://38.75.136.137:98/gslb/dsdqbv/cctv15hd.m3u8?auth=test20251009
-#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:8123ms
-http://1.24.39.180:9003/hls/15/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:8185ms
-http://1.24.39.180:9003/hls/15/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-15" group-title="央视频道",CCTV-15 #响应:8805ms
-http://1.24.39.180:9003/hls/15/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:1902ms
-http://38.75.136.137:98/gslb/dsdqbv/cctv16hd.m3u8?auth=test20251009
-#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:3020ms
+#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:3109ms
+http://69.30.246.194/live/cctv16.m3u8
+#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:3181ms
+http://69.30.246.194/live/cctv16.m3u8
+#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:3196ms
+https://epg.pw/stream/c1beb2abcba5aef09c2f58efc3ca84b76de2c7b9cf60762b0d79772d9e70d454.m3u8
+#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:3201ms
+https://epg.pw/stream/c1beb2abcba5aef09c2f58efc3ca84b76de2c7b9cf60762b0d79772d9e70d454.m3u8
+#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:3408ms
+http://69.30.246.194/live/cctv16.m3u8
+#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:3610ms
 https://piccpndali.v.myalicdn.com/audio/cctv16_2.m3u8
-#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:3190ms
-http://69.30.246.194/live/cctv16.m3u8
-#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:3250ms
-http://69.30.246.194/live/cctv16.m3u8
-#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:3510ms
-http://69.30.246.194/live/cctv16.m3u8
-#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:3836ms
-https://epg.pw/stream/c1beb2abcba5aef09c2f58efc3ca84b76de2c7b9cf60762b0d79772d9e70d454.m3u8
-#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:3896ms
-https://epg.pw/stream/c1beb2abcba5aef09c2f58efc3ca84b76de2c7b9cf60762b0d79772d9e70d454.m3u8
-#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:4254ms
+#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:5682ms
 http://38.75.136.137:98/gslb/dsdqbv/cctv16hd.m3u8?auth=test20251009
-#EXTINF:-1 tvg-name="CCTV-17" group-title="央视频道",CCTV-17 #响应:804ms
-http://38.75.136.137:98/gslb/dsdqpub/cctv17hd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CCTV-17" group-title="央视频道",CCTV-17 #响应:806ms
-http://38.75.136.137:98/gslb/dsdqpub/cctv17hd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CCTV-17" group-title="央视频道",CCTV-17 #响应:7553ms
-http://1.24.39.180:9003/hls/61/index.m3u8
-#EXTINF:-1 tvg-name="CCTV-17" group-title="央视频道",CCTV-17 #响应:9651ms
-http://1.24.39.180:9003/hls/61/index.m3u8
-#EXTINF:-1 tvg-name="第一财经" group-title="卫视频道",第一财经 #响应:3557ms
+#EXTINF:-1 tvg-name="CCTV-16" group-title="央视频道",CCTV-16 #响应:6746ms
+http://38.75.136.137:98/gslb/dsdqbv/cctv16hd.m3u8?auth=test20251009
+#EXTINF:-1 tvg-name="亳州农村" group-title="卫视频道",亳州农村 #响应:6694ms
+http://zbbf2.ahbztv.com/live/418.m3u8
+#EXTINF:-1 tvg-name="亳州农村" group-title="卫视频道",亳州农村 #响应:6709ms
+http://zbbf2.ahbztv.com/live/418.m3u8?zanhd
+#EXTINF:-1 tvg-name="第一财经" group-title="卫视频道",第一财经 #响应:7007ms
+http://satellitepull.cnr.cn/live/wx32dycjgb/playlist.m3u8
+#EXTINF:-1 tvg-name="第一财经" group-title="卫视频道",第一财经 #响应:7565ms
 http://ls.qingting.fm/live/276.m3u8
-#EXTINF:-1 tvg-name="梨园频道" group-title="卫视频道",梨园频道 #响应:8517ms
-https://dxtx.hntv.tv/live/lypd.m3u8?txSecret=10c771842a0be59e8b575d765173ec96&txTime=7B923E0A&wsSecret=57eaa14afcdb01c9ce02d0c36f1b7cca&wsTime=1770278387
-#EXTINF:-1 tvg-name="梨园频道" group-title="卫视频道",梨园频道 #响应:8844ms
-https://dxtx.hntv.tv/live/lypd.m3u8?txSecret=10c771842a0be59e8b575d765173ec96&txTime=7B923E0A&wsSecret=57eaa14afcdb01c9ce02d0c36f1b7cca&wsTime=1770278387
-#EXTINF:-1 tvg-name="广东卫视" group-title="卫视频道",广东卫视 #响应:952ms
+#EXTINF:-1 tvg-name="梨园频道" group-title="卫视频道",梨园频道 #响应:8928ms
+https://dxtx.hntv.tv/live/lypd.m3u8?txSecret=10c771842a0be59e8b575d765173ec96&txTime=7B923E0A&wsSecret=60ee24c4b7a9a601aa49ee8e33aaf017&wsTime=1770300033
+#EXTINF:-1 tvg-name="梨园频道" group-title="卫视频道",梨园频道 #响应:8964ms
+https://dxtx.hntv.tv/live/lypd.m3u8?txSecret=10c771842a0be59e8b575d765173ec96&txTime=7B923E0A&wsSecret=60ee24c4b7a9a601aa49ee8e33aaf017&wsTime=1770300033
+#EXTINF:-1 tvg-name="广东卫视" group-title="卫视频道",广东卫视 #响应:1000ms
 https://txmov2.a.kwimgs.com/upic/2023/01/26/09/BMjAyMzAxMjYwOTE3NDVfNzM5MzQzNzIyXzk0NjI1OTUwNTA3XzBfMw==_b_B81ddda927d33445d544befd008e60109.mp4
-#EXTINF:-1 tvg-name="广东卫视" group-title="卫视频道",广东卫视 #响应:1243ms
-http://38.75.136.137:98/gslb/dsdqpub/gdwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="广东卫视" group-title="卫视频道",广东卫视 #响应:1799ms
+#EXTINF:-1 tvg-name="广东卫视" group-title="卫视频道",广东卫视 #响应:1332ms
 https://txmov2.a.kwimgs.com/upic/2023/01/26/09/BMjAyMzAxMjYwOTE3NDVfNzM5MzQzNzIyXzk0NjI1OTUwNTA3XzBfMw==_b_B81ddda927d33445d544befd008e60109.mp4
-#EXTINF:-1 tvg-name="广东卫视" group-title="卫视频道",广东卫视 #响应:1821ms
+#EXTINF:-1 tvg-name="广东卫视" group-title="卫视频道",广东卫视 #响应:1393ms
 http://38.75.136.137:98/gslb/dsdqpub/gdwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="广东卫视" group-title="卫视频道",广东卫视 #响应:2802ms
+#EXTINF:-1 tvg-name="广东卫视" group-title="卫视频道",广东卫视 #响应:2419ms
+http://38.75.136.137:98/gslb/dsdqpub/gdwshd.m3u8?auth=testpub
+#EXTINF:-1 tvg-name="广东卫视" group-title="卫视频道",广东卫视 #响应:3278ms
 http://23.237.228.134/live6/guangdong.m3u8
-#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:1380ms
-http://69.30.246.194/live/zjws.m3u8
-#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:2232ms
-http://23.237.228.134/live6/zhejiang.m3u8
-#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:6432ms
-http://ali-xwl.cztv.com/live/channel01720Plxw.m3u8
-#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:6482ms
-http://ali-xwl.cztv.com/live/channel01720Plxw.m3u8
-#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:6485ms
+#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:1329ms
 http://ali-xwl.cztv.com/live/channel011080Plxw.m3u8
-#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:6512ms
+#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:1705ms
+http://69.30.246.194/live/zjws.m3u8
+#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:2446ms
+http://23.237.228.134/live6/zhejiang.m3u8
+#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:5245ms
 http://ali-xwl.cztv.com/live/channel01720Plxw.m3u8
-#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:7419ms
-http://153.0.171.163:9901/tsfile/live/0124_1.m3u8?key=txiptv&playlive=1&authid=0
-#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:7584ms
-https://ali-m-l.cztv.com/channels/lantian/channel001/1080p.m3u8?token=a91795eaa13d363d432e0b8cf4cbb5cd
-#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视频道",湖南卫视 #响应:1584ms
-http://69.30.246.194/live/hnws.m3u8
-#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视频道",湖南卫视 #响应:2368ms
+#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:5250ms
+http://ali-xwl.cztv.com/live/channel01720Plxw.m3u8
+#EXTINF:-1 tvg-name="浙江卫视" group-title="卫视频道",浙江卫视 #响应:5308ms
+http://ali-xwl.cztv.com/live/channel01720Plxw.m3u8
+#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视频道",湖南卫视 #响应:2395ms
 http://23.237.228.134/live6/hunan.m3u8
-#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视频道",湖南卫视 #响应:3057ms
+#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视频道",湖南卫视 #响应:2619ms
 https://txmov2.a.kwimgs.com/bs3/video-hls/5199687338554291078_hlsb.m3u8
-#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视频道",湖南卫视 #响应:3242ms
+#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视频道",湖南卫视 #响应:2738ms
 https://txmov2.a.kwimgs.com/bs3/video-hls/5199687338554291078_hlsb.m3u8
-#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视频道",湖南卫视 #响应:3253ms
+#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视频道",湖南卫视 #响应:3141ms
 https://txmov2.a.kwimgs.com/bs3/video-hls/5199687338554291078_hlsb.m3u8
-#EXTINF:-1 tvg-name="北京卫视" group-title="卫视频道",北京卫视 #响应:2684ms
+#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视频道",湖南卫视 #响应:6015ms
+http://69.30.246.194/live/hnws.m3u8
+#EXTINF:-1 tvg-name="湖南卫视" group-title="卫视频道",湖南卫视 #响应:6778ms
+http://satellitepull.cnr.cn/live/wx32hunws/playlist.m3u8
+#EXTINF:-1 tvg-name="北京卫视" group-title="卫视频道",北京卫视 #响应:2248ms
 http://38.75.136.137:98/gslb/dsdqpub/bjwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="北京卫视" group-title="卫视频道",北京卫视 #响应:2830ms
+#EXTINF:-1 tvg-name="北京卫视" group-title="卫视频道",北京卫视 #响应:2789ms
 http://38.75.136.137:98/gslb/dsdqpub/bjwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="北京卫视" group-title="卫视频道",北京卫视 #响应:3222ms
+#EXTINF:-1 tvg-name="北京卫视" group-title="卫视频道",北京卫视 #响应:3582ms
 http://38.75.136.137:98/gslb/dsdqbv/bjwshd.m3u8?auth=test20251009
-#EXTINF:-1 tvg-name="北京卫视" group-title="卫视频道",北京卫视 #响应:3238ms
+#EXTINF:-1 tvg-name="北京卫视" group-title="卫视频道",北京卫视 #响应:3655ms
 http://38.75.136.137:98/gslb/dsdqbv/bjwshd.m3u8?auth=test20251009
-#EXTINF:-1 tvg-name="湖北卫视" group-title="卫视频道",湖北卫视 #响应:1635ms
+#EXTINF:-1 tvg-name="北京卫视" group-title="卫视频道",北京卫视 #响应:6705ms
+http://satellitepull.cnr.cn/live/wxbtv/playlist.m3u8
+#EXTINF:-1 tvg-name="湖北卫视" group-title="卫视频道",湖北卫视 #响应:1704ms
 http://23.237.228.134/live6/hubei.m3u8
-#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 #响应:1282ms
+#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 #响应:1489ms
 http://38.75.136.137:98/gslb/dsdqpub/hljwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 #响应:1370ms
+#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 #响应:1633ms
+https://t.freetv.fun/live/hei-long-jiang-wei-shi-6.m3u8
+#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 #响应:1653ms
 http://38.75.136.137:98/gslb/dsdqpub/hljwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 #响应:1539ms
+#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 #响应:1770ms
 https://t.freetv.fun/live/hei-long-jiang-wei-shi-6.m3u8
-#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 #响应:1581ms
-https://t.freetv.fun/live/hei-long-jiang-wei-shi-6.m3u8
-#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 #响应:3209ms
+#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 #响应:4088ms
 http://l.cztvcloud.com/channels/lantian/SXyuyao3/720p.m3u8
-#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 #响应:4475ms
+#EXTINF:-1 tvg-name="黑龙江卫视" group-title="卫视频道",黑龙江卫视 #响应:4324ms
 http://l.cztvcloud.com/channels/lantian/SXyuyao3/720p.m3u8
-#EXTINF:-1 tvg-name="安徽卫视" group-title="卫视频道",安徽卫视 #响应:1118ms
+#EXTINF:-1 tvg-name="安徽卫视" group-title="卫视频道",安徽卫视 #响应:1833ms
 http://38.75.136.137:98/gslb/dsdqpub/ahwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="安徽卫视" group-title="卫视频道",安徽卫视 #响应:1253ms
+#EXTINF:-1 tvg-name="安徽卫视" group-title="卫视频道",安徽卫视 #响应:2507ms
 http://38.75.136.137:98/gslb/dsdqpub/ahwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="重庆卫视" group-title="卫视频道",重庆卫视 #响应:1904ms
+#EXTINF:-1 tvg-name="重庆卫视" group-title="卫视频道",重庆卫视 #响应:1710ms
 http://23.237.228.134/live6/chongqing.m3u8
-#EXTINF:-1 tvg-name="重庆卫视" group-title="卫视频道",重庆卫视 #响应:4296ms
-http://153.0.171.163:9901/tsfile/live/0142_1.m3u8?key=txiptv&playlive=1&authid=0
-#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:2398ms
+#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3093ms
 https://t.freetv.fun/live/dong-fang-wei-shi.m3u8
-#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:2718ms
-http://69.30.246.194/live/dfws.m3u8
-#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3315ms
-http://69.30.246.194/live/dfws.m3u8
-#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3341ms
-http://69.30.246.194/live/dfws.m3u8
-#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3468ms
-http://38.75.136.137:98/gslb/dsdqpub/dfwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3579ms
-http://69.30.246.194/live/dfws.m3u8
-#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3599ms
+#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3277ms
+https://epg.pw/stream/6aec3ea636542c53729b5c9dd290864ab04d4a69d2b9cb7864a9898779915898.m3u8
+#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3359ms
 https://txmov2.a.kwimgs.com/bs3/video-hls/5219953535631090825_hlsb.m3u8
-#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3793ms
+#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3474ms
+http://69.30.246.194/live/dfws.m3u8
+#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3707ms
+https://txmov2.a.kwimgs.com/bs3/video-hls/5219953535631090825_hlsb.m3u8
+#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3808ms
+http://38.75.136.137:98/gslb/dsdqpub/dfwshd.m3u8?auth=testpub
+#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3837ms
+https://txmov2.a.kwimgs.com/bs3/video-hls/5219953535631090825_hlsb.m3u8
+#EXTINF:-1 tvg-name="东方卫视" group-title="卫视频道",东方卫视 #响应:3852ms
 http://23.237.228.134/live6/dongnan.m3u8
-#EXTINF:-1 tvg-name="东南卫视" group-title="卫视频道",东南卫视 #响应:3163ms
+#EXTINF:-1 tvg-name="东南卫视" group-title="卫视频道",东南卫视 #响应:3586ms
 https://stream1.freetv.fun/bf437d113b5326c63689e186eb8889b90b03e72e8d76ce2b53632abc40872343.m3u8
-#EXTINF:-1 tvg-name="东南卫视" group-title="卫视频道",东南卫视 #响应:3778ms
+#EXTINF:-1 tvg-name="东南卫视" group-title="卫视频道",东南卫视 #响应:4297ms
 http://live.zohi.tv/video/s10001-fztv-3/index.m3u8
-#EXTINF:-1 tvg-name="东南卫视" group-title="卫视频道",东南卫视 #响应:5903ms
+#EXTINF:-1 tvg-name="东南卫视" group-title="卫视频道",东南卫视 #响应:5622ms
 http://live.zohi.tv/video/s10001-fztv-3/index.m3u8
-#EXTINF:-1 tvg-name="甘肃卫视" group-title="卫视频道",甘肃卫视 #响应:2387ms
+#EXTINF:-1 tvg-name="甘肃卫视" group-title="卫视频道",甘肃卫视 #响应:2518ms
 http://38.75.136.137:98/gslb/dsdqpub/gswshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="甘肃卫视" group-title="卫视频道",甘肃卫视 #响应:2460ms
+#EXTINF:-1 tvg-name="甘肃卫视" group-title="卫视频道",甘肃卫视 #响应:2615ms
 http://38.75.136.137:98/gslb/dsdqpub/gswshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="甘肃卫视" group-title="卫视频道",甘肃卫视 #响应:2613ms
+#EXTINF:-1 tvg-name="甘肃卫视" group-title="卫视频道",甘肃卫视 #响应:2735ms
 https://t.freetv.fun/live/gan-su-wei-shi-3.m3u8
-#EXTINF:-1 tvg-name="甘肃卫视" group-title="卫视频道",甘肃卫视 #响应:2642ms
+#EXTINF:-1 tvg-name="甘肃卫视" group-title="卫视频道",甘肃卫视 #响应:2782ms
 https://t.freetv.fun/live/gan-su-wei-shi-3.m3u8
-#EXTINF:-1 tvg-name="甘肃卫视" group-title="卫视频道",甘肃卫视 #响应:4114ms
+#EXTINF:-1 tvg-name="甘肃卫视" group-title="卫视频道",甘肃卫视 #响应:4422ms
 http://live.zohi.tv/video/s10001-fztv-3/index.m3u8
-#EXTINF:-1 tvg-name="凤凰卫视" group-title="卫视频道",凤凰卫视 #响应:1835ms
+#EXTINF:-1 tvg-name="凤凰卫视" group-title="卫视频道",凤凰卫视 #响应:1331ms
 http://122.152.202.33/s/81a8a44f/index.m3u8?id=15
-#EXTINF:-1 tvg-name="凤凰卫视" group-title="卫视频道",凤凰卫视 #响应:1888ms
+#EXTINF:-1 tvg-name="凤凰卫视" group-title="卫视频道",凤凰卫视 #响应:1367ms
 http://122.152.202.33/s/81a8a44f/index.m3u8?id=15
-#EXTINF:-1 tvg-name="广西卫视" group-title="卫视频道",广西卫视 #响应:1727ms
+#EXTINF:-1 tvg-name="广西卫视" group-title="卫视频道",广西卫视 #响应:1635ms
 http://38.75.136.137:98/gslb/dsdqpub/gxwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="广西卫视" group-title="卫视频道",广西卫视 #响应:2571ms
-http://38.75.136.137:98/gslb/dsdqpub/gxwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="广西卫视" group-title="卫视频道",广西卫视 #响应:3003ms
-http://23.237.228.134/live6/guangxi.m3u8
-#EXTINF:-1 tvg-name="广西卫视" group-title="卫视频道",广西卫视 #响应:3196ms
+#EXTINF:-1 tvg-name="广西卫视" group-title="卫视频道",广西卫视 #响应:2906ms
 http://23.237.228.134/live6/guizhou.m3u8
-#EXTINF:-1 tvg-name="广西卫视" group-title="卫视频道",广西卫视 #响应:3410ms
+#EXTINF:-1 tvg-name="广西卫视" group-title="卫视频道",广西卫视 #响应:3028ms
+http://38.75.136.137:98/gslb/dsdqpub/gxwshd.m3u8?auth=testpub
+#EXTINF:-1 tvg-name="广西卫视" group-title="卫视频道",广西卫视 #响应:3320ms
+http://23.237.228.134/live6/guangxi.m3u8
+#EXTINF:-1 tvg-name="广西卫视" group-title="卫视频道",广西卫视 #响应:3598ms
 https://stream1.freetv.fun/d7b6a3939cda4d39694c346a5a9a0a2cd3b9f9a050c60ada9816d37eba564184.m3u8
-#EXTINF:-1 tvg-name="广西卫视" group-title="卫视频道",广西卫视 #响应:7812ms
-http://cssbyd.imwork.net:8082/hls/33/index.m3u8
-#EXTINF:-1 tvg-name="广西卫视" group-title="卫视频道",广西卫视 #响应:9226ms
-http://cssbyd.imwork.net:8082/hls/33/index.m3u8
-#EXTINF:-1 tvg-name="贵州卫视" group-title="卫视频道",贵州卫视 #响应:1627ms
+#EXTINF:-1 tvg-name="贵州卫视" group-title="卫视频道",贵州卫视 #响应:2482ms
 http://23.237.228.134/live6/hainan.m3u8
-#EXTINF:-1 tvg-name="海南卫视" group-title="卫视频道",海南卫视 #响应:5937ms
-http://36.32.174.67:60080/newlive/live/hls/46/live.m3u8
-#EXTINF:-1 tvg-name="海南卫视" group-title="卫视频道",海南卫视 #响应:6210ms
-http://36.32.174.67:60080/newlive/live/hls/46/live.m3u8
-#EXTINF:-1 tvg-name="海南卫视" group-title="卫视频道",海南卫视 #响应:8522ms
-http://36.32.174.67:60080/newlive/live/hls/46/live.m3u8
-#EXTINF:-1 tvg-name="海南卫视" group-title="卫视频道",海南卫视 #响应:9743ms
-https://migu.188766.xyz/?migutoken=7777cf0daeb52fc08153d96da5fef405&id=hn_hnws&type=sz
-#EXTINF:-1 tvg-name="河北卫视" group-title="卫视频道",河北卫视 #响应:1858ms
+#EXTINF:-1 tvg-name="河北卫视" group-title="卫视频道",河北卫视 #响应:3614ms
 https://t.freetv.fun/live/he-bei-wei-shi-6.m3u8
-#EXTINF:-1 tvg-name="河北卫视" group-title="卫视频道",河北卫视 #响应:1907ms
+#EXTINF:-1 tvg-name="河北卫视" group-title="卫视频道",河北卫视 #响应:3648ms
 https://t.freetv.fun/live/he-bei-wei-shi-6.m3u8
-#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:8480ms
+#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:6207ms
 https://migu.188766.xyz/?migutoken=17e05c3eb2c9984040202d339c12d323&id=%E6%B2%B3%E5%8D%97%E5%8D%AB%E8%A7%86%E9%AB%98%E6%B8%85&type=yy
-#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:8795ms
-http://tvcdn.stream3.hndt.com/tv/65c4a6d5017e1000b2b6ea2500000000_transios/playlist.m3u8?wsSecret=bc72bb2a31166ca576f96b5d1928c318&wsTime=1770278387
-#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:8873ms
-http://tvcdn.stream3.hndt.com/tv/65c4a6d5017e1000b2b6ea2500000000_transios/playlist.m3u8?wsSecret=bc72bb2a31166ca576f96b5d1928c318&wsTime=1770278387
-#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:8958ms
+#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:8329ms
+http://tvcdn.stream3.hndt.com/tv/65c4a6d5017e1000b2b6ea2500000000_transios/playlist.m3u8?wsSecret=ecd9c5ab3329d9c07275b3df87d7ec79&wsTime=1770300033
+#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:8648ms
+http://tvcdn.stream3.hndt.com/tv/65c4a6d5017e1000b2b6ea2500000000_transios/playlist.m3u8?wsSecret=ecd9c5ab3329d9c07275b3df87d7ec79&wsTime=1770300033
+#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:8827ms
 http://1.94.31.214/php/hntv.php?id=hnws
-#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:9263ms
+#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:9017ms
 https://t.freetv.fun/live/he-nan-wei-shi-13.php
-#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:9576ms
+#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:9086ms
+http://1.94.31.214/php/hntv.php?id=hnws
+#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:9228ms
 https://t.freetv.fun/live/he-nan-wei-shi-13.php
-#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:9778ms
+#EXTINF:-1 tvg-name="河南卫视" group-title="卫视频道",河南卫视 #响应:9235ms
 http://cssbyd.imwork.net:8082/hls/37/index.m3u8
-#EXTINF:-1 tvg-name="吉林卫视" group-title="卫视频道",吉林卫视 #响应:1799ms
+#EXTINF:-1 tvg-name="吉林卫视" group-title="卫视频道",吉林卫视 #响应:1826ms
 http://38.75.136.137:98/gslb/dsdqpub/jlwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="吉林卫视" group-title="卫视频道",吉林卫视 #响应:1831ms
+#EXTINF:-1 tvg-name="吉林卫视" group-title="卫视频道",吉林卫视 #响应:1993ms
 http://38.75.136.137:98/gslb/dsdqpub/jlwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:2576ms
-http://38.75.136.137:98/gslb/dsdqpub/jswshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:2802ms
-http://69.30.246.194/live/jsws.m3u8
-#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:2853ms
+#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:2278ms
 https://t.freetv.fun/live/jiang-su-wei-shi-5.m3u8
-#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:2882ms
-http://69.30.246.194/live/jsws.m3u8
-#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:2890ms
-https://t.freetv.fun/live/jiang-su-wei-shi-5.m3u8
-#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:2991ms
+#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:2593ms
 http://38.75.136.137:98/gslb/dsdqpub/jswshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:3323ms
+#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:2777ms
+http://38.75.136.137:98/gslb/dsdqpub/jswshd.m3u8?auth=testpub
+#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:3080ms
 http://69.30.246.194/live/jsws.m3u8
-#EXTINF:-1 tvg-name="江西卫视" group-title="卫视频道",江西卫视 #响应:1702ms
+#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:3103ms
+https://t.freetv.fun/live/jiang-su-wei-shi-5.m3u8
+#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:7792ms
+http://69.30.246.194/live/jsws.m3u8
+#EXTINF:-1 tvg-name="江苏卫视" group-title="卫视频道",江苏卫视 #响应:7997ms
+http://69.30.246.194/live/jsws.m3u8
+#EXTINF:-1 tvg-name="江西卫视" group-title="卫视频道",江西卫视 #响应:1891ms
 http://38.75.136.137:98/gslb/dsdqpub/jxwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="江西卫视" group-title="卫视频道",江西卫视 #响应:1739ms
+#EXTINF:-1 tvg-name="江西卫视" group-title="卫视频道",江西卫视 #响应:1993ms
 http://38.75.136.137:98/gslb/dsdqpub/jxwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="辽宁卫视" group-title="卫视频道",辽宁卫视 #响应:1251ms
+#EXTINF:-1 tvg-name="江西卫视" group-title="卫视频道",江西卫视 #响应:9917ms
+http://222.214.208.34:59901/tsfile/live/0138_1.m3u8
+#EXTINF:-1 tvg-name="辽宁卫视" group-title="卫视频道",辽宁卫视 #响应:1044ms
 http://38.75.136.137:98/gslb/dsdqpub/lnwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="辽宁卫视" group-title="卫视频道",辽宁卫视 #响应:1387ms
+#EXTINF:-1 tvg-name="辽宁卫视" group-title="卫视频道",辽宁卫视 #响应:1157ms
 http://38.75.136.137:98/gslb/dsdqpub/lnwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="辽宁卫视" group-title="卫视频道",辽宁卫视 #响应:8477ms
-http://111.221.137.234:44330/tsfile/live/0123_1.m3u8?key=txiptv&playlive=0&authid=0
-#EXTINF:-1 tvg-name="内蒙古卫视" group-title="卫视频道",内蒙古卫视 #响应:4755ms
-http://153.0.171.163:9901/tsfile/live/0109_1.m3u8?key=txiptv&playlive=1&authid=0
-#EXTINF:-1 tvg-name="内蒙古卫视" group-title="卫视频道",内蒙古卫视 #响应:8959ms
-https://migu.188766.xyz/?migutoken=239b5e31125b9b3389d93d92a20c0edd&id=%E5%86%85%E8%92%99%E5%8F%A4%E5%8D%AB%E8%A7%86&pp=1
-#EXTINF:-1 tvg-name="内蒙古卫视" group-title="卫视频道",内蒙古卫视 #响应:9354ms
-https://migu.188766.xyz/?migutoken=239b5e31125b9b3389d93d92a20c0edd&id=%E5%86%85%E8%92%99%E5%8F%A4%E5%8D%AB%E8%A7%86&pp=1
-#EXTINF:-1 tvg-name="宁夏卫视" group-title="卫视频道",宁夏卫视 #响应:1930ms
+#EXTINF:-1 tvg-name="宁夏卫视" group-title="卫视频道",宁夏卫视 #响应:1809ms
 http://38.75.136.137:98/gslb/dsdqpub/nxws.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="宁夏卫视" group-title="卫视频道",宁夏卫视 #响应:1965ms
+#EXTINF:-1 tvg-name="宁夏卫视" group-title="卫视频道",宁夏卫视 #响应:1891ms
 http://38.75.136.137:98/gslb/dsdqpub/nxws.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="宁夏卫视" group-title="卫视频道",宁夏卫视 #响应:7909ms
+#EXTINF:-1 tvg-name="宁夏卫视" group-title="卫视频道",宁夏卫视 #响应:6185ms
 http://36.32.174.67:60080/newlive/live/hls/49/live.m3u8
-#EXTINF:-1 tvg-name="青海卫视" group-title="卫视频道",青海卫视 #响应:2010ms
+#EXTINF:-1 tvg-name="青海卫视" group-title="卫视频道",青海卫视 #响应:2090ms
 http://38.75.136.137:98/gslb/dsdqpub/qhws.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="青海卫视" group-title="卫视频道",青海卫视 #响应:2084ms
+#EXTINF:-1 tvg-name="青海卫视" group-title="卫视频道",青海卫视 #响应:2324ms
 http://38.75.136.137:98/gslb/dsdqpub/qhws.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="山东卫视" group-title="卫视频道",山东卫视 #响应:1078ms
+#EXTINF:-1 tvg-name="山东卫视" group-title="卫视频道",山东卫视 #响应:1384ms
 http://38.75.136.137:98/gslb/dsdqpub/sdwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="山东卫视" group-title="卫视频道",山东卫视 #响应:1149ms
+#EXTINF:-1 tvg-name="山东卫视" group-title="卫视频道",山东卫视 #响应:1710ms
 http://38.75.136.137:98/gslb/dsdqpub/sdwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="山西卫视" group-title="卫视频道",山西卫视 #响应:637ms
+#EXTINF:-1 tvg-name="山西卫视" group-title="卫视频道",山西卫视 #响应:808ms
 http://38.75.136.137:98/gslb/dsdqpub/sxwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="山西卫视" group-title="卫视频道",山西卫视 #响应:773ms
+#EXTINF:-1 tvg-name="山西卫视" group-title="卫视频道",山西卫视 #响应:988ms
 http://38.75.136.137:98/gslb/dsdqpub/sxwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="山西卫视" group-title="卫视频道",山西卫视 #响应:7093ms
-http://m3u8.channel.wsrtv.com.cn/cms/videos/nmip-media/channellive/channel7/playlist.m3u8
-#EXTINF:-1 tvg-name="山西卫视" group-title="卫视频道",山西卫视 #响应:7377ms
+#EXTINF:-1 tvg-name="山西卫视" group-title="卫视频道",山西卫视 #响应:9076ms
 http://36.32.174.67:60080/newlive/live/hls/43/live.m3u8
-#EXTINF:-1 tvg-name="山西卫视" group-title="卫视频道",山西卫视 #响应:8014ms
-http://36.32.174.67:60080/newlive/live/hls/43/live.m3u8
-#EXTINF:-1 tvg-name="山西卫视" group-title="卫视频道",山西卫视 #响应:9033ms
-http://36.32.174.67:60080/newlive/live/hls/43/live.m3u8
-#EXTINF:-1 tvg-name="陕西卫视" group-title="卫视频道",陕西卫视 #响应:1461ms
+#EXTINF:-1 tvg-name="陕西卫视" group-title="卫视频道",陕西卫视 #响应:1636ms
 http://23.237.228.134/live6/sichuan.m3u8
-#EXTINF:-1 tvg-name="四川卫视" group-title="卫视频道",四川卫视 #响应:2790ms
-https://stream1.freetv.fun/a9bd3a65e221b7781803b40226f113f9ce0fb6aa7ae42ac76115c6142bc18956.ctv
-#EXTINF:-1 tvg-name="四川卫视" group-title="卫视频道",四川卫视 #响应:8497ms
-https://t.freetv.fun/live/si-chuan-wei-shi-4.php
-#EXTINF:-1 tvg-name="四川卫视" group-title="卫视频道",四川卫视 #响应:9010ms
-https://t.freetv.fun/live/si-chuan-wei-shi-4.php
-#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:1346ms
+#EXTINF:-1 tvg-name="陕西卫视" group-title="卫视频道",陕西卫视 #响应:7408ms
+http://cssbyd.imwork.net:8082/hls/42/index.m3u8
+#EXTINF:-1 tvg-name="陕西卫视" group-title="卫视频道",陕西卫视 #响应:7628ms
+http://cssbyd.imwork.net:8082/hls/42/index.m3u8
+#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:1455ms
 http://38.75.136.137:98/gslb/dsdqpub/szwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:1546ms
+#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:1864ms
 http://38.75.136.137:98/gslb/dsdqpub/szwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:2244ms
-http://23.237.228.134/live6/shenzhen.m3u8
-#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:3388ms
+#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:2268ms
 http://38.64.72.148:80/hls/modn/list/4007/playlist.m3u8
-#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:3917ms
+#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:4091ms
+http://23.237.228.134/live6/shenzhen.m3u8
+#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:6013ms
 http://116.76.254.170:44330/tsfile/live/1013_1.m3u8?key=txiptv&playlive=0&authid=0
-#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:4001ms
+#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:6371ms
 http://116.76.254.170:44330/tsfile/live/1013_1.m3u8?key=txiptv&playlive=0&authid=0
-#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:4465ms
-http://111.221.137.234:44330/tsfile/live/1013_1.m3u8?key=txiptv&playlive=0&authid=0
-#EXTINF:-1 tvg-name="深圳卫视" group-title="卫视频道",深圳卫视 #响应:8630ms
-https://t.freetv.fun/live/shen-zhen-wei-shi-3.m3u8
-#EXTINF:-1 tvg-name="三沙卫视" group-title="卫视频道",三沙卫视 #响应:1168ms
+#EXTINF:-1 tvg-name="三沙卫视" group-title="卫视频道",三沙卫视 #响应:1320ms
 http://38.75.136.137:98/gslb/dsdqpub/ssws.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="三沙卫视" group-title="卫视频道",三沙卫视 #响应:7478ms
+#EXTINF:-1 tvg-name="三沙卫视" group-title="卫视频道",三沙卫视 #响应:7218ms
 https://srs.ssws.tv/video/sstv-10/index.m3u8
-#EXTINF:-1 tvg-name="三沙卫视" group-title="卫视频道",三沙卫视 #响应:7493ms
+#EXTINF:-1 tvg-name="三沙卫视" group-title="卫视频道",三沙卫视 #响应:7332ms
 https://srs.ssws.tv/video/sstv-10/index.m3u8
-#EXTINF:-1 tvg-name="三沙卫视" group-title="卫视频道",三沙卫视 #响应:7768ms
-https://srs.ssws.tv/video/sstv-10/index.m3u8
-#EXTINF:-1 tvg-name="三沙卫视" group-title="卫视频道",三沙卫视 #响应:8165ms
-http://nn.7x9d.cn/地方台8563/海南.php?id=ssws
-#EXTINF:-1 tvg-name="三沙卫视" group-title="卫视频道",三沙卫视 #响应:8877ms
-https://migu.188766.xyz/?migutoken=1ef52f5fa912cfab7cf4f626d824f62f&id=hn_ssws&type=sz
-#EXTINF:-1 tvg-name="三沙卫视" group-title="卫视频道",三沙卫视 #响应:9665ms
-https://migu.188766.xyz/?migutoken=1ef52f5fa912cfab7cf4f626d824f62f&id=hn_ssws&type=sz
-#EXTINF:-1 tvg-name="天津卫视" group-title="卫视频道",天津卫视 #响应:1064ms
+#EXTINF:-1 tvg-name="天津卫视" group-title="卫视频道",天津卫视 #响应:1279ms
 http://38.75.136.137:98/gslb/dsdqpub/tjwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="天津卫视" group-title="卫视频道",天津卫视 #响应:1064ms
+#EXTINF:-1 tvg-name="天津卫视" group-title="卫视频道",天津卫视 #响应:1400ms
 http://38.75.136.137:98/gslb/dsdqpub/tjwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="西藏卫视" group-title="卫视频道",西藏卫视 #响应:5871ms
+#EXTINF:-1 tvg-name="西藏卫视" group-title="卫视频道",西藏卫视 #响应:5728ms
 https://stream1.freetv.fun/e580c189c012c47539786d49ca3f7980e8027b57f8b0aa35c8fdecea1aa502ac.ctv
-#EXTINF:-1 tvg-name="新疆卫视" group-title="卫视频道",新疆卫视 #响应:826ms
+#EXTINF:-1 tvg-name="新疆卫视" group-title="卫视频道",新疆卫视 #响应:950ms
 http://38.75.136.137:98/gslb/dsdqpub/xjws.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="新疆卫视" group-title="卫视频道",新疆卫视 #响应:912ms
+#EXTINF:-1 tvg-name="新疆卫视" group-title="卫视频道",新疆卫视 #响应:994ms
 http://38.75.136.137:98/gslb/dsdqpub/xjws.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="新疆卫视" group-title="卫视频道",新疆卫视 #响应:3201ms
+#EXTINF:-1 tvg-name="新疆卫视" group-title="卫视频道",新疆卫视 #响应:2488ms
 https://stream1.freetv.fun/b74002189f10e32ea0b1d9ac52446a6cad3530afe3b748a5c86f47f81e482ac4.m3u8
-#EXTINF:-1 tvg-name="云南卫视" group-title="卫视频道",云南卫视 #响应:1131ms
+#EXTINF:-1 tvg-name="新疆卫视" group-title="卫视频道",新疆卫视 #响应:8773ms
+http://36.32.174.67:60080/newlive/live/hls/47/live.m3u8
+#EXTINF:-1 tvg-name="云南卫视" group-title="卫视频道",云南卫视 #响应:1237ms
 http://38.75.136.137:98/gslb/dsdqpub/ynwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="云南卫视" group-title="卫视频道",云南卫视 #响应:1267ms
+#EXTINF:-1 tvg-name="云南卫视" group-title="卫视频道",云南卫视 #响应:1360ms
 https://t.freetv.fun/live/yun-nan-wei-shi-2.m3u8
-#EXTINF:-1 tvg-name="云南卫视" group-title="卫视频道",云南卫视 #响应:1384ms
+#EXTINF:-1 tvg-name="云南卫视" group-title="卫视频道",云南卫视 #响应:1772ms
 http://38.75.136.137:98/gslb/dsdqpub/ynwshd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="云南卫视" group-title="卫视频道",云南卫视 #响应:1637ms
+#EXTINF:-1 tvg-name="云南卫视" group-title="卫视频道",云南卫视 #响应:1946ms
 https://t.freetv.fun/live/yun-nan-wei-shi-2.m3u8
-#EXTINF:-1 tvg-name="云南卫视" group-title="卫视频道",云南卫视 #响应:7216ms
-http://153.0.171.163:9901/tsfile/live/0119_1.m3u8?key=txiptv&playlive=1&authid=0
-#EXTINF:-1 tvg-name="云南卫视" group-title="卫视频道",云南卫视 #响应:9472ms
-http://cssbyd.imwork.net:8082/hls/36/index.m3u8
-#EXTINF:-1 tvg-name="CHC影迷电影" group-title="卫视频道",CHC影迷电影 #响应:944ms
+#EXTINF:-1 tvg-name="CHC影迷电影" group-title="卫视频道",CHC影迷电影 #响应:1209ms
 http://38.75.136.137:98/gslb/dsdqpub/chchd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CHC影迷电影" group-title="卫视频道",CHC影迷电影 #响应:1023ms
+#EXTINF:-1 tvg-name="CHC影迷电影" group-title="卫视频道",CHC影迷电影 #响应:1343ms
 http://38.75.136.137:98/gslb/dsdqpub/chchd.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CHC影迷电影" group-title="卫视频道",CHC影迷电影 #响应:1219ms
+#EXTINF:-1 tvg-name="CHC影迷电影" group-title="卫视频道",CHC影迷电影 #响应:1478ms
 https://t.freetv.fun/live/chcying-mi-dian-ying-3.m3u8
-#EXTINF:-1 tvg-name="CHC影迷电影" group-title="卫视频道",CHC影迷电影 #响应:1263ms
+#EXTINF:-1 tvg-name="CHC影迷电影" group-title="卫视频道",CHC影迷电影 #响应:1483ms
 https://t.freetv.fun/live/chcying-mi-dian-ying-3.m3u8
-#EXTINF:-1 tvg-name="CHC家庭影院" group-title="卫视频道",CHC家庭影院 #响应:637ms
+#EXTINF:-1 tvg-name="CHC家庭影院" group-title="卫视频道",CHC家庭影院 #响应:788ms
 http://38.75.136.137:98/gslb/dsdqpub/chcjt.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CHC家庭影院" group-title="卫视频道",CHC家庭影院 #响应:6531ms
-http://43.251.226.89:8080/play/225.m3u8
-#EXTINF:-1 tvg-name="CHC动作电影" group-title="卫视频道",CHC动作电影 #响应:1570ms
+#EXTINF:-1 tvg-name="CHC动作电影" group-title="卫视频道",CHC动作电影 #响应:1479ms
 http://38.75.136.137:98/gslb/dsdqpub/chcdz.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CHC动作电影" group-title="卫视频道",CHC动作电影 #响应:1673ms
+#EXTINF:-1 tvg-name="CHC动作电影" group-title="卫视频道",CHC动作电影 #响应:1663ms
 http://38.75.136.137:98/gslb/dsdqpub/chcdz.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CHC动作电影" group-title="卫视频道",CHC动作电影 #响应:1674ms
-http://38.75.136.137:98/gslb/dsdqpub/chcdz.m3u8?auth=testpub
-#EXTINF:-1 tvg-name="CHC动作电影" group-title="卫视频道",CHC动作电影 #响应:1745ms
+#EXTINF:-1 tvg-name="CHC动作电影" group-title="卫视频道",CHC动作电影 #响应:1731ms
 https://t.freetv.fun/live/chcdong-zuo-dian-ying.m3u8
-#EXTINF:-1 tvg-name="CHC动作电影" group-title="卫视频道",CHC动作电影 #响应:1777ms
+#EXTINF:-1 tvg-name="CHC动作电影" group-title="卫视频道",CHC动作电影 #响应:1738ms
+http://38.75.136.137:98/gslb/dsdqpub/chcdz.m3u8?auth=testpub
+#EXTINF:-1 tvg-name="CHC动作电影" group-title="卫视频道",CHC动作电影 #响应:1799ms
 https://t.freetv.fun/live/chcdong-zuo-dian-ying.m3u8
-#EXTINF:-1 tvg-name="古天乐电影" group-title="卫视频道",古天乐电影 #响应:2106ms
+#EXTINF:-1 tvg-name="古天乐电影" group-title="卫视频道",古天乐电影 #响应:1620ms
 http://www.douzhicloud.site:35455/huya/29982675
-#EXTINF:-1 tvg-name="周星驰电影" group-title="卫视频道",周星驰电影 #响应:2016ms
+#EXTINF:-1 tvg-name="周星驰电影" group-title="卫视频道",周星驰电影 #响应:1515ms
 http://www.douzhicloud.site:35455/huya/11342412
-#EXTINF:-1 tvg-name="刘德华电影" group-title="卫视频道",刘德华电影 #响应:2245ms
+#EXTINF:-1 tvg-name="刘德华电影" group-title="卫视频道",刘德华电影 #响应:2668ms
 http://www.douzhicloud.site:35455/huya/11342424
-#EXTINF:-1 tvg-name="林正英电影" group-title="卫视频道",林正英电影 #响应:2298ms
-http://www.douzhicloud.site:35455/huya/11342421
-#EXTINF:-1 tvg-name="成龙电影" group-title="卫视频道",成龙电影 #响应:1695ms
-http://www.douzhicloud.site:35455/huya/11342386
